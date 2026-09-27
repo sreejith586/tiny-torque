@@ -51,4 +51,6 @@
 
 | D-037 | 2026-09-27 | **Email OTP is the primary sign-in for now; phone OTP later.** Supabase Auth email via custom SMTP = **Resend** (verified sending domain required). Login shows email first with "Use mobile number instead". Phone provider (Twilio/MSG91, D-012/D-025) configured when ready — no code change needed | Sreejith: avoid SMS setup now | High | accepted | F-01, S1-03 |
 
-<!-- Append new rows below this line. Next ID: D-038 -->
+| D-038 | 2026-09-27 | Transactional email sending domain is **`tinytorque.hypermaxsolutions.com`** (verified in Resend); auth sender `hello@tinytorque.hypermaxsolutions.com`, sender name "Mini Vault". All later transactional mail (S6/S9 notifications) uses the same domain | Sreejith verified it | Medium (domain reputation accrues) | accepted | D-037 |
+
+<!-- Append new rows below this line. Next ID: D-039 -->
