@@ -38,7 +38,7 @@ Next.js 16 (App Router, RSC, Server Actions) · React 19 · TypeScript strict ·
 1. One task → one branch `mv/S{n}-{id}-{slug}` (or the sprint branch when unattended) → one PR titled `[MV-Sn-nn] …` **into `staging`**. Never merge; Sreejith reviews. `main` is only ever fast-forwarded from `staging` after the Sunday demo. (D-002, D-020, D-035)
 2. Task ≥ 2 h: short plan in the PR first, wait for "go". (D-020)
 3. Order: migration → `pnpm gen:types` → domain schema/types → repo → service + Vitest → UI → Playwright (critical flows) → docs. (D-020)
-4. Schema changes ONLY as `supabase/migrations/NNNN_name.sql`. Never edit an applied migration. Destructive changes ship in two releases. (D-006)
+4. Schema changes ONLY as `supabase/migrations/<YYYYMMDDHHMMSS>_name.sql` (`supabase migration new <name>`). Never edit an applied migration. Destructive changes ship in two releases. (D-006)
 5. `@supabase/*` imports only in `src/domain/*/repo.ts` and `src/lib/supabase/*`. Components/routes call `domain/*/service` only. (D-007)
 6. zod at every boundary (actions, route handlers, Edge bodies, CSV rows, AI output). (D-013)
 7. Entitlements asked ONLY via `domain/entitlements`; DB triggers/RPCs are the backstop. (D-003, D-021)
@@ -77,6 +77,6 @@ S0 — Foundation, tasks 01–05, 07–11 done in the cloud on branch `sprint-0`
 
 ## Don't
 - Don't add H2/H3 features (promoted listings, ranking boosts, 3D, presence) — stretch register only. (D-017)
-- Don't paste SQL in the dashboard. Don't write `photos` jsonb after migration 0004. Don't use service-role key in Next.js.
+- Don't paste SQL in the dashboard. Don't write `photos` jsonb after the garage_v2 migration. Don't use service-role key in Next.js.
 - Don't refactor outside the task's files. Don't "improve" Varun's UX or invent components. Don't "fix" prototype behaviour without a spec change.
 - Don't rely on chat memory for state — if it isn't in PROGRESS.md or DECISIONS.md, it didn't happen.

@@ -47,4 +47,6 @@
 
 | D-035 | 2026-09-27 | **Branch flow with a persistent `staging` Supabase branch** (Sreejith created `main` + `staging` in Supabase Branching): git `sprint-N` → PR into `staging` (ephemeral preview branch + e2e) → merge = staging deploy, Sunday demo runs on staging → fast-forward `staging → main` the same evening = production deploy (D-028). Prod migrations are applied by the GitHub integration on merge to `main`. `main` is never committed to directly | Sreejith's setup; keeps a stable demo env with zero extra projects | High | accepted | 06 §5, ci.yml |
 
-<!-- Append new rows below this line. Next ID: D-036 -->
+| D-036 | 2026-09-27 | Migration files use the Supabase CLI timestamp convention `<YYYYMMDDHHMMSS>_<name>.sql`; docs keep the logical `0000…0011` sequence numbers. Baseline/housekeeping renamed before any remote apply (allowed: not yet applied anywhere shared) | `db push` + GitHub integration require it | High | accepted | 03 §4 |
+
+<!-- Append new rows below this line. Next ID: D-037 -->

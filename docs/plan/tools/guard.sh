@@ -13,7 +13,7 @@ if grep -rnE "from ['\"]@supabase/" src --include='*.ts' --include='*.tsx' \
 fi
 
 # D-012: no hardcoded country code (enforced once identity_v2 / the country picker ships in S1)
-if ls supabase/migrations/0002_* >/dev/null 2>&1 && grep -rnE "COUNTRY_CODE\s*=\s*['\"]\+91" src ; then say D-012 "hardcoded +91 country code"; fi
+if ls supabase/migrations/*_identity_v2.sql >/dev/null 2>&1 && grep -rnE "COUNTRY_CODE\s*=\s*['\"]\+91" src ; then say D-012 "hardcoded +91 country code"; fi
 
 # D-021: offers / token_ledger must not be written directly from app code (RPC only)
 if grep -rnE "from\(['\"](offers|token_ledger|token_purchases|entitlement_grants)['\"]\)\s*\.\s*(update|insert|upsert|delete)" src ; then
@@ -21,7 +21,7 @@ if grep -rnE "from\(['\"](offers|token_ledger|token_purchases|entitlement_grants
 fi
 
 # D-010: no writes to legacy photos jsonb after migration 0004 exists
-if ls supabase/migrations/0004_* >/dev/null 2>&1 && grep -rnE "\bphotos\s*:" src/domain --include='*.ts' | grep -v "_v1" ; then
+if ls supabase/migrations/*_garage_v2.sql >/dev/null 2>&1 && grep -rnE "\bphotos\s*:" src/domain --include='*.ts' | grep -v "_v1" ; then
   say D-010 "write to legacy photos jsonb — use media rows"
 fi
 
