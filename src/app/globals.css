@@ -1,0 +1,355 @@
+:root {
+  /* Default theme (workshop-light) — overridden at runtime by
+     applyThemeToDocument() in src/lib/theme.ts, and duplicated here so
+     first paint (before JS runs) isn't unstyled. */
+  --bg: #F6F1E7;
+  --panel: #FFFFFF;
+  --panel-alt: #EFE7D6;
+  --cream: #1C1712;
+  --orange: #B84509;
+  --teal: #146358;
+  --gold: #7A5F08;
+  --muted: #5C5445;
+  --border: #C9BC9E;
+  --danger: #9A2E1A;
+  --btn-text: #FFFFFF;
+  --violet: #5B3FA0;
+
+  --font-heading: var(--font-oswald), 'Oswald', sans-serif;
+  --font-body: var(--font-work-sans), 'Work Sans', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background: var(--bg);
+  color: var(--cream);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  margin: 0 0 8px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: var(--font-body);
+}
+
+/* Aurora Glass: a richer, slightly glassy card treatment. */
+.theme-3d .card,
+.theme-3d .panel {
+  backdrop-filter: blur(6px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Leather & Chrome: darker metallic nav aesthetic. */
+.theme-leather .bottom-nav {
+  background: linear-gradient(180deg, var(--panel-alt), var(--panel));
+  border-top: 1px solid var(--gold);
+}
+
+.page {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 76px; /* room for bottom nav */
+}
+
+.panel,
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: 12px;
+  padding: 13px 18px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.btn-primary {
+  background: var(--orange);
+  color: var(--btn-text);
+}
+
+.btn-secondary {
+  background: var(--panel-alt);
+  color: var(--cream);
+  border: 1px solid var(--border);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 15px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 6px;
+  margin-top: 14px;
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.warning-banner {
+  background: var(--panel-alt);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+/* ---------- Batch photo scan ---------- */
+.confidence-high {
+  color: var(--teal);
+  font-weight: 600;
+}
+
+.confidence-medium {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.confidence-low {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.scan-review-card {
+  background: var(--panel);
+}
+
+/* ---------- Bottom nav ---------- */
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-around;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+  z-index: 20;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  flex: 1;
+  padding: 4px 0;
+}
+
+.nav-item.active {
+  color: var(--orange);
+}
+
+.nav-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.nav-item.nav-add .nav-icon {
+  background: var(--orange);
+  color: var(--btn-text);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+/* ---------- Theme swatches ---------- */
+.theme-swatches {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.theme-swatch {
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 10px;
+  background: var(--panel-alt);
+  cursor: pointer;
+  text-align: center;
+}
+
+.theme-swatch.selected {
+  border-color: var(--orange);
+}
+
+.swatch-dots {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.swatch-dots span {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.swatch-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--cream);
+}
+
+/* ---------- Garage grid ---------- */
+.garage-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.garage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.garage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.car-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.car-card .car-photo {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--panel-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+}
+
+.car-card .car-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.car-card .car-body {
+  padding: 10px;
+}
+
+.car-card .car-brand {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.car-card .car-meta {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--muted);
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.toggle-row:last-child {
+  border-bottom: none;
+}

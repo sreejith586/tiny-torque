@@ -1,0 +1,40 @@
+# DECISIONS.md — Mini Vault decision log (append-only)
+
+> **Rules.** One row per decision. Never edit or delete a row; to change a decision add a new row with `Supersedes: D-xxx` and mark the old one `superseded`. Every Claude Code session reads this file before touching code. A change that contradicts an `accepted` row is a regression — stop and ask. Keep rows to one line; long rationale lives in the referenced doc.
+>
+> Status: `accepted` · `proposed` (needs Sreejith's confirmation) · `superseded` · `deferred` (explicitly not deciding now)
+
+| ID | Date | Decision | Why (short) | Reversibility | Status | Ref |
+|---|---|---|---|---|---|---|
+| D-001 | 2026-09-27 | Pilot geography is **UAE + India**; one shared marketplace, listings carry `country_code` + `currency`, default browse = own country | Sreejith's call; both cohorts available | Medium | accepted | 01 §3 |
+| D-002 | 2026-09-27 | Build model: **Sreejith + Claude Code, solo**, 1-week sprints, ≈20 h planned/sprint, S11 = buffer | Capacity reality | High | accepted | 05 |
+| D-003 | 2026-09-27 | **Money in H1 = token packs only** (one-time purchases). Collector deals settle **offline**. No escrow, no commission, no subscriptions | Sreejith's call; lowest regulatory surface | Medium (once users have paid) | accepted | 01 §3, F-11 |
+| D-004 | 2026-09-27 | **Keep Supabase**; modernise app layer in place (Next.js 16.x, React 19, Tailwind 4, shadcn, zod, TanStack Query, Vitest, pgTAP, Playwright); refactor not rewrite; multiverse readiness via data model, not features | Sreejith chose option 1 "with multiverse in mind" | Medium | accepted | ADR-01, ADR-03 |
+| D-005 | 2026-09-27 | Supabase region **ap-south-1 (Mumbai)**, Vercel `bom1` | Serves AE+IN; India likely larger | **Low** — decide before prod project exists | proposed | ADR-02 |
+| D-006 | 2026-09-27 | Schema changes **only via Supabase CLI migrations**; baseline = Varun's schema verbatim; generated types; never edit applied migrations; destructive changes in two releases | Auditability, rollback | High | accepted | ADR-04 |
+| D-007 | 2026-09-27 | **Domain layer with repo boundary**: `@supabase/*` only in `domain/*/repo.ts` + `lib/supabase/*`; components call services only; ESLint-enforced | Multiverse insurance #1; testability | High | accepted | ADR-05 |
+| D-008 | 2026-09-27 | **Canonical catalogue** (`catalog_brands`, `catalog_models`) with nullable FK from items/listings; AI scan proposes, admin verifies | Multiverse insurance #2; dedupe/search/value | Medium-High | accepted | ADR-06 |
+| D-009 | 2026-09-27 | **Append-only `domain_events`**; XP/badges/notifications are event consumers, never inline | Multiverse insurance #3; replayability | High | accepted | ADR-07 |
+| D-010 | 2026-09-27 | **Private storage + `media` table**; store paths not URLs; client downsizes before upload; `photos jsonb` dropped after backfill (S2) | Plan limits, moderation, future textures | Medium | accepted | ADR-08 |
+| D-011 | 2026-09-27 | **Stripe Checkout** (Hypermax FZE) for one-time packs behind a `PaymentProvider` interface; Razorpay/UPI only if India conversion is poor | Fastest live from UAE entity; avoids RBI recurring rules | Medium (merchant of record + currency sticky) | accepted (pricing pending → D-024) | ADR-09 |
+| D-012 | 2026-09-27 | Auth = **phone OTP primary + email OTP fallback**; country picker replaces `+91` constant; MSG91 via Send-SMS hook if Twilio India is poor | India SMS delivery risk | High | accepted | ADR-10 |
+| D-013 | 2026-09-27 | Testing posture: Vitest (domain), pgTAP RLS matrix per migration, Deno tests for Edge, Playwright on 6 critical flows per PR preview | Solo builder needs automated regression | High | accepted | ADR-12 |
+| D-014 | 2026-09-27 | Environments: local / staging / prod, separate Supabase projects, Vercel previews per PR, manual promote to prod | Safety | High | accepted | ADR-13 |
+| D-015 | 2026-09-27 | Observability: Sentry + PostHog + Vercel Analytics; PostHog funnels for pilot KPIs defined before launch | Pilot must produce data | High | accepted | ADR-11, 01 §6 |
+| D-016 | 2026-09-27 | Pilot: **invite-only**, 30–80 collectors incl. 3–5 shops, 8–12 weeks, English only, PWA (no native) | Scope control | High | accepted | 01 §3 |
+| D-017 | 2026-09-27 | **Out of H1**: promoted listings, verified seller, priority placement, collection insights, PDF export, native apps, Arabic/Hindi, any multiverse feature. Visual search = stretch only | Varun's V2/V3 grouping + pilot focus | High | accepted | 01 §4, 04 stretch |
+| D-018 | 2026-09-27 | Kill-switch **feature flags mandatory** for anything touching money, messaging, AI or ranking (`ai_scan`, `offers`, `deal_chat`, `token_purchase`, `csv_import`, `marketplace_publish`, `invite_only`) | Operate a pilot safely | High | accepted | 02 §2, F-16 |
+| D-019 | 2026-09-27 | Plan lives in repo `docs/plan/` (mirrored to Claude Project); `tools/backlog.json` is the single source for sprint plan + CSV; `CLAUDE.md` moves to repo root in S0 | No drift between artefacts | High | accepted | 00-README |
+| D-020 | 2026-09-27 | **Sprint locking**: locked Monday; no new scope mid-sprint; carry-over → next sprint or S11 buffer; sequencing migration → service → UI → e2e inside every sprint | Sreejith's working style | High | accepted | 05, 06 §8 |
+| D-021 | 2026-09-27 | Offer status changes **only via RPC `transition_offer`**; token balance changes **only via RPC `spend_tokens` / Stripe webhook**; no direct table updates | Integrity, race safety | High | accepted | 03 §2.7, §2.14 |
+| D-022 | 2026-09-27 | Priority (unlabelled) search placement: **not decided**; revisit in H2 with pilot data. Labelled paid placement acceptable in principle (H2) | Varun's trust principle | — | deferred | 01 §7 |
+| D-023 | 2026-09-27 | **Session protocol + decision guard**: every session reads CLAUDE.md → PROGRESS.md → DECISIONS.md → task row only; updates PROGRESS.md at end; `tools/guard.sh` in CI fails on decision-violating patterns; contradicting an accepted row = stop and ask | Sreejith: no context drift, no regression | High | accepted | CLAUDE.md, 06 §1 |
+| D-024 | 2026-09-27 | Token pack sizes/prices (AED) and token costs of listing slot / scan pack / Pro-30d | Needed by S7 | Medium | proposed | F-11 |
+| D-025 | 2026-09-27 | India SMS route: Twilio Verify + DLT vs MSG91 via Send-SMS hook | Needed by S1 | High | proposed | ADR-10 |
+| D-026 | 2026-09-27 | Media model: `photos jsonb` → `media` rows **during H1 (S2)** rather than after pilot | Chosen "now"; Sreejith may reverse | Medium | proposed | ADR-08 |
+
+| D-027 | 2026-09-27 | **UX fidelity to Varun's prototype is binding**: the 6 themes (exact token values in `theme.ts`), screen layouts, flows, copy tone and interaction patterns are the reference. No new complex UI components or patterns; shadcn is used only as accessible *primitives* restyled to Varun's tokens (buttons, inputs, sheets, dialogs, selects). Any deviation from a prototype screen needs Varun's sign-off recorded here | Sreejith: "stick to the design theme and usability already done by Varun; never drift; no complex usability components" | High | accepted | CLAUDE.md, 06 §3, 02 ADR-03 |
+
+| D-028 | 2026-09-27 | **Deploy to production at the end of every sprint.** Unfinished features ship dark behind their flag; demo runs on prod; founders cohort (you, Varun, 3–5 trusted collectors) uses prod from S1; pilot shops invited early (S2) to load stock; full pilot cohort at S11 | Sreejith: progress must be visible | High | accepted | 05 "Ships to production", 06 §5 |
+
+<!-- Append new rows below this line. Next ID: D-029 -->
