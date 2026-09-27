@@ -1,14 +1,15 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { getCollectionItem } from '@/lib/api';
+import { getCollectionItem } from '@/domain/garage';
 import CarDetailView from '@/components/CarDetailView';
 
-export default async function CarDetailPage({ params }: { params: { id: string } }) {
-  const supabase = createClient();
+export default async function CarDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const item = await getCollectionItem(supabase, params.id);
+  const item = await getCollectionItem(supabase, id);
   if (!item) notFound();
 
   const isOwner = item.owner_id === user.id;

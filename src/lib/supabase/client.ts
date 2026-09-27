@@ -3,7 +3,7 @@
 // Browser-side Supabase client — used inside client components (forms,
 // photo uploads, the theme switcher's auth-aware bits, etc).
 import { createBrowserClient } from '@supabase/ssr';
-import type { Database } from '@/types/database';
+import type { Database } from '@/types/supabase';
 
 export function createClient() {
   return createBrowserClient<Database>(

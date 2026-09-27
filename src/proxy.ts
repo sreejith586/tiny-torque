@@ -1,23 +1,24 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-// Refreshes the Supabase auth session on every request (so server
-// components always see a valid session) and protects the routes that
-// require a signed-in user, redirecting to /login otherwise.
+// Next.js 16 "proxy" (formerly middleware). Refreshes the Supabase session on
+// every request so Server Components always see a valid session, and guards
+// the routes that require a signed-in user.
 //
-// Public (no auth required): /, /login, /onboarding, /market, static assets.
-// Everything else — /garage, /profile, /offers — requires a session.
+// Public (no auth required): /, /login, /onboarding, /market (browse is public
+// per F-06), static assets. Everything else — /garage, /profile, /offers,
+// /deals, /settings, /tokens, /admin — requires a session.
 
-const PUBLIC_PATHS = ['/', '/login', '/onboarding', '/market', '/offers'];
+const PUBLIC_PATHS = new Set(['/', '/login', '/onboarding', '/market']);
 
 function isPublicPath(pathname: string) {
-  if (PUBLIC_PATHS.includes(pathname)) return true;
-  // /market and /offers are stub pages in Phase 1 (see app/market,
-  // app/offers) and are intentionally left open to signed-out visitors.
+  if (PUBLIC_PATHS.has(pathname)) return true;
+  if (pathname.startsWith('/market/')) return true; // listing detail is public
+  if (pathname.startsWith('/u/')) return true; // public profiles
   return false;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: request.headers } });
 
   const supabase = createServerClient(
@@ -25,20 +26,21 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
+        getAll() {
+          return request.cookies.getAll();
         },
-        set(name: string, value: string, options: CookieOptions) {
-          response.cookies.set({ name, value, ...options });
-        },
-        remove(name: string, options: CookieOptions) {
-          response.cookies.set({ name, value: '', ...options });
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request: { headers: request.headers } });
+          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
         },
       },
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
 
@@ -52,12 +54,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static, _next/image, favicon.ico
-     * - files with an extension (images, etc.)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\\..*).*)'],
 };
