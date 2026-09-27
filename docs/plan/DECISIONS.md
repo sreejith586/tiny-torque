@@ -55,4 +55,6 @@
 
 | D-039 | 2026-09-27 | **Promotion to production is a GitHub PR `staging → main` merged with "Create a merge commit"** (never squash/rebase — commit hashes must stay identical on both branches). Replaces the CLI fast-forward wording in D-035; everything else in D-035 stands | Sreejith works from the GitHub UI; no local git step needed | High | accepted | 06 §5 |
 
-<!-- Append new rows below this line. Next ID: D-040 -->
+| D-040 | 2026-09-28 | **Prod migrations are applied by `pnpm exec supabase db push` from `main` after each promotion** (the GitHub integration's prod sync is not relied on until it is observed applying one). GitHub default branch set to `staging` so new PRs target it by default | S0 experience: integration never applied; PR base mistakes | High | accepted | 06 §5 |
+
+<!-- Append new rows below this line. Next ID: D-041 -->
