@@ -1,43 +1,51 @@
 'use client';
 
-import type { FormEvent } from 'react';
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { sendOtp, verifyOtp, getProfile } from '@/domain/identity';
+import { sendOtp, verifyOtp, sendEmailOtp, verifyEmailOtp, getProfile } from '@/domain/identity';
 
-// Two-step phone login: enter mobile number -> send OTP -> enter code ->
-// verify. On first login (no profiles row yet) we send the person to
-// /onboarding; otherwise straight to /garage.
+// Two-step OTP login: choose phone or email -> send code -> enter code -> verify.
+// On first login (no profiles row yet) we send the person to /onboarding;
+// otherwise straight to /garage.
 //
-// Note (infra, not code): whether OTP SMS goes out via Supabase's default
-// Twilio-based phone provider or a provider like MSG91 is configured in
-// the Supabase dashboard (Authentication > Providers > Phone), not here.
+// Email OTP is the primary path until the SMS provider is configured (D-037);
+// phone stays available. Country picker + full E.164 handling land in S1-03.
 
 const COUNTRY_CODE = '+91';
+type Method = 'email' | 'phone';
 
 export default function LoginPage() {
   const supabase = createClient();
   const router = useRouter();
 
-  const [step, setStep] = useState<'mobile' | 'otp'>('mobile');
+  const [method, setMethod] = useState<Method>('email');
+  const [step, setStep] = useState<'identify' | 'otp'>('identify');
   const [mobileDigits, setMobileDigits] = useState('');
+  const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fullMobile = `${COUNTRY_CODE}${mobileDigits.replace(/\D/g, '')}`;
+  const cleanEmail = email.trim().toLowerCase();
+  const destination = method === 'email' ? cleanEmail : fullMobile;
 
   async function handleSendOtp(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (mobileDigits.replace(/\D/g, '').length < 10) {
+    if (method === 'phone' && mobileDigits.replace(/\D/g, '').length < 10) {
       setError('Enter a valid 10-digit mobile number.');
+      return;
+    }
+    if (method === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setError('Enter a valid email address.');
       return;
     }
     setLoading(true);
     try {
-      await sendOtp(supabase, fullMobile);
+      if (method === 'email') await sendEmailOtp(supabase, cleanEmail);
+      else await sendOtp(supabase, fullMobile);
       setStep('otp');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not send the code. Try again.');
@@ -55,7 +63,10 @@ export default function LoginPage() {
     }
     setLoading(true);
     try {
-      const user = await verifyOtp(supabase, fullMobile, code.trim());
+      const user =
+        method === 'email'
+          ? await verifyEmailOtp(supabase, cleanEmail, code.trim())
+          : await verifyOtp(supabase, fullMobile, code.trim());
       if (!user) throw new Error('Verification did not return a user.');
 
       const profile = await getProfile(supabase, user.id);
@@ -68,46 +79,72 @@ export default function LoginPage() {
     }
   }
 
+  function switchMethod() {
+    setMethod(method === 'email' ? 'phone' : 'email');
+    setError(null);
+  }
+
   return (
     <main style={{ padding: '48px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
       <h1 style={{ fontSize: 26 }}>Sign in to Mini Vault</h1>
-      <p className="muted">No password needed — just your mobile number.</p>
+      <p className="muted">
+        {method === 'email' ? 'No password needed — just your email.' : 'No password needed — just your mobile number.'}
+      </p>
 
-      {step === 'mobile' && (
+      {step === 'identify' && (
         <form onSubmit={handleSendOtp} style={{ marginTop: 12 }}>
-          <label htmlFor="mobile">Mobile number</label>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <span
-              className="panel"
-              style={{ padding: '12px 14px', width: 'auto', flex: '0 0 auto' }}
-            >
-              {COUNTRY_CODE}
-            </span>
-            <input
-              id="mobile"
-              type="tel"
-              inputMode="numeric"
-              placeholder="98765 43210"
-              value={mobileDigits}
-              onChange={(e) => setMobileDigits(e.target.value)}
-              autoFocus
-            />
-          </div>
+          {method === 'email' ? (
+            <>
+              <label htmlFor="email">Email address</label>
+              <input
+                id="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoFocus
+              />
+            </>
+          ) : (
+            <>
+              <label htmlFor="mobile">Mobile number</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <span className="panel" style={{ padding: '12px 14px', width: 'auto', flex: '0 0 auto' }}>
+                  {COUNTRY_CODE}
+                </span>
+                <input
+                  id="mobile"
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="98765 43210"
+                  value={mobileDigits}
+                  onChange={(e) => setMobileDigits(e.target.value)}
+                  autoFocus
+                />
+              </div>
+            </>
+          )}
           {error && <p className="field-error">{error}</p>}
           <button className="btn-primary" style={{ marginTop: 20 }} disabled={loading}>
             {loading ? 'Sending code…' : 'Send code'}
+          </button>
+          <button type="button" className="btn-secondary" style={{ marginTop: 10 }} onClick={switchMethod}>
+            {method === 'email' ? 'Use mobile number instead' : 'Use email instead'}
           </button>
         </form>
       )}
 
       {step === 'otp' && (
         <form onSubmit={handleVerifyOtp} style={{ marginTop: 12 }}>
-          <label htmlFor="code">Enter the code sent to {fullMobile}</label>
+          <label htmlFor="code">Enter the code sent to {destination}</label>
           <input
             id="code"
             type="text"
             inputMode="numeric"
-            placeholder="1234"
+            autoComplete="one-time-code"
+            placeholder="123456"
             value={code}
             onChange={(e) => setCode(e.target.value)}
             autoFocus
@@ -121,12 +158,12 @@ export default function LoginPage() {
             className="btn-secondary"
             style={{ marginTop: 10 }}
             onClick={() => {
-              setStep('mobile');
+              setStep('identify');
               setCode('');
               setError(null);
             }}
           >
-            Use a different number
+            {method === 'email' ? 'Use a different email' : 'Use a different number'}
           </button>
         </form>
       )}

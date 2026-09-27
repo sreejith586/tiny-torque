@@ -13,6 +13,17 @@ export async function verifyOtp(supabase: Client, phoneE164: string, code: strin
   return data.user;
 }
 
+export async function sendEmailOtp(supabase: Client, email: string) {
+  const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+  if (error) throw error;
+}
+
+export async function verifyEmailOtp(supabase: Client, email: string, code: string) {
+  const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
+  if (error) throw error;
+  return data.user;
+}
+
 export async function signOut(supabase: Client) {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;

@@ -9,6 +9,9 @@ test('landing renders and links to login', async ({ page }) => {
   await page.getByRole('link', { name: 'Get started' }).click();
   await expect(page).toHaveURL(/\/login$/);
   await expect(page.getByRole('heading', { name: 'Sign in to Mini Vault' })).toBeVisible();
+  await expect(page.getByLabel('Email address')).toBeVisible();
+  await page.getByRole('button', { name: 'Use mobile number instead' }).click();
+  await expect(page.getByLabel('Mobile number')).toBeVisible();
 });
 
 test('guarded routes redirect to login (proxy.ts)', async ({ page }) => {
@@ -37,6 +40,7 @@ for (const theme of THEMES) {
 test('sign-in with test phone number', async ({ page }) => {
   test.skip(!process.env.E2E_TEST_PHONE, 'needs E2E_TEST_PHONE / E2E_TEST_OTP (Supabase test number)');
   await page.goto('/login');
+  await page.getByRole('button', { name: 'Use mobile number instead' }).click();
   await page.getByLabel('Mobile number').fill(process.env.E2E_TEST_PHONE!.replace(/^\+?91/, ''));
   await page.getByRole('button', { name: 'Send code' }).click();
   await page.getByLabel(/Enter the code/).fill(process.env.E2E_TEST_OTP!);

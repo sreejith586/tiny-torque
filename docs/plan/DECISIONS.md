@@ -49,4 +49,6 @@
 
 | D-036 | 2026-09-27 | Migration files use the Supabase CLI timestamp convention `<YYYYMMDDHHMMSS>_<name>.sql`; docs keep the logical `0000…0011` sequence numbers. Baseline/housekeeping renamed before any remote apply (allowed: not yet applied anywhere shared) | `db push` + GitHub integration require it | High | accepted | 03 §4 |
 
-<!-- Append new rows below this line. Next ID: D-037 -->
+| D-037 | 2026-09-27 | **Email OTP is the primary sign-in for now; phone OTP later.** Supabase Auth email via custom SMTP = **Resend** (verified sending domain required). Login shows email first with "Use mobile number instead". Phone provider (Twilio/MSG91, D-012/D-025) configured when ready — no code change needed | Sreejith: avoid SMS setup now | High | accepted | F-01, S1-03 |
+
+<!-- Append new rows below this line. Next ID: D-038 -->

@@ -6,6 +6,8 @@ import type { ProfileCreateInput, ProfilePatch, ProfileRow } from './types';
 
 export const sendOtp = repo.sendOtp;
 export const verifyOtp = repo.verifyOtp;
+export const sendEmailOtp = repo.sendEmailOtp;
+export const verifyEmailOtp = repo.verifyEmailOtp;
 export const signOut = repo.signOut;
 export const getProfile = repo.getProfile;
 
