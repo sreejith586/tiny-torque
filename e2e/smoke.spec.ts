@@ -37,7 +37,7 @@ for (const theme of THEMES) {
 test('sign-in with test phone number', async ({ page }) => {
   test.skip(!process.env.E2E_TEST_PHONE, 'needs E2E_TEST_PHONE / E2E_TEST_OTP (Supabase test number)');
   await page.goto('/login');
-  await page.getByLabel('Mobile number').fill(process.env.E2E_TEST_PHONE!.replace('+91', ''));
+  await page.getByLabel('Mobile number').fill(process.env.E2E_TEST_PHONE!.replace(/^\+?91/, ''));
   await page.getByRole('button', { name: 'Send code' }).click();
   await page.getByLabel(/Enter the code/).fill(process.env.E2E_TEST_OTP!);
   await page.getByRole('button', { name: 'Verify & continue' }).click();

@@ -19,7 +19,7 @@
 | D-011 | 2026-09-27 | **Stripe Checkout** (Hypermax FZE) for one-time packs behind a `PaymentProvider` interface; Razorpay/UPI only if India conversion is poor | Fastest live from UAE entity; avoids RBI recurring rules | Medium (merchant of record + currency sticky) | accepted (pricing pending → D-024) | ADR-09 |
 | D-012 | 2026-09-27 | Auth = **phone OTP primary + email OTP fallback**; country picker replaces `+91` constant; MSG91 via Send-SMS hook if Twilio India is poor | India SMS delivery risk | High | accepted | ADR-10 |
 | D-013 | 2026-09-27 | Testing posture: Vitest (domain), pgTAP RLS matrix per migration, Deno tests for Edge, Playwright on 6 critical flows per PR preview | Solo builder needs automated regression | High | accepted | ADR-12 |
-| D-014 | 2026-09-27 | Environments: local / staging / prod, separate Supabase projects, Vercel previews per PR, manual promote to prod | Safety | High | accepted | ADR-13 |
+| D-014 | 2026-09-27 | Environments: local / staging / prod, separate Supabase projects, Vercel previews per PR, manual promote to prod | Safety | High | superseded (staging part) by D-033 | ADR-13 |
 | D-015 | 2026-09-27 | Observability: Sentry + PostHog + Vercel Analytics; PostHog funnels for pilot KPIs defined before launch | Pilot must produce data | High | accepted | ADR-11, 01 §6 |
 | D-016 | 2026-09-27 | Pilot: **invite-only**, 30–80 collectors incl. 3–5 shops, 8–12 weeks, English only, PWA (no native) | Scope control | High | accepted | 01 §3 |
 | D-017 | 2026-09-27 | **Out of H1**: promoted listings, verified seller, priority placement, collection insights, PDF export, native apps, Arabic/Hindi, any multiverse feature. Visual search = stretch only | Varun's V2/V3 grouping + pilot focus | High | accepted | 01 §4, 04 stretch |
@@ -42,4 +42,7 @@
 | D-031 | 2026-09-27 | **Tailwind without preflight**: utilities + theme layers only, so Varun's base CSS renders unchanged; semantic colour utilities map to `[data-theme]` variables; `<ThemeStyles>` emits all 6 themes from `theme.ts` (single source) | D-027 fidelity with Tailwind productivity | High | accepted | MV-S0-03 |
 | D-032 | 2026-09-27 | **No-Docker validation path is first-class**: `scripts/db-validate.sh` + `scripts/pg-stub.sql` apply every migration to a plain Postgres and CI's `migrations` job uses it; `supabase start` remains the local default when Docker exists | Cloud sandboxes lack Docker; CI simplicity | High | accepted | MV-S0-04 |
 
-<!-- Append new rows below this line. Next ID: D-033 -->
+| D-033 | 2026-09-27 | **Supabase Branching instead of a staging project.** One hosted project (`prod`, Pro plan); every PR gets a preview branch (migrations + `seed.sql` + `config.toml`) via the Supabase GitHub integration, and the Supabase↔Vercel integration injects branch keys into the matching Vercel preview; Playwright runs against that preview (`deployment_status`). Local = `supabase start` / no-Docker script. Supersedes the staging-project part of D-014 | Sreejith chose option 2; zero standing cost, no schema drift | High | accepted | ADR-13, 06 §5, ci.yml |
+| D-034 | 2026-09-27 | Remote is `git@github.com:sreejith586/tiny-torque.git` (repo name tiny-torque, package/app name Mini Vault); Vercel project connected to it; `main` = production branch | Sreejith set it up | High | accepted | PROGRESS |
+
+<!-- Append new rows below this line. Next ID: D-035 -->

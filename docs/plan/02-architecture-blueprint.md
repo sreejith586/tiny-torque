@@ -116,8 +116,8 @@ Known defects to fix early: `/market` and `/offers` are public in middleware (fi
 ### ADR-12 Testing posture
 - Vitest for domain services (repo mocked) and zod schemas; RLS integration tests run against a local `supabase start` DB with two JWTs (owner / stranger) for every table; Playwright smoke suite on the 6 critical flows (sign-in, add item, scan, publish listing, make offer, buy tokens with Stripe test mode) run against Vercel preview in CI.
 
-### ADR-13 Hosting & environments
-- Vercel (Pro) with three environments: `dev` (local + `supabase start`), `staging` (Supabase project `mini-vault-staging`, Vercel preview branch `staging`), `prod`. Secrets only in Vercel/Supabase, never in repo. Branch → preview URL for every PR.
+### ADR-13 Hosting & environments (amended by D-033)
+- Vercel with `local` (`supabase start`), `preview` (Vercel preview + Supabase preview branch per PR, keys injected by the Supabase↔Vercel integration) and `prod` (single Supabase Pro project + Vercel production from `main`). No separate staging project. Secrets only in Vercel/Supabase, never in repo.
 
 ## 4. Module map (`src/`)
 

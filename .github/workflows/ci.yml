@@ -2,7 +2,8 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main, staging, 'sprint-*']
+    branches: [main, 'sprint-*']
+  deployment_status: # Vercel preview ready → run Playwright against it (Supabase branch DB behind it, D-033)
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -11,6 +12,7 @@ concurrency:
 jobs:
   checks:
     name: typecheck · lint · unit · guard · build
+    if: github.event_name != 'deployment_status'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -34,6 +36,7 @@ jobs:
 
   migrations:
     name: migrations apply cleanly (D-006)
+    if: github.event_name != 'deployment_status'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     services:
@@ -56,13 +59,16 @@ jobs:
           git diff --exit-code src/types/supabase.ts || (echo "::error::src/types/supabase.ts is stale — run pnpm gen:types"; exit 1)
 
   e2e:
-    name: playwright smoke
+    name: playwright smoke on Vercel preview
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: checks
-    if: github.event_name == 'pull_request'
+    if: >-
+      github.event_name == 'deployment_status' &&
+      github.event.deployment_status.state == 'success' &&
+      startsWith(github.event.deployment.environment, 'Preview')
     steps:
       - uses: actions/checkout@v4
+        with: { ref: "${{ github.event.deployment.sha }}" }
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with: { node-version-file: .nvmrc, cache: pnpm }
@@ -70,13 +76,10 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
         env:
-          # Points at the Vercel preview once MV-S0-06 is done; until then the
-          # local build is used (playwright.config.ts starts `next start`).
-          BASE_URL: ${{ vars.E2E_BASE_URL }}
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL || 'https://ci-placeholder.supabase.co' }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY || 'ci-placeholder' }}
-          E2E_TEST_PHONE: ${{ secrets.E2E_TEST_PHONE }}
-          E2E_TEST_OTP: ${{ secrets.E2E_TEST_OTP }}
+          BASE_URL: ${{ github.event.deployment_status.environment_url }}
+          # Matches [auth.sms.test_otp] in supabase/config.toml (applied to preview branches)
+          E2E_TEST_PHONE: '+919999900001'
+          E2E_TEST_OTP: '246810'
       - uses: actions/upload-artifact@v4
         if: failure()
         with: { name: playwright-report, path: playwright-report, retention-days: 7 }
