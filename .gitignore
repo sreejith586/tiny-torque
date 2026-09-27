@@ -1,0 +1,25 @@
+# deps / build
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+# env
+.env
+.env.*
+!.env.example
+# supabase local
+supabase/.branches/
+supabase/.temp/
+supabase/.env.local
+# tooling
+coverage/
+playwright-report/
+test-results/
+.eslintcache
+# os / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
