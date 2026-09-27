@@ -3,6 +3,7 @@ import localFont from 'next/font/local';
 import './globals.css';
 import ThemeInit from '@/components/ThemeInit';
 import ThemeStyles, { THEME_BOOT_SCRIPT } from '@/components/ThemeStyles';
+import AnalyticsInit from '@/components/AnalyticsInit';
 import BottomNav from '@/components/BottomNav';
 
 // Self-hosted (same faces/weights as Varun's Google Fonts setup — D-027):
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ThemeInit />
+        <AnalyticsInit />
         <div className="page">{children}</div>
         <BottomNav />
       </body>
