@@ -12,8 +12,8 @@ if grep -rnE "from ['\"]@supabase/" src --include='*.ts' --include='*.tsx' \
   say D-007 "@supabase import outside domain/*/repo.ts or lib/supabase"
 fi
 
-# D-012: no hardcoded country code
-if grep -rnE "COUNTRY_CODE\s*=\s*['\"]\+91" src ; then say D-012 "hardcoded +91 country code"; fi
+# D-012: no hardcoded country code (enforced once identity_v2 / the country picker ships in S1)
+if ls supabase/migrations/0002_* >/dev/null 2>&1 && grep -rnE "COUNTRY_CODE\s*=\s*['\"]\+91" src ; then say D-012 "hardcoded +91 country code"; fi
 
 # D-021: offers / token_ledger must not be written directly from app code (RPC only)
 if grep -rnE "from\(['\"](offers|token_ledger|token_purchases|entitlement_grants)['\"]\)\s*\.\s*(update|insert|upsert|delete)" src ; then

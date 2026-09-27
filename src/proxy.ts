@@ -1,47 +1,26 @@
-import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { refreshSession } from '@/lib/supabase/proxy';
 
 // Next.js 16 "proxy" (formerly middleware). Refreshes the Supabase session on
 // every request so Server Components always see a valid session, and guards
 // the routes that require a signed-in user.
 //
-// Public (no auth required): /, /login, /onboarding, /market (browse is public
-// per F-06), static assets. Everything else — /garage, /profile, /offers,
-// /deals, /settings, /tokens, /admin — requires a session.
+// Public (no auth required): /, /login, /onboarding, /market (+ listing
+// detail, F-06), /u/{handle} public profiles, static assets. Everything else —
+// /garage, /profile, /offers, /deals, /settings, /tokens, /admin — requires a
+// session.
 
 const PUBLIC_PATHS = new Set(['/', '/login', '/onboarding', '/market']);
 
 function isPublicPath(pathname: string) {
   if (PUBLIC_PATHS.has(pathname)) return true;
-  if (pathname.startsWith('/market/')) return true; // listing detail is public
-  if (pathname.startsWith('/u/')) return true; // public profiles
+  if (pathname.startsWith('/market/')) return true;
+  if (pathname.startsWith('/u/')) return true;
   return false;
 }
 
 export async function proxy(request: NextRequest) {
-  let response = NextResponse.next({ request: { headers: request.headers } });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request: { headers: request.headers } });
-          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-        },
-      },
-    }
-  );
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const { response, user } = await refreshSession(request);
   const { pathname } = request.nextUrl;
 
   if (!user && !isPublicPath(pathname)) {
