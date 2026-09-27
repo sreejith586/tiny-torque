@@ -3,7 +3,8 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { scanPhotoForCars, addCollectionItems, uploadCarPhoto, type ScanCandidate } from '@/lib/api';
+import { addCollectionItems, uploadCarPhoto } from '@/domain/garage';
+import { scanPhotoForCars, type ScanCandidate } from '@/domain/ai';
 
 // Editable review row: a scan candidate plus an "include" checkbox and the
 // same fields the manual add-car form exposes, so the user can fix anything

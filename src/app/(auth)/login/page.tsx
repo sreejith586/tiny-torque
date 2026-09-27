@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import type { FormEvent } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { sendOtp, verifyOtp, getProfile } from '@/lib/api';
+import { sendOtp, verifyOtp, getProfile } from '@/domain/identity';
 
 // Two-step phone login: enter mobile number -> send OTP -> enter code ->
 // verify. On first login (no profiles row yet) we send the person to

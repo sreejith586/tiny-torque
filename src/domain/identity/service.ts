@@ -1,0 +1,40 @@
+// Identity service — auth + profile. Components import from here, never from repo.
+import type { Client } from '@/lib/supabase/types';
+import * as repo from './repo';
+import { profileCreateSchema, profilePatchSchema } from './schema';
+import type { ProfileCreateInput, ProfilePatch, ProfileRow } from './types';
+
+export const sendOtp = repo.sendOtp;
+export const verifyOtp = repo.verifyOtp;
+export const signOut = repo.signOut;
+export const getProfile = repo.getProfile;
+
+/** First-login onboarding: creates the profiles row (id = auth user id). */
+export async function createProfile(supabase: Client, userId: string, input: ProfileCreateInput) {
+  const v = profileCreateSchema.parse(input);
+  await repo.insertProfile(supabase, {
+    id: userId,
+    display_name: v.displayName,
+    account_type: v.accountType,
+    store_name: v.storeName ?? null,
+    location: v.location ?? null,
+    mobile: v.mobile ?? null,
+    photo_url: v.photoUrl ?? null,
+  });
+}
+
+/** Profile edit with PATCH semantics — untouched fields are never nulled (MV-S0-09). */
+export async function patchProfile(supabase: Client, userId: string, patch: ProfilePatch) {
+  const v = profilePatchSchema.parse(patch);
+  const row: Record<string, unknown> = {};
+  if (v.displayName !== undefined) row.display_name = v.displayName;
+  if (v.accountType !== undefined) row.account_type = v.accountType;
+  if (v.storeName !== undefined) row.store_name = v.storeName;
+  if (v.location !== undefined) row.location = v.location;
+  if (v.mobile !== undefined) row.mobile = v.mobile;
+  if (v.photoUrl !== undefined) row.photo_url = v.photoUrl;
+  if (Object.keys(row).length === 0) return;
+  await repo.updateProfile(supabase, userId, row);
+}
+
+export type { ProfileRow, ProfileCreateInput, ProfilePatch };
