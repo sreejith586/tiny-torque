@@ -1,21 +1,31 @@
 # Mini Vault
 
-A Next.js (App Router, TypeScript) + Supabase rewrite of the Mini Vault
-diecast car collector prototype. Phase 1 covers real phone-OTP auth and a
-fully working personal garage (My Garage): add, edit, delete, search,
-filter and sort your own collection, with photo uploads to Supabase
-Storage.
+A Next.js 16 (App Router, TypeScript) + Supabase build of the Mini Vault
+diecast car collector platform, from Varun's Phase-1 prototype. Plan,
+decision log and sprint board live in [`docs/plan/`](./docs/plan/00-README.md);
+`CLAUDE.md` is the project memory for Claude Code sessions.
+
+**Quick start**
+
+```bash
+pnpm install
+cp .env.example .env.local        # fill in Supabase URL + anon key
+pnpm dev                          # http://localhost:3000
+pnpm typecheck && pnpm lint && pnpm test && pnpm guard
+pnpm exec playwright test         # builds + starts the app, or set BASE_URL
+```
+
+Schema changes are Supabase CLI migrations only (`supabase/migrations`).
+With Docker: `supabase start && supabase db reset && pnpm gen:types`.
+Without Docker: `DATABASE_URL=postgres://… bash scripts/db-validate.sh` then
+`DATABASE_URL=…/mv_validate pnpm gen:types:db`.
 
 ## Setup
 
 1. **Create a Supabase project** at [supabase.com](https://supabase.com).
 
-2. **Run the schema.** In the Supabase dashboard, go to
-   **SQL Editor → New query**, paste the contents of
-   [`supabase/schema.sql`](./supabase/schema.sql), and run it once. This
-   creates the `profiles`, `collection_items`, `marketplace_listings`,
-   `seller_reviews`, `wishlist_items` and `reports` tables (with RLS
-   policies) and the public `car-photos` Storage bucket.
+2. **Apply migrations.** `pnpm exec supabase link --project-ref <ref>` then
+   `pnpm exec supabase db push`. Never paste SQL into the dashboard (D-006).
 
 3. **Configure phone auth.** In the dashboard, go to
    **Authentication → Providers → Phone** and enable it. Supabase's
@@ -52,8 +62,8 @@ Storage.
 6. **Install and run:**
 
    ```bash
-   npm install
-   npm run dev
+   pnpm install
+   pnpm dev
    ```
 
    Open [http://localhost:3000](http://localhost:3000).

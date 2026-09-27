@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { deleteCollectionItem, updateCollectionItem } from '@/lib/api';
+import { deleteCollectionItem, updateCollectionItem } from '@/domain/garage';
 import type { CollectionItemRow } from '@/types/database';
 
 const FIELDS: Array<{ key: keyof CollectionItemRow; label: string }> = [

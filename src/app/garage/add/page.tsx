@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState, FormEvent } from 'react';
+import type { FormEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { addCollectionItem, findPossibleDuplicates, uploadCarPhoto } from '@/lib/api';
+import { addCollectionItem, findPossibleDuplicates, uploadCarPhoto } from '@/domain/garage';
 import type { CollectionItemRow } from '@/types/database';
 
 const MAX_PHOTOS = 3;
@@ -48,11 +49,11 @@ export default function AddCarPage() {
 
   // Non-blocking duplicate warning: check as brand/model/variant settle.
   useEffect(() => {
-    if (!userId || !brand.trim()) {
-      setDuplicates([]);
-      return;
-    }
     const handle = setTimeout(async () => {
+      if (!userId || !brand.trim()) {
+        setDuplicates([]);
+        return;
+      }
       setCheckingDuplicates(true);
       try {
         const found = await findPossibleDuplicates(supabase, userId, brand.trim(), model.trim() || null, variant.trim() || null);
@@ -152,7 +153,7 @@ export default function AddCarPage() {
         />
 
         {checkingDuplicates && <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>Checking your garage…</p>}
-        {duplicates.length > 0 && (
+        {duplicates[0] && (
           <div className="warning-banner">
             You may already own {duplicates.length === 1 ? 'a matching car' : `${duplicates.length} matching cars`}
             {duplicates[0].model ? ` (${duplicates[0].brand} ${duplicates[0].model})` : ` (${duplicates[0].brand})`}.

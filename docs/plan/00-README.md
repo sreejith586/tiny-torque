@@ -1,6 +1,6 @@
 # Mini Vault — Build Plan (H1: platform + pilot)
 
-Prepared 2026-09-27 for Sreejith Sreenivasan (CTO/owner) from Varun's handover. **Nothing here has been built yet** — this is the plan to lock before Sprint 0.
+Prepared 2026-09-27 for Sreejith Sreenivasan (CTO/owner) from Varun's handover. Sprint 0 was executed the same day on branch `sprint-0` (see `PROGRESS.md`).
 
 | File | What it answers | Read when |
 |---|---|---|
@@ -14,7 +14,7 @@ Prepared 2026-09-27 for Sreejith Sreenivasan (CTO/owner) from Varun's handover. 
 | `DECISIONS.md` | **Append-only decision log (D-001…).** Binding for every session; contradicting a row = regression | Every session, before code |
 | `PROGRESS.md` | Session hand-off state: active task, board, blockers, next action | Every session: read first, update last |
 | `tools/guard.sh` | CI/pre-push grep guard that fails on decision-violating code | Runs automatically |
-| `CLAUDE.draft.md` | 150-line always-loaded memory for Claude Code — rename to `/CLAUDE.md` at repo root in Sprint 0 (task MV-S0-10) | — |
+| `/CLAUDE.md` (repo root) | Always-loaded memory for Claude Code: session protocol, rules, commands | Every session (automatic) |
 | `tools/backlog.json`, `tools/render.py` | Source of truth for the sprint plan + CSV; edit JSON, re-run script | When re-planning |
 
 ## Decisions you still owe before Sprint 0 (blocking)
@@ -29,6 +29,6 @@ Prepared 2026-09-27 for Sreejith Sreenivasan (CTO/owner) from Varun's handover. 
 Priority search placement stance (H2, after data) · Razorpay/UPI (only if India token conversion is poor) · multiverse engine (H3) · native apps · Arabic/Hindi UI.
 
 ## How to use with Claude Code
-1. `docs/plan/` is already in the repo; in Sprint 0 move `docs/plan/CLAUDE.draft.md` to `/CLAUDE.md` (task MV-S0-10).
+1. `docs/plan/` and `/CLAUDE.md` are in the repo (done in S0).
 2. Each session: "Work on MV-S2-04." — CLAUDE.md's session protocol makes Claude Code read PROGRESS.md → DECISIONS.md → the task row, state the plan and D-xxx touched, and wait for go. At the end it updates PROGRESS.md and appends any decision.
 3. Re-plan by editing `tools/backlog.json` and running `python3 docs/plan/tools/render.py`, then re-import `backlog.csv` to Jira (or update issues by Issue Key).
