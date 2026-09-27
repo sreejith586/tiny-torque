@@ -3,7 +3,7 @@ import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTs from 'eslint-config-next/typescript';
 
 export default defineConfig([
-  globalIgnores(['.next/**', 'node_modules/**', 'supabase/functions/**', 'playwright-report/**', 'coverage/**', 'next-env.d.ts']),
+  globalIgnores(['src/types/supabase.ts', '.next/**', 'node_modules/**', 'supabase/functions/**', 'playwright-report/**', 'coverage/**', 'next-env.d.ts']),
   ...nextVitals,
   ...nextTs,
   {
