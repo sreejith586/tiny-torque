@@ -73,7 +73,7 @@ supabase functions serve ai-scan --env-file supabase/.env.local
 Migration on local+staging with pgTAP · deployable to prod dark behind its flag · service Vitest · UI in 6 themes with loading/empty/error, matching prototype · events emitted · flag if risky · Playwright updated for critical flows · guard.sh + CI green · PROGRESS.md updated · docs touched · reviewed by Sreejith.
 
 ## Current sprint
-S0 — Foundation, tasks 01–05, 07–11 done in the cloud on branch `sprint-0`; S0-06 (accounts, region, first prod deploy) waits on Sreejith. See PROGRESS.md.
+S1 — Identity, multi-country, platform primitives. Branch `sprint-1`, PRs into `staging`. S0 complete 2026-09-28 (prod live). See PROGRESS.md.
 
 ## Don't
 - Don't add H2/H3 features (promoted listings, ranking boosts, 3D, presence) — stretch register only. (D-017)

@@ -3,54 +3,57 @@
 > **This file is the hand-off between sessions.** Read it first (after CLAUDE.md), update it last. Keep it under 120 lines: it is state, not history — history is in git and in the sprint plan. One task per session unless the tasks are trivially small.
 
 ## Current position
-- **Sprint:** S0 — Foundation. Locked 2026-09-27 (Sreejith: "initiate the first sprint on cloud").
-- **Branch:** `sprint-0` (9 commits on top of `main` baseline `fd3b02d`). `main` untouched — Sreejith reviews and merges.
-- **Production:** not yet deployed. Remote + Vercel done; Supabase project + Branching pending (checklist below).
-- **Active task:** none — S0-06 is the only open S0 task.
-- **Last session:** 2026-09-27 (cloud, unattended). Built S0-01…S0-05, S0-07…S0-11. Build, lint, typecheck, 6 unit tests, 18 Playwright smoke tests, decision guard: all green.
-- **Next action (Sreejith, ~1 h):** run the S0-06 checklist below, then push `sprint-0`, open the PR, merge to `main`, deploy. Then lock S1.
+- **Sprint:** S1 — Identity, multi-country, platform primitives. Not yet locked (lock = first S1 session).
+- **Production:** LIVE — `https://tiny-torque-git-main-tiny-torque.vercel.app` (Vercel project `tiny-torque`, branch `main`). First deploy 2026-09-28; email-OTP sign-in → onboarding → garage → add car verified by Sreejith.
+- **Supabase:** project `bjhowyyyypeacfkgxwqr` (Branching on; persistent branches `main`, `staging`). Migrations applied: 20260927000000 baseline, 20260927000100 housekeeping, 20260928000000 grants. Edge Function `scan-photo` deployed with `ANTHROPIC_API_KEY`.
+- **Auth:** email OTP via Resend SMTP (`hello@tinytorque.hypermaxsolutions.com`); templates "Confirm signup" + "Magic Link" carry `{{ .Token }}`; Site URL = prod URL; redirect URLs for main/staging/previews/localhost. Phone OTP: later (D-037).
+- **Active task:** none.
+- **Last session:** 2026-09-27/28 — S0 completed end to end. Fixes after first deploy: CI Node 22 + sslmode, build without env at prerender, migration file naming (D-036), Vercel framework preset, prod env vars, table grants (42501), email templates/site URL, promotion via PR (D-039), db push from main (D-040).
+- **Next action:** start S1 in a cloud Claude Code session — "Work on MV-S1-01. Follow CLAUDE.md." Branch `sprint-1` from `staging`.
 
-## Sprint task board (current sprint only)
+## S0 closing board
+| Task | Status |
+|---|---|
+| MV-S0-01 … 05, 07 … 11 | done |
+| MV-S0-06 Environments + first prod deploy | **done** 2026-09-28 |
+| MV-S1-03 (partial, pulled forward) | email OTP path shipped; country picker + full E.164 still in S1 |
+
+## S1 task board (lock at first S1 session; rows from 05-sprint-plan.md)
 | Task | Status | Notes |
 |---|---|---|
-| MV-S0-01 Repo hygiene & tooling | done | pnpm, husky pre-commit (lint-staged) + pre-push (typecheck, test, guard), PR template |
-| MV-S0-02 Upgrade Next.js 16.3 / React 19 | done | proxy.ts, async APIs, ESLint 9 flat config, self-hosted fonts (D-030) |
-| MV-S0-03 Tailwind 4 + shadcn + theme tokens | done | no preflight (D-031); ThemeStyles + boot script; no shadcn components yet |
-| MV-S0-04 Supabase CLI + baseline migrations | done | 0000 baseline, 0001 housekeeping; validated on Postgres 16 (D-032) |
-| MV-S0-05 Generated types + domain skeleton | done | domain/{identity,garage,ai}; api.ts removed; ESLint boundary; 6 Vitest tests |
-| MV-S0-06 Environments (Mumbai) + Vercel + first prod deploy | **blocked (Sreejith)** | see checklist below |
-| MV-S0-07 CI + Playwright scaffold | done | ci.yml (checks, migrations, e2e); 18 smoke tests |
-| MV-S0-08 Sentry + PostHog + Analytics | done | wrappers no-op until DSN/keys set in Vercel |
-| MV-S0-09 Fix inherited defects | done | root middleware never ran → src/proxy.ts; storage prefix policy; PATCH profile |
-| MV-S0-10 Plan docs + CLAUDE.md + regression checklist | done | CLAUDE.md at root; Phase-1 regression run locally (landing, login, guards, themes) — sign-in flows need a real Supabase project (S0-06) |
-| MV-S0-11 Decision guard in CI + session protocol | done | guard.sh in CI + pre-push; D-012 check gated on migration 0002 |
+| MV-S1-01 Migration 0002 identity_v2 | todo | file name `2026MMDDHHMMSS_identity_v2.sql` (D-036); guard D-012 activates once it exists |
+| MV-S1-02 pgTAP RLS tests for identity tables | todo | pgTAP needs `supabase start`/Docker or a pgTAP-enabled Postgres in CI — decide in-task |
+| MV-S1-03 Login v2: country picker, phone/email OTP | todo | email path done; remove `COUNTRY_CODE='+91'`, add picker |
+| MV-S1-04 Onboarding v2 | todo | |
+| MV-S1-05 domain/identity service | todo | |
+| MV-S1-06 domain/events + flags + admin shell | todo | |
+| MV-S1-07 Public profile v1 /u/[handle] | todo | |
+| MV-S1-08 Settings: export + delete stub | todo | |
+| MV-S1-09 Playwright sign-in → onboarding → profile | todo | use email test path or Supabase test OTP on branches |
 
 Status vocabulary: `todo` · `in-progress (branch)` · `in-review (PR #)` · `done` · `blocked (why)` · `carried → Sn`.
 
-## MV-S0-06 checklist (Sreejith; Branching model, D-033)
-Done: GitHub remote `git@github.com:sreejith586/tiny-torque.git`; Vercel project connected (D-034); Supabase project `bjhowyyyypeacfkgxwqr` with Branching enabled and persistent branches `main` + `staging` (D-035). Region: confirm it is `ap-south-1` (D-005) — if not, recreate now while it is empty.
-1. Push: `git remote add origin git@github.com:sreejith586/tiny-torque.git && git branch staging main && git push -u origin main staging sprint-0`. Open PR `sprint-0 → staging`. In Vercel, map git branch `staging` to a Preview deployment (default) — the Supabase integration will attach the `staging` Supabase branch keys.
-2. ~~Create project~~ done. Confirm plan = Pro before founders' data lands (PITR, no pausing).
-3. Supabase → Integrations → **GitHub**: connect `sreejith586/tiny-torque`, supabase directory `supabase`, production branch `main`; enable **Branching**. Decide prod sync: either let the integration apply merged migrations to prod (recommended) or run `db push` yourself — not both.
-4. Supabase → Integrations → **Vercel**: link the Vercel project; enable "sync environment variables" for preview branches (this feeds `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY` to previews). Set the prod values in Vercel production env manually + `NEXT_PUBLIC_APP_ENV=production`; Functions region `bom1`.
-5. Auth (D-037): Supabase → Authentication → Providers → Email: enabled (default). Supabase → Project Settings → Authentication → **SMTP Settings**: enable custom SMTP — host `smtp.resend.com`, port `465`, user `resend`, password = Resend API key, sender `hello@tinytorque.hypermaxsolutions.com` (domain verified in Resend, D-038), sender name `Mini Vault`. Authentication → Email Templates → **Magic Link**: body must include `{{ .Token }}` (the 6-digit code), e.g. `Your Mini Vault code is {{ .Token }} (valid 10 minutes).` Phone provider: later.
-6. From the repo: `pnpm exec supabase login && pnpm exec supabase link --project-ref bjhowyyyypeacfkgxwqr && pnpm exec supabase db push && pnpm exec supabase functions deploy scan-photo && pnpm exec supabase secrets set ANTHROPIC_API_KEY=…` (skip `db push` if the GitHub integration applies migrations on merge — pick one).
-7. Merge the PR into `staging` → staging deploy → smoke there. Then `git checkout main && git merge --ff-only staging && git push` → migrations apply to prod → Vercel production deploys `main` → prod smoke: `/` → login → OTP → onboarding → add car with photo → scan page. Record prod URL + date here.
-8. Re-open a trivial PR to verify the loop end-to-end: preview branch created, Vercel preview built with branch keys, e2e job green on `deployment_status`.
+## Release procedure (every sprint end, D-035/D-039/D-040)
+1. PR `sprint-N → staging` (merge commit) → Vercel staging deploy → smoke.
+2. PR `staging → main` (merge commit) → Vercel production deploy.
+3. `git checkout main && git pull && pnpm exec supabase db push` → `pnpm exec supabase migration list` shows parity.
+4. Prod smoke; record version + date here.
 
 ## Blockers / open questions
-- D-005 region · D-024 token pricing · D-025 India SMS route · D-026 media timing — all `proposed`, Sreejith to confirm.
+- D-005 region: confirm the project is `ap-south-1` (dashboard → Project Settings → General). If not, it is now costly to move — decide consciously.
+- D-024 token pricing (S7) · D-025 India SMS route (when phone OTP is scheduled) · D-026 media timing (S2).
 - Varun: starter catalogue CSV (~200 castings) by S3; tier names for F-13; 20-photo scan fixture set by S3.
-- Shared Claude chat link was unreadable — verbal decisions from Varun's design chat may be missing from `04`.
+- Staging Supabase branch: verify it has the three migrations (open the staging deployment and sign in); if not, `supabase db push --db-url <staging branch url>` once.
 
 ## Decisions made this sprint
-- D-029 model policy, D-030 self-hosted fonts, D-031 Tailwind without preflight, D-032 no-Docker validation path, D-033 Branching instead of staging, D-034 remote + Vercel, D-035 sprint→staging→main flow, D-036 migration file naming, D-037 email OTP first via Resend.
+- D-029…D-040 (see DECISIONS.md).
 
 ## Carry-over register
-- MV-S0-06 → completes S0 once Sreejith runs the checklist (not carried to S1; S1 tasks don't depend on it except S1-03 Twilio config and S1-09 e2e sign-in).
+- none
 
 ## Session log (last 5 sessions only — trim older)
 | Date | Task(s) | Outcome | PR |
 |---|---|---|---|
 | 2026-09-27 | Planning | Plan v1 + decision log + progress file created | — |
-| 2026-09-27 | S0-01…05, 07…11 (cloud) | 9 commits on `sprint-0`; all checks green; S0-06 blocked on accounts | to open |
+| 2026-09-27 | S0-01…05, 07…11 (cloud) | 9 commits on `sprint-0`; all checks green | #1 |
+| 2026-09-27/28 | S0-06 + post-deploy fixes | Production live; migrations, auth, grants, CI all green | #1–#7+ |
