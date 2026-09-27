@@ -2,7 +2,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main, 'sprint-*']
+    branches: [main, staging, 'sprint-*']
   deployment_status: # Vercel preview ready → run Playwright against it (Supabase branch DB behind it, D-033)
 
 concurrency:

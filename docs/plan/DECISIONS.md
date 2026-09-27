@@ -45,4 +45,6 @@
 | D-033 | 2026-09-27 | **Supabase Branching instead of a staging project.** One hosted project (`prod`, Pro plan); every PR gets a preview branch (migrations + `seed.sql` + `config.toml`) via the Supabase GitHub integration, and the Supabase↔Vercel integration injects branch keys into the matching Vercel preview; Playwright runs against that preview (`deployment_status`). Local = `supabase start` / no-Docker script. Supersedes the staging-project part of D-014 | Sreejith chose option 2; zero standing cost, no schema drift | High | accepted | ADR-13, 06 §5, ci.yml |
 | D-034 | 2026-09-27 | Remote is `git@github.com:sreejith586/tiny-torque.git` (repo name tiny-torque, package/app name Mini Vault); Vercel project connected to it; `main` = production branch | Sreejith set it up | High | accepted | PROGRESS |
 
-<!-- Append new rows below this line. Next ID: D-035 -->
+| D-035 | 2026-09-27 | **Branch flow with a persistent `staging` Supabase branch** (Sreejith created `main` + `staging` in Supabase Branching): git `sprint-N` → PR into `staging` (ephemeral preview branch + e2e) → merge = staging deploy, Sunday demo runs on staging → fast-forward `staging → main` the same evening = production deploy (D-028). Prod migrations are applied by the GitHub integration on merge to `main`. `main` is never committed to directly | Sreejith's setup; keeps a stable demo env with zero extra projects | High | accepted | 06 §5, ci.yml |
+
+<!-- Append new rows below this line. Next ID: D-036 -->

@@ -28,14 +28,14 @@
 Status vocabulary: `todo` · `in-progress (branch)` · `in-review (PR #)` · `done` · `blocked (why)` · `carried → Sn`.
 
 ## MV-S0-06 checklist (Sreejith; Branching model, D-033)
-Done: GitHub remote `git@github.com:sreejith586/tiny-torque.git`; Vercel project connected (D-034); Supabase project created — ref `bjhowyyyypeacfkgxwqr` (`https://bjhowyyyypeacfkgxwqr.supabase.co`). Region: confirm it is `ap-south-1` (D-005) — if not, recreate now while it is empty.
-1. Push: `git remote add origin git@github.com:sreejith586/tiny-torque.git && git push -u origin main sprint-0`. Open PR `sprint-0 → main`.
+Done: GitHub remote `git@github.com:sreejith586/tiny-torque.git`; Vercel project connected (D-034); Supabase project `bjhowyyyypeacfkgxwqr` with Branching enabled and persistent branches `main` + `staging` (D-035). Region: confirm it is `ap-south-1` (D-005) — if not, recreate now while it is empty.
+1. Push: `git remote add origin git@github.com:sreejith586/tiny-torque.git && git branch staging main && git push -u origin main staging sprint-0`. Open PR `sprint-0 → staging`. In Vercel, map git branch `staging` to a Preview deployment (default) — the Supabase integration will attach the `staging` Supabase branch keys.
 2. ~~Create project~~ done. Confirm plan = Pro before founders' data lands (PITR, no pausing).
 3. Supabase → Integrations → **GitHub**: connect `sreejith586/tiny-torque`, supabase directory `supabase`, production branch `main`; enable **Branching**. Decide prod sync: either let the integration apply merged migrations to prod (recommended) or run `db push` yourself — not both.
 4. Supabase → Integrations → **Vercel**: link the Vercel project; enable "sync environment variables" for preview branches (this feeds `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY` to previews). Set the prod values in Vercel production env manually + `NEXT_PUBLIC_APP_ENV=production`; Functions region `bom1`.
 5. Auth on prod: enable Phone provider (Twilio) or, for now, a **test phone number** in the dashboard. Check whether the integration copies `config.toml` `[auth.sms.test_otp]` to prod — if yes, remove it from prod or accept it (fake number).
 6. From the repo: `pnpm exec supabase login && pnpm exec supabase link --project-ref bjhowyyyypeacfkgxwqr && pnpm exec supabase db push && pnpm exec supabase functions deploy scan-photo && pnpm exec supabase secrets set ANTHROPIC_API_KEY=…` (skip `db push` if the GitHub integration applies migrations on merge — pick one).
-7. Merge the PR → migrations apply to prod → Vercel production deploys `main` → prod smoke: `/` → login → OTP → onboarding → add car with photo → scan page. Record prod URL + date here.
+7. Merge the PR into `staging` → staging deploy → smoke there. Then `git checkout main && git merge --ff-only staging && git push` → migrations apply to prod → Vercel production deploys `main` → prod smoke: `/` → login → OTP → onboarding → add car with photo → scan page. Record prod URL + date here.
 8. Re-open a trivial PR to verify the loop end-to-end: preview branch created, Vercel preview built with branch keys, e2e job green on `deployment_status`.
 
 ## Blockers / open questions
