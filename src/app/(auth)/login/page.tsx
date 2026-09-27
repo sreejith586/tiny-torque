@@ -69,8 +69,17 @@ export default function LoginPage() {
           : await verifyOtp(supabase, fullMobile, code.trim());
       if (!user) throw new Error('Verification did not return a user.');
 
-      const profile = await getProfile(supabase, user.id);
-      router.push(profile ? '/garage' : '/onboarding');
+      // Signed in. Profile lookup is a separate concern — never report it as a bad code.
+      let hasProfile = false;
+      try {
+        hasProfile = !!(await getProfile(supabase, user.id));
+      } catch (err) {
+        setError(
+          `Signed in, but your profile could not be loaded (${err instanceof Error ? err.message : 'unknown error'}). Try refreshing.`
+        );
+        return;
+      }
+      router.push(hasProfile ? '/garage' : '/onboarding');
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'That code did not work. Try again.');

@@ -35,7 +35,7 @@ Handover from Varun (design + Phase-1 Next.js/Supabase prototype). Owner/CTO: Sr
 Next.js 16 (App Router, RSC, Server Actions) · React 19 · TypeScript strict · Tailwind 4 + shadcn/ui **primitives only**, restyled to Varun's 6 theme token sets on `[data-theme]` · Supabase (Postgres+RLS, Auth phone/email OTP, Storage private buckets, Realtime, Edge Functions Deno) · zod · TanStack Query (client lists only) · Vitest · pgTAP · Playwright · Sentry · PostHog · Stripe Checkout · Anthropic vision (Edge Function `ai-scan`). Region ap-south-1 / Vercel bom1 (D-005).
 
 ## Non-negotiable rules (each maps to a DECISIONS.md row)
-1. One task → one branch `mv/S{n}-{id}-{slug}` (or the sprint branch when unattended) → one PR titled `[MV-Sn-nn] …` **into `staging`**. Never merge; Sreejith reviews. `main` is only ever fast-forwarded from `staging` after the Sunday demo. (D-002, D-020, D-035)
+1. One task → one branch `mv/S{n}-{id}-{slug}` (or the sprint branch when unattended) → one PR titled `[MV-Sn-nn] …` **into `staging`**. Never merge; Sreejith reviews. `main` only changes via a `staging → main` PR merged with a merge commit after the Sunday demo. (D-002, D-020, D-035, D-039)
 2. Task ≥ 2 h: short plan in the PR first, wait for "go". (D-020)
 3. Order: migration → `pnpm gen:types` → domain schema/types → repo → service + Vitest → UI → Playwright (critical flows) → docs. (D-020)
 4. Schema changes ONLY as `supabase/migrations/<YYYYMMDDHHMMSS>_name.sql` (`supabase migration new <name>`). Never edit an applied migration. Destructive changes ship in two releases. (D-006)
