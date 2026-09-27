@@ -43,6 +43,7 @@ Status vocabulary: `todo` · `in-progress (branch)` · `in-review (PR #)` · `do
 - D-005 region: confirm the project is `ap-south-1` (dashboard → Project Settings → General). If not, it is now costly to move — decide consciously.
 - D-024 token pricing (S7) · D-025 India SMS route (when phone OTP is scheduled) · D-026 media timing (S2).
 - Varun: starter catalogue CSV (~200 castings) by S3; tier names for F-13; 20-photo scan fixture set by S3.
+- Vercel Deployment Protection: CI e2e needs `VERCEL_AUTOMATION_BYPASS_SECRET` (GitHub Actions secret) — generate under Vercel → Settings → Deployment Protection → Protection Bypass for Automation. Without it, previews bounce to vercel.com/login and the e2e job fails.
 - Staging Supabase branch: verify it has the three migrations (open the staging deployment and sign in); if not, `supabase db push --db-url <staging branch url>` once.
 
 ## Decisions made this sprint

@@ -38,7 +38,10 @@ for (const theme of THEMES) {
 }
 
 test('sign-in with test phone number', async ({ page }) => {
-  test.skip(!process.env.E2E_TEST_PHONE, 'needs E2E_TEST_PHONE / E2E_TEST_OTP (Supabase test number)');
+  test.skip(
+    process.env.E2E_ENABLE_PHONE_SIGNIN !== '1' || !process.env.E2E_TEST_PHONE,
+    'phone sign-in smoke is opt-in (E2E_ENABLE_PHONE_SIGNIN=1) until an SMS provider/test OTP is verified'
+  );
   await page.goto('/login');
   await page.getByRole('button', { name: 'Use mobile number instead' }).click();
   await page.getByLabel('Mobile number').fill(process.env.E2E_TEST_PHONE!.replace(/^\+?91/, ''));
