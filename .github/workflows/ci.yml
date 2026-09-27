@@ -48,13 +48,16 @@ jobs:
           --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
       - run: sudo apt-get update -q && sudo apt-get install -y -q postgresql-client
       - run: bash scripts/db-validate.sh
         env:
           DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
       - name: Generated types are up to date
         run: |
-          corepack enable && pnpm install --frozen-lockfile
           DATABASE_URL="postgres://postgres:postgres@127.0.0.1:5432/mv_validate" pnpm gen:types:db
           git diff --exit-code src/types/supabase.ts || (echo "::error::src/types/supabase.ts is stale — run pnpm gen:types"; exit 1)
 
@@ -62,10 +65,12 @@ jobs:
     name: playwright smoke on Vercel preview
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Vercel names the environment "Preview" / "Preview – <project>"; production deployments are skipped here.
     if: >-
       github.event_name == 'deployment_status' &&
       github.event.deployment_status.state == 'success' &&
-      startsWith(github.event.deployment.environment, 'Preview')
+      github.event.deployment_status.environment_url != '' &&
+      !contains(github.event.deployment.environment, 'Production')
     steps:
       - uses: actions/checkout@v4
         with: { ref: "${{ github.event.deployment.sha }}" }
