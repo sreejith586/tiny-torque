@@ -37,4 +37,9 @@
 
 | D-028 | 2026-09-27 | **Deploy to production at the end of every sprint.** Unfinished features ship dark behind their flag; demo runs on prod; founders cohort (you, Varun, 3–5 trusted collectors) uses prod from S1; pilot shops invited early (S2) to load stock; full pilot cohort at S11 | Sreejith: progress must be visible | High | accepted | 05 "Ships to production", 06 §5 |
 
-<!-- Append new rows below this line. Next ID: D-029 -->
+| D-029 | 2026-09-27 | **Model policy for Claude sessions**: default Fable 5.1; when its limit is reached switch the session to Sonnet 5 (or the cheapest model that passes the task's tests); cloud sessions allowed while Sreejith is away, working only on `sprint-*` branches, one commit per task, never merging to `main` | Sreejith: keep building while away; control cost | High | accepted | 06 §1 |
+| D-030 | 2026-09-27 | **Fonts self-hosted** via next/font/local (same Oswald / Work Sans weights as Varun's Google Fonts) — no third-party font request at build or runtime | Build failed behind proxy; better privacy/perf; visually identical | High | accepted | MV-S0-02 |
+| D-031 | 2026-09-27 | **Tailwind without preflight**: utilities + theme layers only, so Varun's base CSS renders unchanged; semantic colour utilities map to `[data-theme]` variables; `<ThemeStyles>` emits all 6 themes from `theme.ts` (single source) | D-027 fidelity with Tailwind productivity | High | accepted | MV-S0-03 |
+| D-032 | 2026-09-27 | **No-Docker validation path is first-class**: `scripts/db-validate.sh` + `scripts/pg-stub.sql` apply every migration to a plain Postgres and CI's `migrations` job uses it; `supabase start` remains the local default when Docker exists | Cloud sandboxes lack Docker; CI simplicity | High | accepted | MV-S0-04 |
+
+<!-- Append new rows below this line. Next ID: D-033 -->

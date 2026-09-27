@@ -1,6 +1,6 @@
 # Mini Vault — project memory for Claude Code
 
-> DRAFT — activate by moving to repo root as CLAUDE.md when Sprint 0 starts. Keep under 200 lines (guard.sh enforces). Long-form lives in `docs/plan/`.
+> Live since Sprint 0. Keep under 200 lines (guard.sh enforces). Long-form lives in `docs/plan/`.
 
 ## What this is
 Diecast car collector platform: personal garage (manual / AI scan / CSV), public profiles, marketplace with offers & trades settled **offline**, token economy (Stripe one-time packs) funding AI scans and Pro. Pilot: invited collectors in **UAE + India**. Long-term: collectors' garages become a shared multiverse — we are NOT building that now, only keeping the data model ready (canonical catalogue, event log, domain layer, media rows).
@@ -58,7 +58,8 @@ Next.js 16 (App Router, RSC, Server Actions) · React 19 · TypeScript strict ·
 pnpm dev · pnpm build · pnpm lint · pnpm typecheck
 pnpm test            # vitest
 pnpm test:e2e        # playwright (needs BASE_URL)
-pnpm gen:types       # supabase gen types → src/types/supabase.ts
+pnpm gen:types       # supabase gen types (local stack) → src/types/supabase.ts
+DATABASE_URL=… bash scripts/db-validate.sh && DATABASE_URL=…/mv_validate pnpm gen:types:db   # no-Docker path
 bash docs/plan/tools/guard.sh        # decision guard (also in CI)
 python3 docs/plan/tools/render.py    # regenerate 05-sprint-plan.md + backlog.csv from backlog.json
 supabase start | stop | db reset | db diff -f <name> | test db
@@ -72,7 +73,7 @@ supabase functions serve ai-scan --env-file supabase/.env.local
 Migration on local+staging with pgTAP · deployable to prod dark behind its flag · service Vitest · UI in 6 themes with loading/empty/error, matching prototype · events emitted · flag if risky · Playwright updated for critical flows · guard.sh + CI green · PROGRESS.md updated · docs touched · reviewed by Sreejith.
 
 ## Current sprint
-S0 — Foundation (see PROGRESS.md for the live board). Update this line at each sprint lock.
+S0 — Foundation, tasks 01–05, 07–11 done in the cloud on branch `sprint-0`; S0-06 (accounts, region, first prod deploy) waits on Sreejith. See PROGRESS.md.
 
 ## Don't
 - Don't add H2/H3 features (promoted listings, ranking boosts, 3D, presence) — stretch register only. (D-017)
