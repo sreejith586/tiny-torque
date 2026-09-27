@@ -33,6 +33,24 @@ if grep -rnE "#[0-9a-fA-F]{6}\b" src/components src/app --include='*.tsx' | grep
   say D-027 "hex colour in component — use theme tokens"
 fi
 
+# D-027: no complex UI libraries — data grids, kanban/DnD, command palettes, custom pickers, chart kits
+if grep -nE '"(@tanstack/react-table|react-data-grid|ag-grid[^"]*|cmdk|@dnd-kit/[^"]*|react-beautiful-dnd|@hello-pangea/dnd|react-select|downshift|react-day-picker|@mui/[^"]*|antd|@chakra-ui/[^"]*|@mantine/[^"]*|recharts|chart\.js|@nivo/[^"]*|framer-motion|swiper|embla-carousel[^"]*)"' package.json ; then
+  say D-027 "UI library outside the prototype's patterns added to package.json — Varun's sign-off needed in DECISIONS.md"
+fi
+
+# D-027: shadcn = primitives only; anything else under src/components/ui needs a DECISIONS.md row
+if [ -d src/components/ui ]; then
+  allowed='^(button|input|textarea|label|select|checkbox|radio-group|switch|sheet|dialog|alert-dialog|dropdown-menu|popover|tooltip|toast|sonner|toaster|tabs|badge|avatar|separator|skeleton|progress|form|scroll-area|utils)\.tsx?$'
+  if ls src/components/ui | grep -vE "$allowed" ; then
+    say D-027 "non-primitive file in src/components/ui — shadcn primitives only (see CLAUDE.md rule 12)"
+  fi
+fi
+
+# D-027: visual baselines exist and are only changed together with a UI change in the same PR
+if [ ! -d e2e/__screenshots__ ] || [ "$(ls e2e/__screenshots__/*.png 2>/dev/null | wc -l)" -lt 19 ]; then
+  say D-027 "e2e/__screenshots__ baselines missing — run pnpm test:e2e:update on Linux and commit them"
+fi
+
 # D-006: applied migrations are immutable (compare against main)
 if git rev-parse --verify origin/main >/dev/null 2>&1; then
   if git diff --name-status origin/main -- supabase/migrations | grep -E "^(M|D)\s" ; then
