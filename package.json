@@ -19,7 +19,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "gen:types": "supabase gen types typescript --local --schema public > src/types/supabase.ts",
-    "gen:types:db": "supabase gen types typescript --db-url \"$DATABASE_URL\" --schema public > src/types/supabase.ts",
+    "gen:types:db": "supabase gen types typescript --db-url \"${DATABASE_URL}?sslmode=disable\" --schema public > src/types/supabase.ts",
     "db:reset": "supabase db reset",
     "db:diff": "supabase db diff -f",
     "guard": "bash docs/plan/tools/guard.sh",

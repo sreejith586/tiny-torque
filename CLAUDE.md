@@ -59,7 +59,7 @@ pnpm dev · pnpm build · pnpm lint · pnpm typecheck
 pnpm test            # vitest
 pnpm test:e2e        # playwright (needs BASE_URL)
 pnpm gen:types       # supabase gen types (local stack) → src/types/supabase.ts
-DATABASE_URL=… bash scripts/db-validate.sh && DATABASE_URL=…/mv_validate pnpm gen:types:db   # no-Docker path
+DATABASE_URL=… bash scripts/db-validate.sh && DATABASE_URL=…/mv_validate pnpm gen:types:db   # no-Docker path (script adds sslmode=disable)
 bash docs/plan/tools/guard.sh        # decision guard (also in CI)
 python3 docs/plan/tools/render.py    # regenerate 05-sprint-plan.md + backlog.csv from backlog.json
 supabase start | stop | db reset | db diff -f <name> | test db
