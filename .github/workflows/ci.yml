@@ -82,7 +82,10 @@ jobs:
       - run: pnpm test:e2e
         env:
           BASE_URL: ${{ github.event.deployment_status.environment_url }}
-          # Matches [auth.sms.test_otp] in supabase/config.toml (applied to preview branches)
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          # Phone sign-in smoke is opt-in until an SMS provider / test OTP is verified on branches (D-037).
+          # Set repo variable E2E_ENABLE_PHONE_SIGNIN=1 to turn it on; matches [auth.sms.test_otp] in config.toml.
+          E2E_ENABLE_PHONE_SIGNIN: ${{ vars.E2E_ENABLE_PHONE_SIGNIN }}
           E2E_TEST_PHONE: '+919999900001'
           E2E_TEST_OTP: '246810'
       - uses: actions/upload-artifact@v4
