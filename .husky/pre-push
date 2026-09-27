@@ -1,0 +1,1 @@
+pnpm typecheck && pnpm test && bash docs/plan/tools/guard.sh

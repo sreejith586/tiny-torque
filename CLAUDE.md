@@ -1,6 +1,6 @@
 # Mini Vault — project memory for Claude Code
 
-> DRAFT — activate by moving to repo root as CLAUDE.md when Sprint 0 starts. Keep under 200 lines (guard.sh enforces). Long-form lives in `docs/plan/`.
+> Live since Sprint 0. Keep under 200 lines (guard.sh enforces). Long-form lives in `docs/plan/`.
 
 ## What this is
 Diecast car collector platform: personal garage (manual / AI scan / CSV), public profiles, marketplace with offers & trades settled **offline**, token economy (Stripe one-time packs) funding AI scans and Pro. Pilot: invited collectors in **UAE + India**. Long-term: collectors' garages become a shared multiverse — we are NOT building that now, only keeping the data model ready (canonical catalogue, event log, domain layer, media rows).
@@ -35,10 +35,10 @@ Handover from Varun (design + Phase-1 Next.js/Supabase prototype). Owner/CTO: Sr
 Next.js 16 (App Router, RSC, Server Actions) · React 19 · TypeScript strict · Tailwind 4 + shadcn/ui **primitives only**, restyled to Varun's 6 theme token sets on `[data-theme]` · Supabase (Postgres+RLS, Auth phone/email OTP, Storage private buckets, Realtime, Edge Functions Deno) · zod · TanStack Query (client lists only) · Vitest · pgTAP · Playwright · Sentry · PostHog · Stripe Checkout · Anthropic vision (Edge Function `ai-scan`). Region ap-south-1 / Vercel bom1 (D-005).
 
 ## Non-negotiable rules (each maps to a DECISIONS.md row)
-1. One task → one branch `mv/S{n}-{id}-{slug}` → one PR titled `[MV-Sn-nn] …`. Never merge; Sreejith reviews. (D-002, D-020)
+1. One task → one branch `mv/S{n}-{id}-{slug}` (or the sprint branch when unattended) → one PR titled `[MV-Sn-nn] …` **into `staging`**. Never merge; Sreejith reviews. `main` is only ever fast-forwarded from `staging` after the Sunday demo. (D-002, D-020, D-035)
 2. Task ≥ 2 h: short plan in the PR first, wait for "go". (D-020)
 3. Order: migration → `pnpm gen:types` → domain schema/types → repo → service + Vitest → UI → Playwright (critical flows) → docs. (D-020)
-4. Schema changes ONLY as `supabase/migrations/NNNN_name.sql`. Never edit an applied migration. Destructive changes ship in two releases. (D-006)
+4. Schema changes ONLY as `supabase/migrations/<YYYYMMDDHHMMSS>_name.sql` (`supabase migration new <name>`). Never edit an applied migration. Destructive changes ship in two releases. (D-006)
 5. `@supabase/*` imports only in `src/domain/*/repo.ts` and `src/lib/supabase/*`. Components/routes call `domain/*/service` only. (D-007)
 6. zod at every boundary (actions, route handlers, Edge bodies, CSV rows, AI output). (D-013)
 7. Entitlements asked ONLY via `domain/entitlements`; DB triggers/RPCs are the backstop. (D-003, D-021)
@@ -58,7 +58,8 @@ Next.js 16 (App Router, RSC, Server Actions) · React 19 · TypeScript strict ·
 pnpm dev · pnpm build · pnpm lint · pnpm typecheck
 pnpm test            # vitest
 pnpm test:e2e        # playwright (needs BASE_URL)
-pnpm gen:types       # supabase gen types → src/types/supabase.ts
+pnpm gen:types       # supabase gen types (local stack) → src/types/supabase.ts
+DATABASE_URL=… bash scripts/db-validate.sh && DATABASE_URL=…/mv_validate pnpm gen:types:db   # no-Docker path
 bash docs/plan/tools/guard.sh        # decision guard (also in CI)
 python3 docs/plan/tools/render.py    # regenerate 05-sprint-plan.md + backlog.csv from backlog.json
 supabase start | stop | db reset | db diff -f <name> | test db
@@ -72,10 +73,10 @@ supabase functions serve ai-scan --env-file supabase/.env.local
 Migration on local+staging with pgTAP · deployable to prod dark behind its flag · service Vitest · UI in 6 themes with loading/empty/error, matching prototype · events emitted · flag if risky · Playwright updated for critical flows · guard.sh + CI green · PROGRESS.md updated · docs touched · reviewed by Sreejith.
 
 ## Current sprint
-S0 — Foundation (see PROGRESS.md for the live board). Update this line at each sprint lock.
+S0 — Foundation, tasks 01–05, 07–11 done in the cloud on branch `sprint-0`; S0-06 (accounts, region, first prod deploy) waits on Sreejith. See PROGRESS.md.
 
 ## Don't
 - Don't add H2/H3 features (promoted listings, ranking boosts, 3D, presence) — stretch register only. (D-017)
-- Don't paste SQL in the dashboard. Don't write `photos` jsonb after migration 0004. Don't use service-role key in Next.js.
+- Don't paste SQL in the dashboard. Don't write `photos` jsonb after the garage_v2 migration. Don't use service-role key in Next.js.
 - Don't refactor outside the task's files. Don't "improve" Varun's UX or invent components. Don't "fix" prototype behaviour without a spec change.
 - Don't rely on chat memory for state — if it isn't in PROGRESS.md or DECISIONS.md, it didn't happen.

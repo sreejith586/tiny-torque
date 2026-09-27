@@ -1,23 +1,30 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { THEMES, ThemeKey, applyThemeToDocument, getStoredTheme, storeTheme } from '@/lib/theme';
+import { useSyncExternalStore } from 'react';
+import type { ThemeKey} from '@/lib/theme';
+import { THEMES, applyThemeToDocument, getStoredTheme, storeTheme } from '@/lib/theme';
+
+const listeners = new Set<() => void>();
+function subscribeTheme(cb: () => void) {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+}
+function notifyTheme() {
+  listeners.forEach((l) => l());
+}
 
 // Swatch picker — ported from renderThemeSwatches() in the prototype.
 // Selecting a swatch applies the theme immediately and persists it to
 // localStorage only (see src/lib/theme.ts for why it isn't synced to
 // Supabase).
 export default function ThemeSwitcher() {
-  const [current, setCurrent] = useState<ThemeKey | null>(null);
-
-  useEffect(() => {
-    setCurrent(getStoredTheme());
-  }, []);
+  // Read the stored theme without a setState-in-effect (hydration-safe: null on the server).
+  const current = useSyncExternalStore(subscribeTheme, getStoredTheme, () => null);
 
   function select(key: ThemeKey) {
     applyThemeToDocument(key);
     storeTheme(key);
-    setCurrent(key);
+    notifyTheme();
   }
 
   return (

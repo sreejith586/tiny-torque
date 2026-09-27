@@ -141,6 +141,8 @@ Feeds quota (count of `done` jobs this period), cost dashboard, and the scan-acc
 
 ## 4. Migration plan (files)
 
+File names follow the Supabase CLI convention `<YYYYMMDDHHMMSS>_<name>.sql` (required by `db push` and the GitHub integration). The `#` column below is the logical sequence used throughout these docs; e.g. `0001` = `20260927000100_housekeeping.sql`.
+
 | # | File | Sprint |
 |---|---|---|
 | 0000 | `baseline.sql` (Varun's schema verbatim) | 0 |

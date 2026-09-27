@@ -1,3 +1,30 @@
+/* Tailwind 4 — utilities and theme only. Preflight is intentionally NOT imported so
+   Varun's hand-written base styles below render pixel-identical (D-027). */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import 'tw-animate-css';
+
+/* Semantic tokens → Tailwind colour utilities (bg-panel, text-cream, border-border, …).
+   Values resolve at runtime from the [data-theme] variables set by src/lib/theme.ts. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-panel-alt: var(--panel-alt);
+  --color-cream: var(--cream);
+  --color-orange: var(--orange);
+  --color-teal: var(--teal);
+  --color-gold: var(--gold);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-danger: var(--danger);
+  --color-btn-text: var(--btn-text);
+  --color-violet: var(--violet);
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
+  --radius-card: 14px;
+}
+
 :root {
   /* Default theme (workshop-light) — overridden at runtime by
      applyThemeToDocument() in src/lib/theme.ts, and duplicated here so

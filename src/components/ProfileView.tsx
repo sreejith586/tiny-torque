@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { saveProfile, signOut } from '@/lib/api';
+import { patchProfile, signOut } from '@/domain/identity';
 import type { AccountType, ProfileRow } from '@/types/database';
 import ThemeSwitcher from './ThemeSwitcher';
 
@@ -24,13 +24,11 @@ export default function ProfileView({ profile }: { profile: ProfileRow }) {
     setSaving(true);
     setError(null);
     try {
-      await saveProfile(supabase, profile.id, {
+      await patchProfile(supabase, profile.id, {
         displayName: displayName.trim(),
         accountType,
         storeName: accountType === 'shop' ? storeName.trim() : null,
         location: location.trim() || null,
-        mobile: profile.mobile,
-        photoUrl: profile.photo_url,
       });
       setEditing(false);
       router.refresh();

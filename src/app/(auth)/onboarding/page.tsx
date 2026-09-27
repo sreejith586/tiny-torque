@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, FormEvent } from 'react';
+import type { FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { saveProfile } from '@/lib/api';
+import { createProfile } from '@/domain/identity';
 import type { AccountType } from '@/types/database';
 
 // Collects the fields completeOnboarding() used to gather in the
@@ -49,7 +50,7 @@ export default function OnboardingPage() {
 
     setLoading(true);
     try {
-      await saveProfile(supabase, userId, {
+      await createProfile(supabase, userId, {
         displayName: displayName.trim(),
         accountType,
         storeName: accountType === 'shop' ? storeName.trim() : null,
