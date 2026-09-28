@@ -11,6 +11,22 @@ export const verifyEmailOtp = repo.verifyEmailOtp;
 export const signOut = repo.signOut;
 export const getProfile = repo.getProfile;
 
+/**
+ * Stopgap handle generator so `createProfile` satisfies the DB's NOT NULL/format
+ * constraint (identity_v2, MV-S1-01). Real handle rules (regex, reserved words,
+ * user-editable, uniqueness check via server action) land in MV-S1-05.
+ */
+function provisionalHandle(displayName: string): string {
+  const base =
+    displayName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 19) || 'collector';
+  const suffix = Math.random().toString(36).slice(2, 6);
+  return `${base}_${suffix}`;
+}
+
 /** First-login onboarding: creates the profiles row (id = auth user id). */
 export async function createProfile(supabase: Client, userId: string, input: ProfileCreateInput) {
   const v = profileCreateSchema.parse(input);
@@ -22,6 +38,7 @@ export async function createProfile(supabase: Client, userId: string, input: Pro
     location: v.location ?? null,
     mobile: v.mobile ?? null,
     photo_url: v.photoUrl ?? null,
+    handle: provisionalHandle(v.displayName),
   });
 }
 
