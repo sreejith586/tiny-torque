@@ -54,6 +54,7 @@ Status vocabulary: `todo` · `in-progress (branch)` · `in-review (PR #)` · `do
 ## Decisions made this sprint
 
 - D-029…D-041 (see DECISIONS.md). D-041 = prototype fidelity enforced mechanically: 74 pixel baselines in `e2e/__screenshots__` (landing, login email/phone, market, garage grid/list, car detail, add car ± more details, scan, profile, offers × 6 themes + 2 desktop; signed-in screens via the `?__visual=1` fixture harness), guard.sh UI-library/primitives checks, F-01 onboarding corrected back to the prototype's single form; S1-03/04/07/08 rows reworded to name the prototype pieces they reuse.
+- **D-042 (supersedes D-041's onboarding clause only):** onboarding (F-01) now references `garage-log-147.html`'s 5-step wizard (account type → name → location → photo(optional) → phone/OTP, progress bar, back button) instead of the single-page form, for MV-S1-04. Rest of D-041 (pixel baselines, banned UI libs, `fd3b02d` for every other screen) unchanged.
 - **Handover parity proof (2026-09-28, `scripts/visual-compare-handover.mjs`, current build vs `fd3b02d` build, 390 px, 6 themes):** landing, market, add car, add car + more details, scan = **0 px difference** in every theme (bottom bar, emoji icons, active tabs, headers, buttons, inputs). Login differs only by the spec'd "Use email instead" button (D-037). Garage/car detail/profile use components with no visual diff vs handover (`git diff fd3b02d -- src/components`).
 
 ## Carry-over register
