@@ -62,6 +62,11 @@ begin
 end;
 $$;
 
+-- the tests schema is created by the superuser above; anon/authenticated need USAGE +
+-- EXECUTE on its helpers once tests below switch role to them
+grant usage on schema tests to anon, authenticated;
+grant execute on all functions in schema tests to anon, authenticated;
+
 \set owner '''00000000-0000-0000-0000-00000000000a'''
 \set stranger '''00000000-0000-0000-0000-00000000000b'''
 \set admin '''00000000-0000-0000-0000-00000000000c'''
