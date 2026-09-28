@@ -158,11 +158,12 @@ insert into public.feature_flags (key, enabled) values ('csv_import', false);
 
 select tests.authenticate_as(:stranger::uuid);
 select is((select count(*) from public.feature_flags)::int, 1, 'feature_flags: any authenticated user can read flags');
-select throws_ok(
-  $$update public.feature_flags set enabled = true where key = 'csv_import'$$,
-  '42501',
-  null,
-  'feature_flags: non-admin update is rejected'
+-- the UPDATE policy is USING-only (no explicit WITH CHECK), so a non-admin's update doesn't
+-- throw -- the row is simply not visible to update, same silent-filter behavior as profiles
+select is(
+  tests.exec_and_count($$update public.feature_flags set enabled = true where key = 'csv_import'$$),
+  0,
+  'feature_flags: non-admin update is rejected (RLS filters it, 0 rows affected)'
 );
 select throws_ok(
   $$insert into public.feature_flags (key) values ('should_fail')$$,
