@@ -47,7 +47,7 @@ if [ -d src/components/ui ]; then
 fi
 
 # D-027: visual baselines exist and are only changed together with a UI change in the same PR
-if [ ! -d e2e/__screenshots__ ] || [ "$(ls e2e/__screenshots__/*.png 2>/dev/null | wc -l)" -lt 19 ]; then
+if [ ! -d e2e/__screenshots__ ] || [ "$(ls e2e/__screenshots__/*.png 2>/dev/null | wc -l)" -lt 74 ]; then
   say D-027 "e2e/__screenshots__ baselines missing — run pnpm test:e2e:update on Linux and commit them"
 fi
 

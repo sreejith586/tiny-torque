@@ -15,11 +15,42 @@ const THEMES = [
 ];
 const MOBILE = { width: 390, height: 844 };
 const DESKTOP = { width: 1280, height: 800 };
-const SCREENS: { name: string; path: string }[] = [
+type Screen = { name: string; path: string; prepare?: (page: Page) => Promise<void> };
+
+// Public screens.
+const PUBLIC_SCREENS: Screen[] = [
   { name: 'landing', path: '/' },
   { name: 'login-email', path: '/login' },
+  {
+    name: 'login-phone',
+    path: '/login',
+    prepare: (page) => page.getByRole('button', { name: 'Use mobile number instead' }).click(),
+  },
   { name: 'market', path: '/market' }, // static "coming soon" shell until S3; re-baseline then
 ];
+
+// Signed-in screens rendered with fixture data through the `?__visual=1` harness
+// (src/lib/visual-fixtures.ts, proxy.ts). Real URLs keep BottomNav's active tab.
+const SIGNED_IN_SCREENS: Screen[] = [
+  { name: 'garage-grid', path: '/garage?__visual=1' },
+  {
+    name: 'garage-list',
+    path: '/garage?__visual=1',
+    prepare: (page) => page.getByRole('button', { name: 'List' }).click(),
+  },
+  { name: 'car-detail', path: '/garage/10000000-0000-4000-8000-000000000001?__visual=1' },
+  { name: 'add-car', path: '/garage/add?__visual=1' },
+  {
+    name: 'add-car-more',
+    path: '/garage/add?__visual=1',
+    prepare: (page) => page.getByRole('button', { name: 'More details' }).click(),
+  },
+  { name: 'scan', path: '/garage/scan?__visual=1' },
+  { name: 'profile', path: '/profile?__visual=1' },
+  { name: 'offers', path: '/offers?__visual=1' },
+];
+
+const SCREENS: Screen[] = [...PUBLIC_SCREENS, ...SIGNED_IN_SCREENS];
 
 test.skip(process.platform !== 'linux', 'screenshot baselines are Linux-only (CI + cloud)');
 
@@ -39,6 +70,10 @@ for (const theme of THEMES) {
       test(`${screen.name} @360`, async ({ page }) => {
         await page.goto(screen.path);
         await settle(page);
+        if (screen.prepare) {
+          await screen.prepare(page);
+          await settle(page);
+        }
         await expect(page).toHaveScreenshot(`${screen.name}-${theme}-mobile.png`, {
           fullPage: true,
         });
@@ -49,10 +84,14 @@ for (const theme of THEMES) {
 
 test.describe('desktop', () => {
   test.use({ viewport: DESKTOP });
-  test('landing @1280 (workshop-light)', async ({ page }) => {
-    await page.addInitScript(() => localStorage.setItem('mini-vault-theme', 'workshop-light'));
-    await page.goto('/');
-    await settle(page);
-    await expect(page).toHaveScreenshot('landing-workshop-light-desktop.png', { fullPage: true });
-  });
+  for (const screen of [PUBLIC_SCREENS[0], SIGNED_IN_SCREENS[0]]) {
+    test(`${screen.name} @1280 (workshop-light)`, async ({ page }) => {
+      await page.addInitScript(() => localStorage.setItem('mini-vault-theme', 'workshop-light'));
+      await page.goto(screen.path);
+      await settle(page);
+      await expect(page).toHaveScreenshot(`${screen.name}-workshop-light-desktop.png`, {
+        fullPage: true,
+      });
+    });
+  }
 });

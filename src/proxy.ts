@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { refreshSession } from '@/lib/supabase/proxy';
+import { isVisualHarness } from '@/lib/visual-fixtures';
 
 // Next.js 16 "proxy" (formerly middleware). Refreshes the Supabase session on
 // every request so Server Components always see a valid session, and guards
@@ -22,6 +23,10 @@ function isPublicPath(pathname: string) {
 export async function proxy(request: NextRequest) {
   const { response, user } = await refreshSession(request);
   const { pathname } = request.nextUrl;
+
+  // D-041 visual-baseline harness: `?__visual=1` renders signed-in screens with fixture data and no
+  // session (see src/lib/visual-fixtures.ts). Never honoured in production.
+  if (isVisualHarness(request.nextUrl.searchParams)) return response;
 
   if (!user && !isPublicPath(pathname)) {
     const redirectUrl = new URL('/login', request.url);
