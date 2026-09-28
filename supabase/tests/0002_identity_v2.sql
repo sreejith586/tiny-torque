@@ -42,7 +42,10 @@ language plpgsql as $$
 begin
   perform set_config('request.jwt.claim.sub', '', true);
   perform set_config('request.jwt.claims', '', true);
-  perform set_config('role', 'postgres', true);
+  -- supabase_admin, not postgres: it's the actual superuser role in the CI image
+  -- (postgres is scoped/non-superuser here), and setup inserts between test sections
+  -- need full privilege to bypass RLS the same way the fixture inserts above did.
+  perform set_config('role', 'supabase_admin', true);
 end;
 $$;
 
