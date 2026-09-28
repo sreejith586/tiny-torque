@@ -112,11 +112,13 @@ select is(
 select throws_ok(
   $$update public.public_profiles set display_name = 'hacked' where id = '00000000-0000-0000-0000-00000000000a'$$,
   '42501',
+  null,
   'public_profiles: UPDATE is rejected (no write-through to profiles)'
 );
 select throws_ok(
   $$delete from public.public_profiles where id = '00000000-0000-0000-0000-00000000000a'$$,
   '42501',
+  null,
   'public_profiles: DELETE is rejected (no write-through to profiles)'
 );
 
@@ -134,6 +136,7 @@ select is((select count(*) from public.invites)::int, 0, 'invites: non-admin see
 select throws_ok(
   $$insert into public.invites (code) values ('SHOULDFAIL')$$,
   '42501',
+  null,
   'invites: non-admin insert is rejected'
 );
 
@@ -158,11 +161,13 @@ select is((select count(*) from public.feature_flags)::int, 1, 'feature_flags: a
 select throws_ok(
   $$update public.feature_flags set enabled = true where key = 'csv_import'$$,
   '42501',
+  null,
   'feature_flags: non-admin update is rejected'
 );
 select throws_ok(
   $$insert into public.feature_flags (key) values ('should_fail')$$,
   '42501',
+  null,
   'feature_flags: non-admin insert is rejected'
 );
 
@@ -187,6 +192,7 @@ select lives_ok(
 select throws_ok(
   $$insert into public.domain_events (type, entity, actor_id) values ('user.signed_up', 'profile', '00000000-0000-0000-0000-00000000000b')$$,
   '42501',
+  null,
   'domain_events: cannot log an event impersonating another actor'
 );
 -- 03-data-model.md §2.21: "read admin only" — even the actor who logged it can't read it back
@@ -196,6 +202,7 @@ select tests.authenticate_as_anon();
 select throws_ok(
   $$insert into public.domain_events (type, entity) values ('user.signed_up', 'profile')$$,
   '42501',
+  null,
   'domain_events: anon cannot log events'
 );
 
@@ -214,6 +221,7 @@ select lives_ok(
 select throws_ok(
   $$insert into public.follows (follower_id, followee_id) values ('00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000c')$$,
   '42501',
+  null,
   'follows: cannot create a follow row impersonating another follower'
 );
 

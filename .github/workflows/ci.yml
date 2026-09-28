@@ -107,12 +107,27 @@ jobs:
         env:
           DATABASE_URL: postgres://supabase_admin:postgres@127.0.0.1:5432/postgres
       - name: Run pgTAP tests
+        # ON_ERROR_STOP only catches actual SQL errors -- a failed pgTAP assertion ("not ok")
+        # is a normal query result row, not an error, so psql exits 0 regardless. Grep the
+        # output for "not ok" explicitly and fail the step if any test failed.
         run: |
+          set -uo pipefail
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -c "create extension if not exists pgtap;"
+          fail=0
           for f in supabase/tests/*.sql; do
             echo "→ $f"
-            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$f"
+            if ! psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$f" | tee /tmp/pgtap-out.txt; then
+              echo "::error::$f errored"
+              fail=1
+            fi
+            if grep -qE '^\s*not ok ' /tmp/pgtap-out.txt; then
+              fail=1
+            fi
           done
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::pgTAP reported one or more failing tests"
+            exit 1
+          fi
         env:
           DATABASE_URL: postgres://supabase_admin:postgres@127.0.0.1:5432/postgres
 
