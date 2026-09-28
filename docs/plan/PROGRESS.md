@@ -10,7 +10,7 @@
 - **Auth:** email OTP via Resend SMTP (`hello@tinytorque.hypermaxsolutions.com`); templates "Confirm signup" + "Magic Link" carry `{{ .Token }}`; Site URL = prod URL; redirect URLs for main/staging/previews/localhost. Phone OTP: later (D-037).
 - **Active task:** none.
 - **Last session:** 2026-09-27/28 — S0 completed end to end. Fixes after first deploy: CI Node 22 + sslmode, build without env at prerender, migration file naming (D-036), Vercel framework preset, prod env vars, table grants (42501), email templates/site URL, promotion via PR (D-039), db push from main (D-040).
-- **Next action:** start S1 in a cloud Claude Code session — "Work on MV-S1-01. Follow CLAUDE.md." Branch `sprint-1` from `staging`.
+- **Next action:** after PRs sprint-0 → staging → main are merged: `git checkout staging && git pull && git checkout -b sprint-1 && git push -u origin sprint-1`, open Claude Code in the repo, run `/task MV-S1-01`. Prereq for S1-01/02 (migration + pgTAP): Docker Desktop + `pnpm exec supabase start` on the Mac, or rely on the CI migrations job and a Supabase preview branch for validation (decide in the S1-01 plan). Model: Fable 5.1 default; `/model` to switch to Sonnet 5 when the limit hits.
 
 ## S0 closing board
 

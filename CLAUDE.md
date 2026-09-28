@@ -33,6 +33,10 @@ Handover from Varun (design + Phase-1 Next.js/Supabase prototype). Owner/CTO: Sr
 4. Docs travel in the same PR as the code.
 5. On sprint-end sessions: run the release checklist (06 §5), promote to prod, record prod version + date in PROGRESS.md.
 
+## Claude Code project config (`.claude/`)
+
+`/task MV-Sn-nn` runs the Start protocol · `/handoff` runs the End protocol · `/decide <text>` appends a DECISIONS.md row. Hooks: SessionStart prints PROGRESS.md; PreToolUse blocks edits to applied migrations, `theme.ts`, `globals.css`, screenshot baselines; Stop reminds about hand-off. `settings.json` denies `git merge/rebase/push --force`, pushes to `main`/`staging`, `db push`, `gh pr merge`, `.env` reads — these are Sreejith's actions (D-002, D-039, D-040).
+
 ## Read first (reference, not every session)
 
 `05-sprint-plan.md` sprints/tasks · `04-feature-specs.md` rules & AC · `03-data-model.md` schema & migrations · `02-architecture-blueprint.md` ADRs · `06-engineering-standards.md` full contract.
