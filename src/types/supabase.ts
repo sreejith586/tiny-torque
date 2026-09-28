@@ -51,16 +51,117 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "account_type": Database["public"]['Enums']["account_type"],"created_at": string,"deleted_at": string | null,"display_name": string,"id": string,"location": string | null,"mobile": string | null,"photo_url": string | null,"plan": Database["public"]['Enums']["plan_tier"],"role": Database["public"]['Enums']["user_role"],"store_name": string | null,"tokens": number,"updated_at": string
+                    "account_type": Database["public"]['Enums']["account_type"],"bio": string | null,"city": string | null,"country_code": string,"created_at": string,"deleted_at": string | null,"display_name": string,"handle": string,"id": string,"level": number,"location": string | null,"mobile": string | null,"onboarding_completed_at": string | null,"photo_url": string | null,"plan": Database["public"]['Enums']["plan_tier"],"pro_until": string | null,"role": Database["public"]['Enums']["user_role"],"scan_quota_bonus": number,"scan_quota_reset_at": string,"scan_quota_used": number,"store_name": string | null,"tokens": number,"tutorial_dismissed_at": string | null,"updated_at": string,"xp": number
                   }
                   Insert: {
-                    "account_type": Database["public"]['Enums']["account_type"],"created_at"?: string,"deleted_at"?: string | null,"display_name": string,"id": string,"location"?: string | null,"mobile"?: string | null,"photo_url"?: string | null,"plan"?: Database["public"]['Enums']["plan_tier"],"role"?: Database["public"]['Enums']["user_role"],"store_name"?: string | null,"tokens"?: number,"updated_at"?: string
+                    "account_type": Database["public"]['Enums']["account_type"],"bio"?: string | null,"city"?: string | null,"country_code"?: string,"created_at"?: string,"deleted_at"?: string | null,"display_name": string,"handle": string,"id": string,"level"?: number,"location"?: string | null,"mobile"?: string | null,"onboarding_completed_at"?: string | null,"photo_url"?: string | null,"plan"?: Database["public"]['Enums']["plan_tier"],"pro_until"?: string | null,"role"?: Database["public"]['Enums']["user_role"],"scan_quota_bonus"?: number,"scan_quota_reset_at"?: string,"scan_quota_used"?: number,"store_name"?: string | null,"tokens"?: number,"tutorial_dismissed_at"?: string | null,"updated_at"?: string,"xp"?: number
                   }
                   Update: {
-                    "account_type"?: Database["public"]['Enums']["account_type"],"created_at"?: string,"deleted_at"?: string | null,"display_name"?: string,"id"?: string,"location"?: string | null,"mobile"?: string | null,"photo_url"?: string | null,"plan"?: Database["public"]['Enums']["plan_tier"],"role"?: Database["public"]['Enums']["user_role"],"store_name"?: string | null,"tokens"?: number,"updated_at"?: string
+                    "account_type"?: Database["public"]['Enums']["account_type"],"bio"?: string | null,"city"?: string | null,"country_code"?: string,"created_at"?: string,"deleted_at"?: string | null,"display_name"?: string,"handle"?: string,"id"?: string,"level"?: number,"location"?: string | null,"mobile"?: string | null,"onboarding_completed_at"?: string | null,"photo_url"?: string | null,"plan"?: Database["public"]['Enums']["plan_tier"],"pro_until"?: string | null,"role"?: Database["public"]['Enums']["user_role"],"scan_quota_bonus"?: number,"scan_quota_reset_at"?: string,"scan_quota_used"?: number,"store_name"?: string | null,"tokens"?: number,"tutorial_dismissed_at"?: string | null,"updated_at"?: string,"xp"?: number
                   }
                   Relationships: [
-                    
+                    {
+      foreignKeyName: "profiles_country_code_fkey"
+      columns: ["country_code"]
+isOneToOne: false
+      referencedRelation: "countries"
+      referencedColumns: ["code"]
+    }
+                  ]
+                },"countries": {
+                  Row: {
+                    "code": string,"currency": string,"dial_code": string,"enabled": boolean,"name": string
+                  }
+                  Insert: {
+                    "code": string,"currency": string,"dial_code": string,"enabled"?: boolean,"name": string
+                  }
+                  Update: {
+                    "code"?: string,"currency"?: string,"dial_code"?: string,"enabled"?: boolean,"name"?: string
+                  }
+                  Relationships: [
+
+                  ]
+                },"invites": {
+                  Row: {
+                    "cohort": string | null,"code": string,"created_at": string,"created_by": string | null,"expires_at": string | null,"max_uses": number,"used_count": number
+                  }
+                  Insert: {
+                    "cohort"?: string | null,"code": string,"created_at"?: string,"created_by"?: string | null,"expires_at"?: string | null,"max_uses"?: number,"used_count"?: number
+                  }
+                  Update: {
+                    "cohort"?: string | null,"code"?: string,"created_at"?: string,"created_by"?: string | null,"expires_at"?: string | null,"max_uses"?: number,"used_count"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "invites_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"follows": {
+                  Row: {
+                    "created_at": string,"followee_id": string,"follower_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"followee_id": string,"follower_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"followee_id"?: string,"follower_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "follows_followee_id_fkey"
+      columns: ["followee_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "follows_follower_id_fkey"
+      columns: ["follower_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"feature_flags": {
+                  Row: {
+                    "audience": NonNullable<Json>,"description": string | null,"enabled": boolean,"key": string,"updated_at": string,"updated_by": string | null
+                  }
+                  Insert: {
+                    "audience"?: NonNullable<Json>,"description"?: string | null,"enabled"?: boolean,"key": string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "audience"?: NonNullable<Json>,"description"?: string | null,"enabled"?: boolean,"key"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "feature_flags_updated_by_fkey"
+      columns: ["updated_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"domain_events": {
+                  Row: {
+                    "actor_id": string | null,"entity": string,"entity_id": string | null,"id": number,"occurred_at": string,"payload": NonNullable<Json>,"type": string
+                  }
+                  Insert: {
+                    "actor_id"?: string | null,"entity": string,"entity_id"?: string | null,"id"?: number,"occurred_at"?: string,"payload"?: NonNullable<Json>,"type": string
+                  }
+                  Update: {
+                    "actor_id"?: string | null,"entity"?: string,"entity_id"?: string | null,"id"?: number,"occurred_at"?: string,"payload"?: NonNullable<Json>,"type"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "domain_events_actor_id_fkey"
+      columns: ["actor_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"reports": {
                   Row: {
@@ -128,7 +229,14 @@ isOneToOne: false
                 }
           }
           Views: {
-            [_ in never]: never
+            "public_profiles": {
+                  Row: {
+                    "account_type": Database["public"]['Enums']["account_type"],"bio": string | null,"city": string | null,"country_code": string,"created_at": string,"display_name": string,"handle": string,"id": string,"is_pro": boolean | null,"level": number,"store_name": string | null,"xp": number
+                  }
+                  Relationships: [
+
+                  ]
+                }
           }
           Functions: {
             "dearmor":
