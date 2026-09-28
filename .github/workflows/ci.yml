@@ -61,6 +61,42 @@ jobs:
           DATABASE_URL="postgres://postgres:postgres@127.0.0.1:5432/mv_validate" pnpm gen:types:db
           git diff --exit-code src/types/supabase.ts || (echo "::error::src/types/supabase.ts is stale — run pnpm gen:types"; exit 1)
 
+  pgtap:
+    name: pgTAP RLS matrix (D-013)
+    if: github.event_name != 'deployment_status'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        # supabase/postgres, not plain postgres: ships pgtap + the real auth schema/functions
+        # (auth.uid(), auth.role()) so the RLS matrix runs against the same auth.uid()
+        # implementation production uses, not scripts/pg-stub.sql's stand-in.
+        image: supabase/postgres:15.14.1.178
+        env: { POSTGRES_PASSWORD: postgres, POSTGRES_DB: postgres }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -q && sudo apt-get install -y -q postgresql-client
+      - name: Apply migrations
+        run: |
+          for f in supabase/migrations/*.sql; do
+            echo "→ $f"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+        env:
+          DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+      - name: Run pgTAP tests
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -c "create extension if not exists pgtap;"
+          for f in supabase/tests/*.sql; do
+            echo "→ $f"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+        env:
+          DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+
   e2e:
     name: playwright smoke on Vercel preview
     runs-on: ubuntu-latest
