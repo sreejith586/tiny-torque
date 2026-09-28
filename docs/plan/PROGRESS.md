@@ -10,7 +10,7 @@
 - **Auth:** email OTP via Resend SMTP (`hello@tinytorque.hypermaxsolutions.com`); templates "Confirm signup" + "Magic Link" carry `{{ .Token }}`; Site URL = prod URL; redirect URLs for main/staging/previews/localhost. Phone OTP: later (D-037).
 - **Active task:** MV-S1-01 — Migration 0002 identity_v2, code done on `sprint-1`, [PR #15](https://github.com/sreejith586/tiny-torque/pull/15) open into `staging`.
 - **Last session:** 2026-09-28 — MV-S1-01 written: `identity_v2.sql` (countries, profiles columns, public_profiles view, invites, follows, feature_flags, domain_events), hand-updated `src/types/supabase.ts` (no CLI to regen for real), stopgap `provisionalHandle()` + fixture update to keep the build green. D-042 recorded (onboarding wizard reference supersedes D-041's single-page clause for that screen).
-- **Next action:** open PR `[MV-S1-01] Migration 0002 identity_v2` from `sprint-1` → `staging`; note the D-012 guard failure (fix is MV-S1-03) and the pending real `pnpm gen:types` regen in the PR description. Once merged/applied, `git checkout main && git pull` and confirm `supabase migration list` shows 0002, then run `pnpm gen:types:db` for real against it. Then `/task MV-S1-02` (pgTAP RLS tests, depends on this migration).
+- **Next action:** Sreejith reviews [PR #15](https://github.com/sreejith586/tiny-torque/pull/15) (known D-012 CI failure explained in the description). Once merged/applied, confirm `supabase migration list` shows 0002 and run `pnpm gen:types:db` for real against it. Then `/task MV-S1-02` (pgTAP RLS tests, depends on this migration).
 
 ## S0 closing board
 
