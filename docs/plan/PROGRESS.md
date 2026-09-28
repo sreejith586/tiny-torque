@@ -8,7 +8,7 @@
 - **Production:** LIVE — `https://tiny-torque-git-main-tiny-torque.vercel.app` (Vercel project `tiny-torque`, branch `main`). First deploy 2026-09-28; email-OTP sign-in → onboarding → garage → add car verified by Sreejith.
 - **Supabase:** project `bjhowyyyypeacfkgxwqr` (Branching on; persistent branches `main`, `staging`). Migrations applied to `main`: 20260927000000 baseline, 20260927000100 housekeeping, 20260928000000 grants. `20260928000100_identity_v2.sql` is written and committed on `sprint-1` but **not yet applied anywhere** — no Docker/psql/Supabase CLI in this sandbox to run it; the Supabase Branching preview on the PR (or a manual `db push`) is the first real application. Edge Function `scan-photo` deployed with `ANTHROPIC_API_KEY`.
 - **Auth:** email OTP via Resend SMTP (`hello@tinytorque.hypermaxsolutions.com`); templates "Confirm signup" + "Magic Link" carry `{{ .Token }}`; Site URL = prod URL; redirect URLs for main/staging/previews/localhost. Phone OTP: later (D-037).
-- **Active task:** MV-S1-01 — Migration 0002 identity_v2, code done on `sprint-1`, PR pending.
+- **Active task:** MV-S1-01 — Migration 0002 identity_v2, code done on `sprint-1`, [PR #15](https://github.com/sreejith586/tiny-torque/pull/15) open into `staging`.
 - **Last session:** 2026-09-28 — MV-S1-01 written: `identity_v2.sql` (countries, profiles columns, public_profiles view, invites, follows, feature_flags, domain_events), hand-updated `src/types/supabase.ts` (no CLI to regen for real), stopgap `provisionalHandle()` + fixture update to keep the build green. D-042 recorded (onboarding wizard reference supersedes D-041's single-page clause for that screen).
 - **Next action:** open PR `[MV-S1-01] Migration 0002 identity_v2` from `sprint-1` → `staging`; note the D-012 guard failure (fix is MV-S1-03) and the pending real `pnpm gen:types` regen in the PR description. Once merged/applied, `git checkout main && git pull` and confirm `supabase migration list` shows 0002, then run `pnpm gen:types:db` for real against it. Then `/task MV-S1-02` (pgTAP RLS tests, depends on this migration).
 
@@ -22,17 +22,17 @@
 
 ## S1 task board (lock at first S1 session; rows from 05-sprint-plan.md)
 
-| Task                                               | Status                 | Notes                                                                                                                                 |
-| -------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| MV-S1-01 Migration 0002 identity_v2                | in-review (PR pending) | file `20260928000100_identity_v2.sql` (D-036); guard D-012 fails CI on login's hardcoded `+91` until MV-S1-03 — expected, noted in PR |
-| MV-S1-02 pgTAP RLS tests for identity tables       | todo                   | pgTAP needs `supabase start`/Docker or a pgTAP-enabled Postgres in CI — decide in-task                                                |
-| MV-S1-03 Login v2: country picker, phone/email OTP | todo                   | email path done; remove `COUNTRY_CODE='+91'`, add picker                                                                              |
-| MV-S1-04 Onboarding v2                             | todo                   |                                                                                                                                       |
-| MV-S1-05 domain/identity service                   | todo                   |                                                                                                                                       |
-| MV-S1-06 domain/events + flags + admin shell       | todo                   |                                                                                                                                       |
-| MV-S1-07 Public profile v1 /u/[handle]             | todo                   |                                                                                                                                       |
-| MV-S1-08 Settings: export + delete stub            | todo                   |                                                                                                                                       |
-| MV-S1-09 Playwright sign-in → onboarding → profile | todo                   | use email test path or Supabase test OTP on branches                                                                                  |
+| Task                                               | Status             | Notes                                                                                                                                 |
+| -------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| MV-S1-01 Migration 0002 identity_v2                | in-review (PR #15) | file `20260928000100_identity_v2.sql` (D-036); guard D-012 fails CI on login's hardcoded `+91` until MV-S1-03 — expected, noted in PR |
+| MV-S1-02 pgTAP RLS tests for identity tables       | todo               | pgTAP needs `supabase start`/Docker or a pgTAP-enabled Postgres in CI — decide in-task                                                |
+| MV-S1-03 Login v2: country picker, phone/email OTP | todo               | email path done; remove `COUNTRY_CODE='+91'`, add picker                                                                              |
+| MV-S1-04 Onboarding v2                             | todo               |                                                                                                                                       |
+| MV-S1-05 domain/identity service                   | todo               |                                                                                                                                       |
+| MV-S1-06 domain/events + flags + admin shell       | todo               |                                                                                                                                       |
+| MV-S1-07 Public profile v1 /u/[handle]             | todo               |                                                                                                                                       |
+| MV-S1-08 Settings: export + delete stub            | todo               |                                                                                                                                       |
+| MV-S1-09 Playwright sign-in → onboarding → profile | todo               | use email test path or Supabase test OTP on branches                                                                                  |
 
 Status vocabulary: `todo` · `in-progress (branch)` · `in-review (PR #)` · `done` · `blocked (why)` · `carried → Sn`.
 
