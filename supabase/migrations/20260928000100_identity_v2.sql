@@ -52,6 +52,18 @@ alter table public.profiles
 alter table public.profiles
   add column if not exists country_code char(2) not null default 'AE' references public.countries(code);
 
+-- Backfill from the real signal already on the row (mobile's E.164 dial-code prefix) rather
+-- than leaving every existing row on the 'AE' column default — a phone-signed-up founder in
+-- India (mobile '+91...') would otherwise end up with country_code='AE', which later drives
+-- the wrong default marketplace country (D-001 "default browse = own country").
+update public.profiles p
+set country_code = c.code
+from public.countries c
+where p.country_code = 'AE'
+  and p.mobile is not null
+  and p.mobile like (c.dial_code || '%')
+  and c.code <> 'AE';
+
 -- backfill handle from display_name, deduped (existing founders-cohort rows have none)
 do $$
 declare
@@ -117,6 +129,14 @@ select
   (pro_until is not null and pro_until > now()) as is_pro
 from public.profiles
 where deleted_at is null;
+
+-- Without this, the view is READ-only in intent but not in fact: it's a plain "simple" view
+-- over a single base relation, so Postgres treats it as auto-updatable, and the blanket
+-- `alter default privileges ... grant select, insert, update, delete on tables` from
+-- 20260928000000_grants.sql applies to views too — meaning anon/authenticated would silently
+-- get INSERT/UPDATE/DELETE on public_profiles, which write through to `profiles` running as
+-- the view owner and so bypass the owner-or-admin policy above entirely (D-015).
+revoke insert, update, delete on public.public_profiles from anon, authenticated;
 
 -- ---------- invites (pilot gating, F-01) ----------
 create table public.invites (

@@ -30,7 +30,7 @@ function provisionalHandle(displayName: string): string {
 /** First-login onboarding: creates the profiles row (id = auth user id). */
 export async function createProfile(supabase: Client, userId: string, input: ProfileCreateInput) {
   const v = profileCreateSchema.parse(input);
-  await repo.insertProfile(supabase, {
+  const row = {
     id: userId,
     display_name: v.displayName,
     account_type: v.accountType,
@@ -38,8 +38,19 @@ export async function createProfile(supabase: Client, userId: string, input: Pro
     location: v.location ?? null,
     mobile: v.mobile ?? null,
     photo_url: v.photoUrl ?? null,
-    handle: provisionalHandle(v.displayName),
-  });
+  };
+  // provisionalHandle's random suffix can collide (low probability, non-zero); retry a few
+  // times with a fresh suffix on a unique-constraint violation rather than failing onboarding.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      await repo.insertProfile(supabase, { ...row, handle: provisionalHandle(v.displayName) });
+      return;
+    } catch (err) {
+      const isHandleCollision =
+        typeof err === 'object' && err !== null && 'code' in err && err.code === '23505';
+      if (!isHandleCollision || attempt === 4) throw err;
+    }
+  }
 }
 
 /** Profile edit with PATCH semantics — untouched fields are never nulled (MV-S0-09). */
