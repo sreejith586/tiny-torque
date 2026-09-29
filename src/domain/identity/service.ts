@@ -11,10 +11,26 @@ export const verifyEmailOtp = repo.verifyEmailOtp;
 export const signOut = repo.signOut;
 export const getProfile = repo.getProfile;
 
+/**
+ * Stopgap handle generator so `createProfile` satisfies the DB's NOT NULL/format
+ * constraint (identity_v2, MV-S1-01). Real handle rules (regex, reserved words,
+ * user-editable, uniqueness check via server action) land in MV-S1-05.
+ */
+function provisionalHandle(displayName: string): string {
+  const base =
+    displayName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 19) || 'collector';
+  const suffix = Math.random().toString(36).slice(2, 6);
+  return `${base}_${suffix}`;
+}
+
 /** First-login onboarding: creates the profiles row (id = auth user id). */
 export async function createProfile(supabase: Client, userId: string, input: ProfileCreateInput) {
   const v = profileCreateSchema.parse(input);
-  await repo.insertProfile(supabase, {
+  const row = {
     id: userId,
     display_name: v.displayName,
     account_type: v.accountType,
@@ -22,7 +38,19 @@ export async function createProfile(supabase: Client, userId: string, input: Pro
     location: v.location ?? null,
     mobile: v.mobile ?? null,
     photo_url: v.photoUrl ?? null,
-  });
+  };
+  // provisionalHandle's random suffix can collide (low probability, non-zero); retry a few
+  // times with a fresh suffix on a unique-constraint violation rather than failing onboarding.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      await repo.insertProfile(supabase, { ...row, handle: provisionalHandle(v.displayName) });
+      return;
+    } catch (err) {
+      const isHandleCollision =
+        typeof err === 'object' && err !== null && 'code' in err && err.code === '23505';
+      if (!isHandleCollision || attempt === 4) throw err;
+    }
+  }
 }
 
 /** Profile edit with PATCH semantics — untouched fields are never nulled (MV-S0-09). */

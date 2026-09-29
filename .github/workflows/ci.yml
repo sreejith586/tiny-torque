@@ -61,6 +61,76 @@ jobs:
           DATABASE_URL="postgres://postgres:postgres@127.0.0.1:5432/mv_validate" pnpm gen:types:db
           git diff --exit-code src/types/supabase.ts || (echo "::error::src/types/supabase.ts is stale — run pnpm gen:types"; exit 1)
 
+  pgtap:
+    name: pgTAP RLS matrix (D-013)
+    if: github.event_name != 'deployment_status'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        # supabase/postgres, not plain postgres: ships pgtap + the real auth schema/functions
+        # (auth.uid(), auth.role()) so the RLS matrix runs against the same auth.uid()
+        # implementation production uses, not scripts/pg-stub.sql's stand-in.
+        image: supabase/postgres:15.14.1.178
+        env: { POSTGRES_PASSWORD: postgres, POSTGRES_DB: postgres }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -q && sudo apt-get install -y -q postgresql-client
+      - name: Storage schema stub
+        # supabase/postgres ships the `storage` schema and the real `auth` schema/functions,
+        # but not storage's own tables (those come from the storage-api service's own
+        # migrations in the full local stack, not the postgres image) -- the baseline
+        # migration's storage.buckets/storage.objects policies need them to exist. Connect as
+        # supabase_admin (the actual superuser in this image -- `postgres` here is a scoped,
+        # non-superuser role, confirmed via pg_roles/pg_namespace; storage is owned by
+        # supabase_admin) so this and every later step has uniform full privileges, same as
+        # the plain-postgres "migrations apply cleanly" job.
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -c "
+            create schema if not exists storage;
+            create table if not exists storage.buckets (id text primary key, name text, public boolean default false);
+            create table if not exists storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid);
+            alter table storage.objects enable row level security;
+            create or replace function storage.foldername(name text) returns text[] language sql immutable as \$\$ select (string_to_array(name, '/'))[1:array_length(string_to_array(name,'/'),1)-1] \$\$;
+          "
+        env:
+          DATABASE_URL: postgres://supabase_admin:postgres@127.0.0.1:5432/postgres
+      - name: Apply migrations
+        run: |
+          for f in supabase/migrations/*.sql; do
+            echo "→ $f"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+        env:
+          DATABASE_URL: postgres://supabase_admin:postgres@127.0.0.1:5432/postgres
+      - name: Run pgTAP tests
+        # ON_ERROR_STOP only catches actual SQL errors -- a failed pgTAP assertion ("not ok")
+        # is a normal query result row, not an error, so psql exits 0 regardless. Grep the
+        # output for "not ok" explicitly and fail the step if any test failed.
+        run: |
+          set -uo pipefail
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -c "create extension if not exists pgtap;"
+          fail=0
+          for f in supabase/tests/*.sql; do
+            echo "→ $f"
+            if ! psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$f" | tee /tmp/pgtap-out.txt; then
+              echo "::error::$f errored"
+              fail=1
+            fi
+            if grep -qE '^\s*not ok ' /tmp/pgtap-out.txt; then
+              fail=1
+            fi
+          done
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::pgTAP reported one or more failing tests"
+            exit 1
+          fi
+        env:
+          DATABASE_URL: postgres://supabase_admin:postgres@127.0.0.1:5432/postgres
+
   e2e:
     name: playwright smoke on Vercel preview
     runs-on: ubuntu-latest
