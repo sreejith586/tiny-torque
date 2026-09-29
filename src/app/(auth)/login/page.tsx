@@ -12,6 +12,7 @@ import {
   listEnabledCountries,
   type CountryRow,
 } from '@/domain/identity';
+import { Spinner, StatusRow } from '@/components/Loaders';
 
 // Two-step OTP login: choose phone or email -> send code -> enter code -> verify.
 // On first login (no profiles row yet) we send the person to /onboarding;
@@ -209,6 +210,12 @@ export default function LoginPage() {
             onChange={(e) => setCode(e.target.value)}
             autoFocus
           />
+          {loading && (
+            <StatusRow>
+              <Spinner />
+              <span>Verifying your code…</span>
+            </StatusRow>
+          )}
           {error && <p className="field-error">{error}</p>}
           <button className="btn-primary" style={{ marginTop: 20 }} disabled={loading}>
             {loading ? 'Verifying…' : 'Verify & continue'}

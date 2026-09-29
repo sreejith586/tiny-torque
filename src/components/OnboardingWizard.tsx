@@ -11,6 +11,7 @@ import {
   CITIES_BY_COUNTRY,
 } from '@/domain/identity';
 import type { AccountType, CountryRow } from '@/types/database';
+import { LoaderDots } from './Loaders';
 
 // D-042: garage-log-147.html's stepped onboarding (progress bar, back button) is the reference
 // for this screen, mapped onto what F-01 actually asks it to collect — the mockup's phone/OTP
@@ -189,9 +190,19 @@ export default function OnboardingWizard({
               flex: 1,
               height: 4,
               borderRadius: 2,
-              background: i <= stepIndex ? 'var(--orange)' : 'var(--border)',
+              background: 'var(--border)',
+              overflow: 'hidden',
             }}
-          />
+          >
+            <div
+              style={{
+                height: '100%',
+                width: i <= stepIndex ? '100%' : '0%',
+                background: 'var(--orange)',
+                transition: 'width 0.35s ease',
+              }}
+            />
+          </div>
         ))}
       </div>
 
@@ -334,6 +345,7 @@ export default function OnboardingWizard({
               {loading ? 'Saving…' : 'Enter my garage'}
             </button>
           </div>
+          {loading && <LoaderDots />}
         </form>
       )}
     </>
