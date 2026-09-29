@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { addCollectionItems, uploadCarPhoto } from '@/domain/garage';
 import { scanPhotoForCars, type ScanCandidate } from '@/domain/ai';
+import { CameraIcon } from '@/components/icons';
 
 // Editable review row: a scan candidate plus an "include" checkbox and the
 // same fields the manual add-car form exposes, so the user can fix anything
@@ -117,18 +118,25 @@ export default function BatchScanPage() {
     <main style={{ padding: '20px 16px', flex: 1 }}>
       <h1 style={{ fontSize: 24 }}>Batch photo scan</h1>
       <p className="muted" style={{ marginTop: 4 }}>
-        Take one photo of several cars on a table or shelf. We&apos;ll identify each one — review and edit before
-        adding them to your garage.
+        Take one photo of several cars on a table or shelf. We&apos;ll identify each one — review
+        and edit before adding them to your garage.
       </p>
 
       {!photoPreview && (
         <button
           type="button"
           className="btn-secondary"
-          style={{ marginTop: 20, width: '100%', height: 140, display: 'flex', flexDirection: 'column', gap: 6 }}
+          style={{
+            marginTop: 20,
+            width: '100%',
+            height: 140,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+          }}
           onClick={() => fileInputRef.current?.click()}
         >
-          <span style={{ fontSize: 28 }}>📷</span>
+          <CameraIcon size={28} />
           <span>Choose a photo</span>
         </button>
       )}
@@ -142,11 +150,20 @@ export default function BatchScanPage() {
             style={{ width: '100%', maxHeight: 320, objectFit: 'cover', borderRadius: 12 }}
           />
           <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-            <button type="button" className="btn-secondary" onClick={() => fileInputRef.current?.click()}>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => fileInputRef.current?.click()}
+            >
               Choose a different photo
             </button>
             {rows.length === 0 && (
-              <button type="button" className="btn-primary" onClick={handleScan} disabled={scanning}>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleScan}
+                disabled={scanning}
+              >
                 {scanning ? 'Scanning…' : 'Scan photo'}
               </button>
             )}
@@ -162,7 +179,11 @@ export default function BatchScanPage() {
         style={{ display: 'none' }}
       />
 
-      {error && <p className="field-error" style={{ marginTop: 16 }}>{error}</p>}
+      {error && (
+        <p className="field-error" style={{ marginTop: 16 }}>
+          {error}
+        </p>
+      )}
 
       {rows.length > 0 && (
         <div style={{ marginTop: 24 }}>
@@ -174,8 +195,18 @@ export default function BatchScanPage() {
             {rows.map((row) => {
               const conf = confidenceLabel(row.confidence);
               return (
-                <div key={row.id} className="scan-review-card" style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  key={row.id}
+                  className="scan-review-card"
+                  style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14 }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
                     <label className="toggle-row" style={{ margin: 0 }}>
                       <input
                         type="checkbox"
@@ -190,10 +221,20 @@ export default function BatchScanPage() {
                     </span>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 10 }}>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: 8,
+                      marginTop: 10,
+                    }}
+                  >
                     <div>
                       <label style={{ fontSize: 12 }}>Brand</label>
-                      <input value={row.brand} onChange={(e) => updateRow(row.id, { brand: e.target.value })} />
+                      <input
+                        value={row.brand}
+                        onChange={(e) => updateRow(row.id, { brand: e.target.value })}
+                      />
                     </div>
                     <div>
                       <label style={{ fontSize: 12 }}>Model</label>
@@ -244,7 +285,9 @@ export default function BatchScanPage() {
             disabled={saving || includedCount === 0}
             onClick={handleSaveAll}
           >
-            {saving ? 'Saving…' : `Add ${includedCount} ${includedCount === 1 ? 'car' : 'cars'} to garage`}
+            {saving
+              ? 'Saving…'
+              : `Add ${includedCount} ${includedCount === 1 ? 'car' : 'cars'} to garage`}
           </button>
         </div>
       )}
