@@ -155,7 +155,7 @@ jobs:
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:e2e
+      - run: pnpm test:e2e:update
         env:
           BASE_URL: ${{ github.event.deployment_status.environment_url }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
@@ -164,6 +164,8 @@ jobs:
           E2E_ENABLE_PHONE_SIGNIN: ${{ vars.E2E_ENABLE_PHONE_SIGNIN }}
           E2E_TEST_PHONE: '+919999900001'
           E2E_TEST_OTP: '246810'
+      - uses: actions/upload-artifact@v4
+        with: { name: updated-baselines-MV-S1-07, path: e2e/__screenshots__, retention-days: 7 }
       - uses: actions/upload-artifact@v4
         if: failure()
         with: { name: playwright-report, path: playwright-report, retention-days: 7 }
