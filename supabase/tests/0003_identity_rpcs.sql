@@ -5,9 +5,12 @@ begin;
 select plan(10);
 
 -- ---------- fixtures ----------
-insert into auth.users (id) values ('00000000-0000-0000-0000-0000000000aa');
+insert into auth.users (id) values
+  ('00000000-0000-0000-0000-0000000000aa'),
+  ('00000000-0000-0000-0000-0000000000ab');
 insert into public.profiles (id, display_name, account_type, handle, role) values
-  ('00000000-0000-0000-0000-0000000000aa', 'Redeemer', 'individual', 'redeemer_fixture', 'user');
+  ('00000000-0000-0000-0000-0000000000aa', 'Redeemer', 'individual', 'redeemer_fixture', 'user'),
+  ('00000000-0000-0000-0000-0000000000ab', 'Admin', 'individual', 'rpc_admin_fixture', 'admin');
 
 insert into public.invites (code, max_uses, used_count, cohort) values ('GOODCODE', 2, 0, 'founders');
 insert into public.invites (code, max_uses, used_count, cohort) values ('USEDUP', 1, 1, 'founders');
@@ -42,6 +45,7 @@ grant usage on schema tests to anon, authenticated;
 grant execute on all functions in schema tests to anon, authenticated;
 
 \set redeemer '''00000000-0000-0000-0000-0000000000aa'''
+\set admin '''00000000-0000-0000-0000-0000000000ab'''
 
 -- ---------- redeem_invite ----------
 select tests.authenticate_as_anon();
@@ -58,6 +62,11 @@ select lives_ok(
   $$select public.redeem_invite('GOODCODE')$$,
   'redeem_invite: a valid, unused code redeems successfully'
 );
+
+-- invites/domain_events are admin-only SELECT (D-015-style, 03 §2.21/§2.23) -- redeem_invite's
+-- SECURITY DEFINER bypasses that to make the writes, but reading the result back still needs
+-- an admin context, same as the redeeming user themselves could never read these tables directly.
+select tests.authenticate_as(:admin::uuid);
 select is(
   (select used_count from public.invites where code = 'GOODCODE'),
   1,
@@ -73,6 +82,7 @@ select is(
   'GOODCODE',
   'redeem_invite: the logged event payload carries the redeemed code'
 );
+select tests.authenticate_as(:redeemer::uuid);
 
 select throws_ok(
   $$select public.redeem_invite('NOSUCHCODE')$$,
