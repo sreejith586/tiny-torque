@@ -48,6 +48,7 @@ const SIGNED_IN_SCREENS: Screen[] = [
   { name: 'scan', path: '/garage/scan?__visual=1' },
   { name: 'profile', path: '/profile?__visual=1' },
   { name: 'offers', path: '/offers?__visual=1' },
+  { name: 'onboarding', path: '/onboarding?__visual=1' },
 ];
 
 const SCREENS: Screen[] = [...PUBLIC_SCREENS, ...SIGNED_IN_SCREENS];
