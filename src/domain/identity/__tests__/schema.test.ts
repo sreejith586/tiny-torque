@@ -3,12 +3,34 @@ import { handleSchema, profileCreateSchema, profilePatchSchema } from '../schema
 
 describe('identity schemas', () => {
   it('requires a store name for shops', () => {
-    const r = profileCreateSchema.safeParse({ displayName: 'Vault Cars', accountType: 'shop' });
+    const r = profileCreateSchema.safeParse({
+      displayName: 'Vault Cars',
+      accountType: 'shop',
+      countryCode: 'AE',
+    });
     expect(r.success).toBe(false);
   });
   it('accepts an individual without store name', () => {
-    const r = profileCreateSchema.safeParse({ displayName: 'Sree', accountType: 'individual' });
+    const r = profileCreateSchema.safeParse({
+      displayName: 'Sree',
+      accountType: 'individual',
+      countryCode: 'AE',
+    });
     expect(r.success).toBe(true);
+  });
+  it('requires a country code (F-01 onboarding v2, MV-S1-04)', () => {
+    const r = profileCreateSchema.safeParse({ displayName: 'Sree', accountType: 'individual' });
+    expect(r.success).toBe(false);
+  });
+  it('uppercases the country code and accepts an optional city', () => {
+    const r = profileCreateSchema.safeParse({
+      displayName: 'Sree',
+      accountType: 'individual',
+      countryCode: 'in',
+      city: 'Bengaluru',
+    });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.countryCode).toBe('IN');
   });
   it('patch schema leaves untouched keys undefined (PATCH semantics, MV-S0-09)', () => {
     const r = profilePatchSchema.parse({ displayName: 'New Name' });

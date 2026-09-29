@@ -64,6 +64,8 @@ export const handleSchema = z
   )
   .refine((h) => !RESERVED_HANDLES.has(h), { message: 'That handle is reserved' });
 
+export const countryCodeSchema = z.string().length(2).toUpperCase();
+
 export const profileCreateSchema = z
   .object({
     displayName: displayNameSchema,
@@ -73,6 +75,8 @@ export const profileCreateSchema = z
     mobile: z.string().trim().max(20).nullish(),
     photoUrl: z.string().url().nullish(),
     handle: handleSchema.nullish(),
+    countryCode: countryCodeSchema,
+    city: z.string().trim().max(80).nullish(),
   })
   .refine((v) => v.accountType !== 'shop' || (v.storeName && v.storeName.length > 0), {
     message: 'Shops need a store name',

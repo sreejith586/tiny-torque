@@ -10,6 +10,8 @@ export interface ProfileCreateInput {
   photoUrl?: string | null;
   /** Editable, auto-suggested from displayName when omitted (F-01). */
   handle?: string | null;
+  countryCode: string;
+  city?: string | null;
 }
 
 /** PATCH semantics: only keys present are written (fixes the Phase-1 upsert null-out bug). */

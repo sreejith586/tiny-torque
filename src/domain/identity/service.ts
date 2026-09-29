@@ -13,6 +13,23 @@ export const signOut = repo.signOut;
 export const getProfile = repo.getProfile;
 export const redeemInvite = repo.redeemInvite;
 export const listEnabledCountries = repo.listEnabledCountries;
+export const isHandleAvailable = repo.isHandleAvailable;
+export { CITIES_BY_COUNTRY } from './cities';
+
+/**
+ * Onboarding's country prefill (F-01): match the signed-in phone's E.164 dial code against the
+ * pilot's enabled countries; email sign-ins (no phone) default to AE.
+ */
+export function defaultCountryCode(
+  contact: { phone?: string | null; email?: string | null },
+  countries: Pick<CountryRow, 'code' | 'dial_code'>[]
+): string {
+  if (contact.phone) {
+    const match = countries.find((c) => contact.phone!.startsWith(c.dial_code));
+    if (match) return match.code;
+  }
+  return 'AE';
+}
 
 export const HANDLE_COOLDOWN_DAYS = 30;
 
@@ -76,6 +93,9 @@ export async function createProfile(supabase: Client, userId: string, input: Pro
     mobile: v.mobile ?? null,
     photo_url: v.photoUrl ?? null,
     handle,
+    country_code: v.countryCode,
+    city: v.city ?? null,
+    onboarding_completed_at: new Date().toISOString(),
   });
 
   await emitEvent(supabase, {
