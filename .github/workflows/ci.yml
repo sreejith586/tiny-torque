@@ -155,10 +155,7 @@ jobs:
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
-      # TEMPORARY (revert before merge): update-baselines.yml can't run via workflow_dispatch
-      # until it's on the default branch (staging) -- GitHub requires that. Using this
-      # already-triggered job to regenerate baselines the D-044 icon fix invalidated instead.
-      - run: pnpm test:e2e:update
+      - run: pnpm test:e2e
         env:
           BASE_URL: ${{ github.event.deployment_status.environment_url }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
@@ -170,7 +167,3 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with: { name: playwright-report, path: playwright-report, retention-days: 7 }
-      # TEMPORARY (revert before merge): part of the update-baselines swap above.
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with: { name: updated-baselines, path: e2e/__screenshots__, retention-days: 7 }
