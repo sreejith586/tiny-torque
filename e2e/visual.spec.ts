@@ -56,7 +56,11 @@ test.skip(process.platform !== 'linux', 'screenshot baselines are Linux-only (CI
 
 async function settle(page: Page) {
   await page.evaluate(() => document.fonts.ready);
-  await page.waitForLoadState('networkidle');
+  // 'load', not 'networkidle': PostHog (AnalyticsInit, loaded on every page) keeps background
+  // network activity going indefinitely, so networkidle routinely hung the full 30s per screen
+  // (~80 screens x themes here) and blew the job's 20-minute timeout. toHaveScreenshot() below
+  // already retries until consecutive frames stabilize, so this is still a reliable wait.
+  await page.waitForLoadState('load');
 }
 
 for (const theme of THEMES) {
