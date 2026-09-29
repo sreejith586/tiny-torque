@@ -26,7 +26,19 @@ test('market is public', async ({ page }) => {
   expect(res?.status()).toBe(200);
 });
 
-const THEMES = ['workshop-light', 'racing-green', 'sunset-amber', 'graphite-steel', 'aurora-glass', 'leather-chrome'];
+test('unknown handle 404s (F-14 AC)', async ({ page }) => {
+  const res = await page.goto('/u/no_such_collector_xyz');
+  expect(res?.status()).toBe(404);
+});
+
+const THEMES = [
+  'workshop-light',
+  'racing-green',
+  'sunset-amber',
+  'graphite-steel',
+  'aurora-glass',
+  'leather-chrome',
+];
 for (const theme of THEMES) {
   test(`theme ${theme} applies before hydration`, async ({ page }) => {
     await page.addInitScript((t) => localStorage.setItem('mini-vault-theme', t), theme);

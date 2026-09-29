@@ -1,4 +1,4 @@
-import type { CollectionItemRow, ProfileRow, CountryRow } from '@/types/database';
+import type { CollectionItemRow, ProfileRow, CountryRow, PublicProfileRow } from '@/types/database';
 
 // D-027 / D-041 visual-baseline harness. `?__visual=1` makes the signed-in pages (garage, car
 // detail, profile; add/scan/offers need no data) render this deterministic fixture data with no
@@ -130,4 +130,20 @@ export const FIXTURE_PROFILE: ProfileRow = {
   scan_quota_reset_at: '2026-09-01T08:00:00.000Z',
   onboarding_completed_at: '2026-09-01T08:00:00.000Z',
   tutorial_dismissed_at: null,
+};
+
+// F-14: /u/{handle} reads public_profiles, not profiles — a distinct (narrower) shape.
+export const FIXTURE_PUBLIC_PROFILE: PublicProfileRow = {
+  id: FIXTURE_PROFILE.id,
+  handle: FIXTURE_PROFILE.handle,
+  display_name: FIXTURE_PROFILE.display_name,
+  account_type: FIXTURE_PROFILE.account_type,
+  store_name: FIXTURE_PROFILE.store_name,
+  country_code: FIXTURE_PROFILE.country_code,
+  city: FIXTURE_PROFILE.city,
+  bio: FIXTURE_PROFILE.bio,
+  level: FIXTURE_PROFILE.level,
+  xp: FIXTURE_PROFILE.xp,
+  created_at: FIXTURE_PROFILE.created_at,
+  is_pro: FIXTURE_PROFILE.plan === 'pro',
 };

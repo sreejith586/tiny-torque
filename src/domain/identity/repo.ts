@@ -88,3 +88,14 @@ export async function listEnabledCountries(supabase: Client) {
   if (error) throw error;
   return data;
 }
+
+// F-14: the public /u/{handle} page reads only this view (D-015 — never the base `profiles` table).
+export async function getPublicProfile(supabase: Client, handle: string) {
+  const { data, error } = await supabase
+    .from('public_profiles')
+    .select('*')
+    .eq('handle', handle)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
