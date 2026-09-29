@@ -158,13 +158,14 @@ export default function LoginPage() {
                 <select
                   id="mobileCountry"
                   aria-label="Country"
+                  title="Country"
                   value={countryCode}
                   onChange={(e) => setCountryCode(e.target.value)}
                   style={{ width: 'auto', flex: '0 0 auto' }}
                 >
                   {countries.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.name} ({c.dial_code})
+                    <option key={c.code} value={c.code} title={c.name}>
+                      {c.code} {c.dial_code}
                     </option>
                   ))}
                 </select>
