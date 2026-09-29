@@ -386,7 +386,7 @@ isOneToOne: false
 { Args: { "": string }; Returns: string
                            },
 "emit_event":
-{ Args: { "p_actor_id": string; "p_type": string; "p_entity": string; "p_entity_id"?: string | null; "p_payload"?: Json }; Returns: undefined
+{ Args: { "p_actor_id": string,"p_entity": string,"p_entity_id"?: string,"p_payload"?: Json,"p_type": string }; Returns: undefined
                            },
 "gen_random_uuid":
 { Args: Record<PropertyKey, never>; Returns: string
