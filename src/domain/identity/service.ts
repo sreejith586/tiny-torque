@@ -3,7 +3,7 @@ import type { Client } from '@/lib/supabase/types';
 import { emitEvent } from '@/domain/events';
 import * as repo from './repo';
 import { profileCreateSchema, profilePatchSchema, RESERVED_HANDLES } from './schema';
-import type { ProfileCreateInput, ProfilePatch, ProfileRow } from './types';
+import type { ProfileCreateInput, ProfilePatch, ProfileRow, CountryRow } from './types';
 
 export const sendOtp = repo.sendOtp;
 export const verifyOtp = repo.verifyOtp;
@@ -122,4 +122,4 @@ export async function patchProfile(supabase: Client, userId: string, patch: Prof
   });
 }
 
-export type { ProfileRow, ProfileCreateInput, ProfilePatch };
+export type { ProfileRow, ProfileCreateInput, ProfilePatch, CountryRow };
