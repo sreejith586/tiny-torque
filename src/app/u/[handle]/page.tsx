@@ -14,7 +14,16 @@ async function loadProfile(
     return { profile: FIXTURE_PUBLIC_PROFILE, items: FIXTURE_ITEMS.filter((i) => i.is_public) };
   }
   const supabase = await createClient();
-  const profile = await getPublicProfile(supabase, handle);
+  let profile;
+  try {
+    profile = await getPublicProfile(supabase, handle);
+  } catch (err) {
+    // TEMPORARY diagnostic (MV-S1-07): surface the real error instead of a bare 500,
+    // to see what's actually failing for an anonymous SSR request. Remove once understood.
+    return {
+      diag: err instanceof Error ? `${err.name}: ${err.message}\n${err.stack}` : String(err),
+    };
+  }
   if (!profile) return null;
   const items = await listPublicCollectionItems(supabase, profile.id!);
   return { profile, items };
@@ -28,9 +37,14 @@ export async function generateMetadata({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
   const { handle } = await params;
-  const profile = isVisualHarness(await searchParams)
-    ? FIXTURE_PUBLIC_PROFILE
-    : await getPublicProfile(await createClient(), handle);
+  let profile;
+  try {
+    profile = isVisualHarness(await searchParams)
+      ? FIXTURE_PUBLIC_PROFILE
+      : await getPublicProfile(await createClient(), handle);
+  } catch {
+    return { title: 'Collector not found' };
+  }
   if (!profile) return { title: 'Collector not found' };
 
   const title = `${profile.display_name} (@${profile.handle})`;
@@ -49,6 +63,13 @@ export default async function PublicProfilePage({
   const { handle } = await params;
   const result = await loadProfile(handle, await searchParams);
   if (!result) notFound();
+  if ('diag' in result) {
+    return (
+      <main style={{ padding: '20px 16px', flex: 1 }}>
+        <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12 }}>{result.diag}</pre>
+      </main>
+    );
+  }
 
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
