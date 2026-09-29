@@ -1,7 +1,68 @@
 import { z } from 'zod';
 
-export const displayNameSchema = z.string().trim().min(2, 'Name is too short').max(40, 'Name is too long');
+export const displayNameSchema = z
+  .string()
+  .trim()
+  .min(2, 'Name is too short')
+  .max(40, 'Name is too long');
 export const accountTypeSchema = z.enum(['individual', 'shop']);
+
+// Route segments and platform-ish words a collector's public /u/{handle} must never shadow.
+export const RESERVED_HANDLES = new Set([
+  'admin',
+  'api',
+  'app',
+  'www',
+  'root',
+  'support',
+  'help',
+  'about',
+  'contact',
+  'login',
+  'logout',
+  'signin',
+  'signup',
+  'onboarding',
+  'settings',
+  'garage',
+  'market',
+  'marketplace',
+  'offers',
+  'deals',
+  'profile',
+  'profiles',
+  'tokens',
+  'token',
+  'u',
+  'users',
+  'user',
+  'invite',
+  'invites',
+  'null',
+  'undefined',
+  'anonymous',
+  'system',
+  'staff',
+  'moderator',
+  'mod',
+  'official',
+  'tinytorque',
+  'tiny-torque',
+  'minivault',
+  'mini-vault',
+  'collector',
+  'collectors',
+]);
+
+export const handleSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(
+    /^[a-z0-9_]{3,24}$/,
+    'Handle must be 3-24 characters: lowercase letters, numbers, underscores only'
+  )
+  .refine((h) => !RESERVED_HANDLES.has(h), { message: 'That handle is reserved' });
 
 export const profileCreateSchema = z
   .object({
@@ -11,6 +72,7 @@ export const profileCreateSchema = z
     location: z.string().trim().max(80).nullish(),
     mobile: z.string().trim().max(20).nullish(),
     photoUrl: z.string().url().nullish(),
+    handle: handleSchema.nullish(),
   })
   .refine((v) => v.accountType !== 'shop' || (v.storeName && v.storeName.length > 0), {
     message: 'Shops need a store name',
@@ -24,6 +86,7 @@ export const profilePatchSchema = z.object({
   location: z.string().trim().max(80).nullish(),
   mobile: z.string().trim().max(20).nullish(),
   photoUrl: z.string().url().nullish(),
+  handle: handleSchema.optional(),
 });
 
 export type ProfileCreateParsed = z.infer<typeof profileCreateSchema>;

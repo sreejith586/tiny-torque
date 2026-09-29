@@ -8,6 +8,8 @@ export interface ProfileCreateInput {
   location?: string | null;
   mobile?: string | null;
   photoUrl?: string | null;
+  /** Editable, auto-suggested from displayName when omitted (F-01). */
+  handle?: string | null;
 }
 
 /** PATCH semantics: only keys present are written (fixes the Phase-1 upsert null-out bug). */

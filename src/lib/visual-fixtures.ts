@@ -113,6 +113,7 @@ export const FIXTURE_PROFILE: ProfileRow = {
   updated_at: '2026-09-01T08:00:00.000Z',
   deleted_at: null,
   handle: 'varun',
+  handle_changed_at: null,
   country_code: 'IN',
   city: 'Bengaluru',
   bio: null,
