@@ -1,5 +1,5 @@
-import type { ProfileRow, AccountType, CountryRow } from '@/types/database';
-export type { ProfileRow, AccountType, CountryRow };
+import type { ProfileRow, AccountType, CountryRow, PublicProfileRow } from '@/types/database';
+export type { ProfileRow, AccountType, CountryRow, PublicProfileRow };
 
 export interface ProfileCreateInput {
   displayName: string;

@@ -5,6 +5,7 @@ import { collectionItemInputSchema } from './schema';
 import type { CollectionItemInput, CollectionItemRow } from './types';
 
 export const listCollectionItems = repo.listByOwner;
+export const listPublicCollectionItems = repo.listPublicByOwner;
 export const getCollectionItem = repo.getById;
 export const updateCollectionItem = repo.update;
 export const deleteCollectionItem = repo.remove;
@@ -21,7 +22,10 @@ export function findPossibleDuplicates(
   return repo.findMatches(supabase, userId, brand, model, variant);
 }
 
-export function toInsertRow(userId: string, input: CollectionItemInput): TablesInsert<'collection_items'> {
+export function toInsertRow(
+  userId: string,
+  input: CollectionItemInput
+): TablesInsert<'collection_items'> {
   const v = collectionItemInputSchema.parse(input);
   return {
     owner_id: userId,
@@ -46,15 +50,26 @@ export function toInsertRow(userId: string, input: CollectionItemInput): TablesI
   };
 }
 
-export async function addCollectionItem(supabase: Client, userId: string, input: CollectionItemInput): Promise<CollectionItemRow> {
+export async function addCollectionItem(
+  supabase: Client,
+  userId: string,
+  input: CollectionItemInput
+): Promise<CollectionItemRow> {
   const [row] = await repo.insertMany(supabase, [toInsertRow(userId, input)]);
   if (!row) throw new Error('Insert returned no row');
   return row;
 }
 
-export async function addCollectionItems(supabase: Client, userId: string, inputs: CollectionItemInput[]): Promise<CollectionItemRow[]> {
+export async function addCollectionItems(
+  supabase: Client,
+  userId: string,
+  inputs: CollectionItemInput[]
+): Promise<CollectionItemRow[]> {
   if (inputs.length === 0) return [];
-  return repo.insertMany(supabase, inputs.map((i) => toInsertRow(userId, i)));
+  return repo.insertMany(
+    supabase,
+    inputs.map((i) => toInsertRow(userId, i))
+  );
 }
 
 export type { CollectionItemInput, CollectionItemRow };
