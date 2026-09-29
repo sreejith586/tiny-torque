@@ -1,5 +1,6 @@
 // Identity service — auth + profile. Components import from here, never from repo.
 import type { Client } from '@/lib/supabase/types';
+import { emitEvent } from '@/domain/events';
 import * as repo from './repo';
 import { profileCreateSchema, profilePatchSchema, RESERVED_HANDLES } from './schema';
 import type { ProfileCreateInput, ProfilePatch, ProfileRow } from './types';
@@ -76,6 +77,13 @@ export async function createProfile(supabase: Client, userId: string, input: Pro
     photo_url: v.photoUrl ?? null,
     handle,
   });
+
+  await emitEvent(supabase, {
+    actorId: userId,
+    type: 'user.onboarded',
+    entity: 'profile',
+    entityId: userId,
+  });
 }
 
 /** Profile edit with PATCH semantics — untouched fields are never nulled (MV-S0-09). */
@@ -106,6 +114,12 @@ export async function patchProfile(supabase: Client, userId: string, patch: Prof
 
   if (Object.keys(row).length === 0) return;
   await repo.updateProfile(supabase, userId, row);
+  await emitEvent(supabase, {
+    actorId: userId,
+    type: 'profile.updated',
+    entity: 'profile',
+    entityId: userId,
+  });
 }
 
 export type { ProfileRow, ProfileCreateInput, ProfilePatch };
