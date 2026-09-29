@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { CollectionItemRow } from '@/types/database';
 
-// Matches garage-log-147.html's noPhotoPlaceholderHtml() exactly (D-044): the car-silhouette
+// Matches garage-log-147.html's noPhotoPlaceholderHtml() exactly (D-045): the car-silhouette
 // PNG (public/car-placeholder.png, extracted from the mockup) as a CSS mask at reduced opacity,
 // with a "No Photo" label over it -- not the plain text-only placeholder this had before.
 function NoPhotoPlaceholder() {
