@@ -20,9 +20,16 @@ async function loadProfile(
   } catch (err) {
     // TEMPORARY diagnostic (MV-S1-07): surface the real error instead of a bare 500,
     // to see what's actually failing for an anonymous SSR request. Remove once understood.
-    return {
-      diag: err instanceof Error ? `${err.name}: ${err.message}\n${err.stack}` : String(err),
-    };
+    const plain =
+      err && typeof err === 'object'
+        ? Object.fromEntries(
+            [...Object.getOwnPropertyNames(err), 'message', 'name'].map((k) => [
+              k,
+              (err as Record<string, unknown>)[k],
+            ])
+          )
+        : err;
+    return { diag: JSON.stringify(plain, null, 2) };
   }
   if (!profile) return null;
   const items = await listPublicCollectionItems(supabase, profile.id!);
