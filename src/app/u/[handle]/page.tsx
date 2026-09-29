@@ -14,23 +14,7 @@ async function loadProfile(
     return { profile: FIXTURE_PUBLIC_PROFILE, items: FIXTURE_ITEMS.filter((i) => i.is_public) };
   }
   const supabase = await createClient();
-  let profile;
-  try {
-    profile = await getPublicProfile(supabase, handle);
-  } catch (err) {
-    // TEMPORARY diagnostic (MV-S1-07): surface the real error instead of a bare 500,
-    // to see what's actually failing for an anonymous SSR request. Remove once understood.
-    const plain =
-      err && typeof err === 'object'
-        ? Object.fromEntries(
-            [...Object.getOwnPropertyNames(err), 'message', 'name'].map((k) => [
-              k,
-              (err as Record<string, unknown>)[k],
-            ])
-          )
-        : err;
-    return { diag: JSON.stringify(plain, null, 2) };
-  }
+  const profile = await getPublicProfile(supabase, handle);
   if (!profile) return null;
   const items = await listPublicCollectionItems(supabase, profile.id!);
   return { profile, items };
@@ -50,6 +34,8 @@ export async function generateMetadata({
       ? FIXTURE_PUBLIC_PROFILE
       : await getPublicProfile(await createClient(), handle);
   } catch {
+    // A metadata-generation error takes down the whole route in Next.js, not just the <title> —
+    // fail soft here and let the page component's own error handling be the real signal.
     return { title: 'Collector not found' };
   }
   if (!profile) return { title: 'Collector not found' };
@@ -70,13 +56,6 @@ export default async function PublicProfilePage({
   const { handle } = await params;
   const result = await loadProfile(handle, await searchParams);
   if (!result) notFound();
-  if ('diag' in result) {
-    return (
-      <main style={{ padding: '20px 16px', flex: 1 }}>
-        <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12 }}>{result.diag}</pre>
-      </main>
-    );
-  }
 
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
