@@ -154,14 +154,20 @@ select tests.clear_authentication();
 
 -- ================= feature_flags =================
 
-insert into public.feature_flags (key, enabled) values ('csv_import', false);
+insert into public.feature_flags (key, enabled) values ('test_flag_only', false);
 
 select tests.authenticate_as(:stranger::uuid);
-select is((select count(*) from public.feature_flags)::int, 1, 'feature_flags: any authenticated user can read flags');
+-- filtered to this test's own fixture, not a total count -- feature_flags also carries the
+-- real D-018 catalogue seeded by 20260929010000_feature_flags_seed.sql (MV-S1-06)
+select is(
+  (select count(*)::int from public.feature_flags where key = 'test_flag_only'),
+  1,
+  'feature_flags: any authenticated user can read flags'
+);
 -- the UPDATE policy is USING-only (no explicit WITH CHECK), so a non-admin's update doesn't
 -- throw -- the row is simply not visible to update, same silent-filter behavior as profiles
 select is(
-  tests.exec_and_count($$update public.feature_flags set enabled = true where key = 'csv_import'$$),
+  tests.exec_and_count($$update public.feature_flags set enabled = true where key = 'test_flag_only'$$),
   0,
   'feature_flags: non-admin update is rejected (RLS filters it, 0 rows affected)'
 );
@@ -173,11 +179,15 @@ select throws_ok(
 );
 
 select tests.authenticate_as_anon();
-select is((select count(*) from public.feature_flags)::int, 1, 'feature_flags: anon can read flags too (public read, D-018)');
+select is(
+  (select count(*)::int from public.feature_flags where key = 'test_flag_only'),
+  1,
+  'feature_flags: anon can read flags too (public read, D-018)'
+);
 
 select tests.authenticate_as(:admin::uuid);
 select lives_ok(
-  $$update public.feature_flags set enabled = true where key = 'csv_import'$$,
+  $$update public.feature_flags set enabled = true where key = 'test_flag_only'$$,
   'feature_flags: admin update succeeds'
 );
 

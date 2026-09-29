@@ -6,7 +6,13 @@ on:
   deployment_status: # Vercel preview ready → run Playwright against it (Supabase branch DB behind it, D-033)
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # Scoped per event, not just per ref: a `push` (checks/migrations) and a `deployment_status`
+  # (Playwright against the Vercel preview) for the same branch used to share one group, so
+  # every push cancelled whatever Playwright run was still going for an earlier commit -- it
+  # takes 5-10 min (Vercel deploy + browser install + tests), longer than a typical push cadence
+  # while iterating, so it kept getting killed before finishing. Confirmed via run history: every
+  # deployment_status run on sprint-1 was "cancelled", none had actually failed on its own merits.
+  group: ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

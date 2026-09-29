@@ -1,4 +1,4 @@
-import type { CollectionItemRow, ProfileRow } from '@/types/database';
+import type { CollectionItemRow, ProfileRow, CountryRow } from '@/types/database';
 
 // D-027 / D-041 visual-baseline harness. `?__visual=1` makes the signed-in pages (garage, car
 // detail, profile; add/scan/offers need no data) render this deterministic fixture data with no
@@ -98,6 +98,11 @@ export const FIXTURE_ITEMS: CollectionItemRow[] = [
   },
 ];
 
+export const FIXTURE_COUNTRIES: CountryRow[] = [
+  { code: 'AE', name: 'United Arab Emirates', dial_code: '+971', currency: 'AED', enabled: true },
+  { code: 'IN', name: 'India', dial_code: '+91', currency: 'INR', enabled: true },
+];
+
 export const FIXTURE_PROFILE: ProfileRow = {
   id: OWNER,
   display_name: 'Varun',
@@ -113,6 +118,7 @@ export const FIXTURE_PROFILE: ProfileRow = {
   updated_at: '2026-09-01T08:00:00.000Z',
   deleted_at: null,
   handle: 'varun',
+  handle_changed_at: null,
   country_code: 'IN',
   city: 'Bengaluru',
   bio: null,

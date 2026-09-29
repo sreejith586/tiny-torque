@@ -8,13 +8,20 @@ export async function sendOtp(supabase: Client, phoneE164: string) {
 }
 
 export async function verifyOtp(supabase: Client, phoneE164: string, code: string) {
-  const { data, error } = await supabase.auth.verifyOtp({ phone: phoneE164, token: code, type: 'sms' });
+  const { data, error } = await supabase.auth.verifyOtp({
+    phone: phoneE164,
+    token: code,
+    type: 'sms',
+  });
   if (error) throw error;
   return data.user;
 }
 
 export async function sendEmailOtp(supabase: Client, email: string) {
-  const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: true },
+  });
   if (error) throw error;
 }
 
@@ -30,7 +37,11 @@ export async function signOut(supabase: Client) {
 }
 
 export async function getProfile(supabase: Client, userId: string): Promise<ProfileRow | null> {
-  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .maybeSingle();
   if (error) throw error;
   return data;
 }
@@ -40,7 +51,40 @@ export async function insertProfile(supabase: Client, row: TablesInsert<'profile
   if (error) throw error;
 }
 
-export async function updateProfile(supabase: Client, userId: string, patch: TablesUpdate<'profiles'>) {
+export async function updateProfile(
+  supabase: Client,
+  userId: string,
+  patch: TablesUpdate<'profiles'>
+) {
   const { error } = await supabase.from('profiles').update(patch).eq('id', userId);
   if (error) throw error;
+}
+
+// public_profiles, not profiles: the base table's SELECT policy is owner-or-admin only (D-015),
+// so checking another user's handle has to go through the public view.
+export async function isHandleAvailable(
+  supabase: Client,
+  handle: string,
+  excludeUserId?: string
+): Promise<boolean> {
+  let query = supabase.from('public_profiles').select('id').eq('handle', handle);
+  if (excludeUserId) query = query.neq('id', excludeUserId);
+  const { data, error } = await query.maybeSingle();
+  if (error) throw error;
+  return !data;
+}
+
+export async function redeemInvite(supabase: Client, code: string) {
+  const { error } = await supabase.rpc('redeem_invite', { p_code: code });
+  if (error) throw error;
+}
+
+export async function listEnabledCountries(supabase: Client) {
+  const { data, error } = await supabase
+    .from('countries')
+    .select('*')
+    .eq('enabled', true)
+    .order('code');
+  if (error) throw error;
+  return data;
 }
