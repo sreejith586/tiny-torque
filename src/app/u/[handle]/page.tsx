@@ -14,7 +14,23 @@ async function loadProfile(
     return { profile: FIXTURE_PUBLIC_PROFILE, items: FIXTURE_ITEMS.filter((i) => i.is_public) };
   }
   const supabase = await createClient();
-  const profile = await getPublicProfile(supabase, handle);
+  let profile;
+  try {
+    profile = await getPublicProfile(supabase, handle);
+  } catch (err) {
+    // TEMPORARY diagnostic round 3 (MV-S1-07): is the D-046 grant fix actually not the cause,
+    // or did the migration just not apply? Remove once understood.
+    const plain =
+      err && typeof err === 'object'
+        ? Object.fromEntries(
+            [...Object.getOwnPropertyNames(err), 'message', 'name'].map((k) => [
+              k,
+              (err as Record<string, unknown>)[k],
+            ])
+          )
+        : err;
+    return { diag: JSON.stringify(plain, null, 2) };
+  }
   if (!profile) return null;
   const items = await listPublicCollectionItems(supabase, profile.id!);
   return { profile, items };
@@ -56,6 +72,13 @@ export default async function PublicProfilePage({
   const { handle } = await params;
   const result = await loadProfile(handle, await searchParams);
   if (!result) notFound();
+  if ('diag' in result) {
+    return (
+      <main style={{ padding: '20px 16px', flex: 1 }}>
+        <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12 }}>{result.diag}</pre>
+      </main>
+    );
+  }
 
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
