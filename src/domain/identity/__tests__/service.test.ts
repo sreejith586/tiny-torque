@@ -4,7 +4,11 @@ import {
   isHandleCooldownActive,
   slugifyHandle,
   defaultCountryCode,
+  anonymisedProfileFields,
+  buildExportPayload,
 } from '../service';
+import type { ProfileRow } from '../types';
+import type { CollectionItemRow } from '@/domain/garage/types';
 
 const COUNTRIES = [
   { code: 'AE', dial_code: '+971' },
@@ -54,5 +58,41 @@ describe('identity.defaultCountryCode (F-01 onboarding country prefill)', () => 
   });
   it('defaults to AE when the phone matches no enabled country', () => {
     expect(defaultCountryCode({ phone: '+15551234567' }, COUNTRIES)).toBe('AE');
+  });
+});
+
+describe('identity.anonymisedProfileFields (F-14 delete account, MV-S1-08)', () => {
+  const fields = anonymisedProfileFields(new Date('2026-09-30T12:00:00.000Z'));
+
+  it('soft-deletes by stamping deleted_at', () => {
+    expect(fields.deleted_at).toBe('2026-09-30T12:00:00.000Z');
+  });
+  it('clears every PII / personal free-text column (rule 15: mobile above all)', () => {
+    expect(fields.mobile).toBeNull();
+    expect(fields.bio).toBeNull();
+    expect(fields.city).toBeNull();
+    expect(fields.location).toBeNull();
+    expect(fields.store_name).toBeNull();
+    expect(fields.photo_url).toBeNull();
+  });
+  it('replaces display_name with a non-null placeholder (column is NOT NULL)', () => {
+    expect(fields.display_name).toBe('Deleted collector');
+  });
+  it('keeps handle and country_code (NOT NULL + constrained; handle is not PII)', () => {
+    expect('handle' in fields).toBe(false);
+    expect('country_code' in fields).toBe(false);
+  });
+});
+
+describe('identity.buildExportPayload (F-14 export, MV-S1-08)', () => {
+  const profile = { id: 'u1', handle: 'sree', display_name: 'Sree' } as unknown as ProfileRow;
+  const items = [{ id: 'i1' }, { id: 'i2' }] as unknown as CollectionItemRow[];
+
+  it('wraps the caller profile + all items in a versioned envelope', () => {
+    const payload = buildExportPayload(profile, items);
+    expect(payload.format).toBe('mini-vault-export-v1');
+    expect(payload.profile).toBe(profile);
+    expect(payload.items).toHaveLength(2);
+    expect(typeof payload.exported_at).toBe('string');
   });
 });
