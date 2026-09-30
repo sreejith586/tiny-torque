@@ -1,0 +1,11 @@
+-- 20260929020000_reload_postgrest_schema — MV-S1-07
+--
+-- PostgREST caches the DB schema at startup and only rereads it on this NOTIFY (or a timer).
+-- `public_profiles` (created in 0002_identity_v2.sql) had never been queried through PostgREST
+-- until MV-S1-07's /u/{handle} page — every request to it failed with PGRST205 ("Could not find
+-- the table 'public.public_profiles' in the schema cache"), discovered via a Playwright smoke
+-- test against the real Vercel preview + Supabase Branching DB. `supabase db push` normally
+-- sends this notification itself; Supabase Branching's own migration application apparently
+-- doesn't, at least not reliably. Safe no-op on any Postgres without a listening PostgREST
+-- (CI's plain postgres/supabase-postgres containers).
+notify pgrst, 'reload schema';

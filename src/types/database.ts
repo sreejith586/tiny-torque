@@ -8,6 +8,8 @@ export type MarketplaceListingRow = Tables<'marketplace_listings'>;
 export type SellerReviewRow = Tables<'seller_reviews'>;
 export type WishlistItemRow = Tables<'wishlist_items'>;
 export type ReportRow = Tables<'reports'>;
+export type CountryRow = Tables<'countries'>;
+export type PublicProfileRow = Tables<'public_profiles'>;
 
 export type AccountType = Enums<'account_type'>;
 export type Plan = Enums<'plan_tier'>;

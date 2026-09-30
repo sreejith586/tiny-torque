@@ -140,9 +140,7 @@
       "goal": "Sign in from UAE or India by phone or email, complete a real onboarding with invite code and handle, land on a public profile URL. Events, flags and admin role exist for every later sprint.",
       "demo": "Sign up with an Indian and a UAE number (and one email) on staging; /u/{handle} renders; toggle a flag in Supabase and see the app react within 60 s.",
       "risks": "Twilio/DLT approval lead time for India (start the paperwork on day 1 of the sprint; email OTP is the fallback so the sprint is not blocked).",
-      "decisions_locked": [
-        "ADR-07, ADR-10"
-      ],
+      "decisions_locked": ["ADR-07, ADR-10"],
       "tasks": [
         {
           "id": "MV-S1-01",
@@ -167,7 +165,7 @@
           "feature": "F-01",
           "type": "frontend",
           "title": "Login v2: country picker, phone/email OTP",
-          "desc": "Twilio Verify configured for AE+IN (DLT template submitted), email OTP enabled; UI: country select (AE/IN first, full list), E.164 formatting, 'use email instead', 6-digit input, resend timer 30 s, error copy; Supabase rate limits tuned.",
+          "desc": "Prototype login screen kept (same panel/inputs/buttons/copy tone — reference fd3b02d); add country select (native <select>, AE/IN first, full list), E.164 formatting, 'Use email instead' toggle (already shipped in S0), 6-digit code input, resend timer 30 s, error copy. Twilio Verify/DLT config if D-025 resolved, else email OTP remains primary. Re-baseline login screenshots in the same PR with reason.",
           "est": 3,
           "deps": "MV-S1-01"
         },
@@ -176,7 +174,7 @@
           "feature": "F-01",
           "type": "frontend",
           "title": "Onboarding v2",
-          "desc": "Steps: invite code (flag invite_only) → account type → names → handle (auto-suggest, live uniqueness via server action) → country/city typeahead (static per-country list) → avatar (temporary URL; media in S2) → done. Progress indicator; resumable.",
+          "desc": "Onboarding v2 = prototype's single 'Set up your profile' form extended per F-01 (invite code when invite_only, handle with server-action uniqueness check, country <select>, city <datalist>); no steps/progress bar/typeahead/avatar (D-041). Same panel, labels, btn-primary, field-error patterns. Playwright + new visual baseline for /onboarding (authenticated fixture).",
           "est": 3.5,
           "deps": "MV-S1-01"
         },
@@ -203,7 +201,7 @@
           "feature": "F-14",
           "type": "frontend",
           "title": "Public profile v1 /u/[handle]",
-          "desc": "Header (avatar, name, handle, shop badge, country/city, member since) + public items grid from public_profiles + collection_items; OG meta; 404 for unknown handle.",
+          "desc": "Public profile /u/[handle]: no prototype screen — compose from ProfileView's panel + toggle-row (name, handle, shop badge as text chip, country/city, member since) and GarageView's CarCard grid for public items (public_profiles + collection_items). Plain <title>/<meta> OG text only (no image generation). 404 for unknown handle. Add visual baseline (seeded fixture profile).",
           "est": 2,
           "deps": "MV-S1-05"
         },
@@ -212,7 +210,7 @@
           "feature": "F-14",
           "type": "backend",
           "title": "Settings: export JSON + delete account (stub)",
-          "desc": "Settings page skeleton; export all items as JSON download; delete account server action that anonymises PII + soft-deletes (full effects finalised S8).",
+          "desc": "Settings page = prototype ProfileView panel pattern (appearance + account panels); export all items as JSON download (btn-secondary); delete account = btn-danger + native confirm, server action anonymises PII + soft-deletes (full effects finalised S8). No new components.",
           "est": 1.5,
           "deps": "MV-S1-05"
         },
@@ -234,9 +232,7 @@
       "goal": "The garage is production-grade: photos as first-class media with plan limits, fast server-side search/filter/sort over large collections, enum-driven fields, and shops can bulk-load stock via CSV.",
       "demo": "Import a 300-row CSV, search it instantly, add an item with photos (free-plan gate visible), see Top Brands stats.",
       "risks": "Media migration from jsonb URLs; image compression quality on low-end Android; CSV edge cases (Excel encodings).",
-      "decisions_locked": [
-        "ADR-08"
-      ],
+      "decisions_locked": ["ADR-08"],
       "tasks": [
         {
           "id": "MV-S2-01",
@@ -328,9 +324,7 @@
       "goal": "Scanning is reliable, metered and cheap: structured output, quota enforced before spend, every job costed, and every accepted scan strengthens the canonical catalogue.",
       "demo": "Scan a group photo of 6 cars → review list with confidence + catalogue match chips → add to garage; free user hits quota at 10 and sees paywall; admin sees cost per scan and proposed models to verify.",
       "risks": "Model accuracy on blurry/angled photos; catalogue fuzzy-match false positives (keep auto-link threshold high at 0.85).",
-      "decisions_locked": [
-        "ADR-06"
-      ],
+      "decisions_locked": ["ADR-06"],
       "tasks": [
         {
           "id": "MV-S3-01",

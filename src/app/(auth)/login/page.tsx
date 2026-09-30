@@ -1,19 +1,35 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { sendOtp, verifyOtp, sendEmailOtp, verifyEmailOtp, getProfile } from '@/domain/identity';
+import {
+  sendOtp,
+  verifyOtp,
+  sendEmailOtp,
+  verifyEmailOtp,
+  getProfile,
+  listEnabledCountries,
+  type CountryRow,
+} from '@/domain/identity';
+import { Spinner, StatusRow } from '@/components/Loaders';
 
 // Two-step OTP login: choose phone or email -> send code -> enter code -> verify.
 // On first login (no profiles row yet) we send the person to /onboarding;
 // otherwise straight to /garage.
 //
 // Email OTP is the primary path until the SMS provider is configured (D-037);
-// phone stays available. Country picker + full E.164 handling land in S1-03.
+// phone stays available. Country list = the pilot's enabled countries (D-001: AE/IN).
 
-const COUNTRY_CODE = '+91';
+const DEFAULT_COUNTRY = 'IN';
 type Method = 'email' | 'phone';
+
+// Matches the `countries` seed (D-001 pilot). Renders immediately so the select is never
+// blank while the live fetch is in flight, and the form still works if it fails outright.
+const FALLBACK_COUNTRIES: CountryRow[] = [
+  { code: 'AE', name: 'United Arab Emirates', dial_code: '+971', currency: 'AED', enabled: true },
+  { code: 'IN', name: 'India', dial_code: '+91', currency: 'INR', enabled: true },
+];
 
 export default function LoginPage() {
   const supabase = createClient();
@@ -21,21 +37,39 @@ export default function LoginPage() {
 
   const [method, setMethod] = useState<Method>('email');
   const [step, setStep] = useState<'identify' | 'otp'>('identify');
+  const [countries, setCountries] = useState<CountryRow[]>(FALLBACK_COUNTRIES);
+  const [countryCode, setCountryCode] = useState(DEFAULT_COUNTRY);
   const [mobileDigits, setMobileDigits] = useState('');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fullMobile = `${COUNTRY_CODE}${mobileDigits.replace(/\D/g, '')}`;
+  useEffect(() => {
+    listEnabledCountries(supabase)
+      .then((rows) => {
+        const first = rows[0];
+        if (!first) return;
+        setCountries(rows);
+        if (!rows.some((c) => c.code === DEFAULT_COUNTRY)) {
+          setCountryCode(first.code);
+        }
+      })
+      .catch(() => {
+        // Country list is a progressive enhancement over the default; sign-in still works.
+      });
+  }, [supabase]);
+
+  const dialCode = countries.find((c) => c.code === countryCode)?.dial_code ?? '+91';
+  const fullMobile = `${dialCode}${mobileDigits.replace(/\D/g, '')}`;
   const cleanEmail = email.trim().toLowerCase();
   const destination = method === 'email' ? cleanEmail : fullMobile;
 
   async function handleSendOtp(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (method === 'phone' && mobileDigits.replace(/\D/g, '').length < 10) {
-      setError('Enter a valid 10-digit mobile number.');
+    if (method === 'phone' && mobileDigits.replace(/\D/g, '').length < 7) {
+      setError('Enter a valid mobile number.');
       return;
     }
     if (method === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
@@ -97,7 +131,9 @@ export default function LoginPage() {
     <main style={{ padding: '48px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
       <h1 style={{ fontSize: 26 }}>Sign in to Mini Vault</h1>
       <p className="muted">
-        {method === 'email' ? 'No password needed — just your email.' : 'No password needed — just your mobile number.'}
+        {method === 'email'
+          ? 'No password needed — just your email.'
+          : 'No password needed — just your mobile number.'}
       </p>
 
       {step === 'identify' && (
@@ -120,9 +156,20 @@ export default function LoginPage() {
             <>
               <label htmlFor="mobile">Mobile number</label>
               <div style={{ display: 'flex', gap: 8 }}>
-                <span className="panel" style={{ padding: '12px 14px', width: 'auto', flex: '0 0 auto' }}>
-                  {COUNTRY_CODE}
-                </span>
+                <select
+                  id="mobileCountry"
+                  aria-label="Country"
+                  title="Country"
+                  value={countryCode}
+                  onChange={(e) => setCountryCode(e.target.value)}
+                  style={{ width: 'auto', flex: '0 0 auto' }}
+                >
+                  {countries.map((c) => (
+                    <option key={c.code} value={c.code} title={c.name}>
+                      {c.code} {c.dial_code}
+                    </option>
+                  ))}
+                </select>
                 <input
                   id="mobile"
                   type="tel"
@@ -139,7 +186,12 @@ export default function LoginPage() {
           <button className="btn-primary" style={{ marginTop: 20 }} disabled={loading}>
             {loading ? 'Sending code…' : 'Send code'}
           </button>
-          <button type="button" className="btn-secondary" style={{ marginTop: 10 }} onClick={switchMethod}>
+          <button
+            type="button"
+            className="btn-secondary"
+            style={{ marginTop: 10 }}
+            onClick={switchMethod}
+          >
             {method === 'email' ? 'Use mobile number instead' : 'Use email instead'}
           </button>
         </form>
@@ -158,6 +210,12 @@ export default function LoginPage() {
             onChange={(e) => setCode(e.target.value)}
             autoFocus
           />
+          {loading && (
+            <StatusRow>
+              <Spinner />
+              <span>Verifying your code…</span>
+            </StatusRow>
+          )}
           {error && <p className="field-error">{error}</p>}
           <button className="btn-primary" style={{ marginTop: 20 }} disabled={loading}>
             {loading ? 'Verifying…' : 'Verify & continue'}

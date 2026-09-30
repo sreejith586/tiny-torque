@@ -1,0 +1,35 @@
+name: Update visual baselines
+# Manual tool (D-041): regenerates e2e/__screenshots__ against a real preview/prod URL and
+# uploads them as an artifact to download and commit. D-041 requires baselines to be generated
+# on Linux; this exists because neither the solo builder nor Claude Code sessions have a local
+# Linux box, only this CI runner. Trigger from the Actions tab (or `gh workflow run
+# update-baselines.yml -f base_url=...`), download the "updated-baselines" artifact, and copy
+# its contents over e2e/__screenshots__ in the PR that explains which screen changed and why.
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'URL to screenshot (a Vercel preview or the prod URL)'
+        required: true
+
+jobs:
+  update:
+    name: pnpm test:e2e:update
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e:update
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          E2E_ENABLE_PHONE_SIGNIN: ${{ vars.E2E_ENABLE_PHONE_SIGNIN }}
+          E2E_TEST_PHONE: '+919999900001'
+          E2E_TEST_OTP: '246810'
+      - uses: actions/upload-artifact@v4
+        with: { name: updated-baselines, path: e2e/__screenshots__, retention-days: 7 }

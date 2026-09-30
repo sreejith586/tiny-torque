@@ -1,0 +1,68 @@
+name: Apply migrations (supabase db push)
+
+# D-049 option (b). Supabase Branching's GitHub integration is NOT connected to this
+# repo, so migrations were never auto-applied to the branch databases — `staging` sat
+# at the 3 S0 migrations for all of S1 while every S1 migration merged at the git level
+# only (root cause of the MV-S1-07 PGRST205 bug, D-048). This workflow closes that gap
+# explicitly: on every push to `staging`/`main` (i.e. a PR merge), apply any un-applied
+# migrations to that environment's Supabase database. Idempotent — a run with nothing
+# new to apply is a no-op.
+#
+# Required repo secrets (Settings → Secrets and variables → Actions):
+#   SUPABASE_ACCESS_TOKEN         personal/CI access token (Account → Access Tokens)
+#   SUPABASE_STAGING_DB_PASSWORD  staging branch DB password (ref bjhowyyyypeacfkgxwqr)
+#   SUPABASE_PROD_DB_PASSWORD     main/prod DB password      (ref whjqwcaoexbytspkaxfh)
+#
+# `supabase db push` on a linked project connects via the connection pooler, which is
+# IPv4-reachable — GitHub-hosted runners are IPv4-only, so the direct db.<ref>.supabase.co
+# host (IPv6-only) would not work here; the pooler path avoids that.
+
+on:
+  push:
+    branches: [staging, main]
+
+concurrency:
+  # Never cancel an in-flight apply: a half-run `db push` can desync schema_migrations.
+  # Queue subsequent pushes instead of cancelling the one in progress.
+  group: db-migrate-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  db-push:
+    name: db push → ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Resolve target project ref
+        id: target
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "ref=whjqwcaoexbytspkaxfh" >> "$GITHUB_OUTPUT"
+            echo "pw_name=SUPABASE_PROD_DB_PASSWORD" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=bjhowyyyypeacfkgxwqr" >> "$GITHUB_OUTPUT"
+            echo "pw_name=SUPABASE_STAGING_DB_PASSWORD" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: supabase db push
+        env:
+          SUPABASE_DB_PASSWORD: ${{ github.ref_name == 'main' && secrets.SUPABASE_PROD_DB_PASSWORD || secrets.SUPABASE_STAGING_DB_PASSWORD }}
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "::error::SUPABASE_ACCESS_TOKEN secret is not set"; exit 1
+          fi
+          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "::error::${{ steps.target.outputs.pw_name }} secret is not set for ${{ github.ref_name }}"; exit 1
+          fi
+          supabase link --project-ref "${{ steps.target.outputs.ref }}"
+          # --include-all: apply every local migration not yet in the remote history,
+          # even ones timestamped before the remote's latest (defends against the exact
+          # drift that caused D-048 — remote stuck behind local). No-op when in sync.
+          supabase db push --include-all
