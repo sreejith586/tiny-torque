@@ -49,6 +49,9 @@ begin
   return v_count;
 end; $$;
 
+grant usage on schema tests to anon, authenticated;
+grant execute on all functions in schema tests to anon, authenticated;
+
 -- ---------- owner ----------
 select tests.authenticate_as('00000000-0000-0000-0000-00000000000a');
 select is((select count(*)::int from public.media), 2, 'owner sees both of their media rows');
