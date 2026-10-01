@@ -7,17 +7,23 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { addCollectionItem, findPossibleDuplicates } from '@/domain/garage';
 import type { CollectionItemRow } from '@/domain/garage';
+import { getProfile } from '@/domain/identity';
+import { photoLimit } from '@/domain/entitlements';
 import { uploadItemMedia } from '@/domain/media';
 import { compressImage } from '@/lib/image';
 import { CameraIcon } from '@/components/icons';
+import type { Plan } from '@/types/database';
 
-const MAX_PHOTOS = 3;
+const CONDITIONS = ['mint', 'near-mint', 'good', 'played', 'damaged'];
+const RARITIES = ['common', 'uncommon', 'rare', 'super-rare', 'treasure-hunt', 'chase'];
 
 export default function AddCarPage() {
   const supabase = createClient();
   const router = useRouter();
 
   const [userId, setUserId] = useState<string | null>(null);
+  const [plan, setPlan] = useState<Plan>('free');
+  const maxPhotos = photoLimit(plan);
 
   // Required
   const [brand, setBrand] = useState('');
@@ -47,7 +53,14 @@ export default function AddCarPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+    supabase.auth.getUser().then(async ({ data }) => {
+      const uid = data.user?.id ?? null;
+      setUserId(uid);
+      if (uid) {
+        const profile = await getProfile(supabase, uid).catch(() => null);
+        if (profile) setPlan(profile.plan);
+      }
+    });
   }, [supabase]);
 
   // Non-blocking duplicate warning: check as brand/model/variant settle.
@@ -79,7 +92,7 @@ export default function AddCarPage() {
 
   function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
-    const room = MAX_PHOTOS - photoFiles.length;
+    const room = maxPhotos - photoFiles.length;
     const accepted = files.slice(0, room);
     if (accepted.length === 0) return;
 
@@ -145,14 +158,19 @@ export default function AddCarPage() {
     <main style={{ padding: '20px 16px', flex: 1 }}>
       <h1 style={{ fontSize: 24 }}>Add a car</h1>
 
-      <Link
-        href="/garage/scan"
-        className="btn-secondary"
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 16 }}
-      >
-        <CameraIcon size={16} />
-        Got several cars in one photo? Batch scan instead
-      </Link>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
+        <Link
+          href="/garage/scan"
+          className="btn-secondary"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+        >
+          <CameraIcon size={16} />
+          Batch scan a photo
+        </Link>
+        <Link href="/garage/import" className="btn-secondary" style={{ display: 'inline-flex' }}>
+          Import CSV / spreadsheet
+        </Link>
+      </div>
 
       <form onSubmit={handleSubmit}>
         <label htmlFor="brand">Brand *</label>
@@ -181,7 +199,7 @@ export default function AddCarPage() {
         )}
 
         <label style={{ marginTop: 20 }}>
-          Photos ({photoFiles.length}/{MAX_PHOTOS})
+          Photos ({photoFiles.length}/{maxPhotos})
         </label>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {photoPreviews.map((src, i) => (
@@ -212,7 +230,7 @@ export default function AddCarPage() {
               </button>
             </div>
           ))}
-          {photoFiles.length < MAX_PHOTOS && (
+          {photoFiles.length < maxPhotos ? (
             <button
               type="button"
               className="btn-secondary"
@@ -221,7 +239,21 @@ export default function AddCarPage() {
             >
               + Photo
             </button>
-          )}
+          ) : plan === 'free' ? (
+            // Entitlement gate (F-02): free = 1 photo; more is a Pro feature (paywall placeholder).
+            <div
+              className="panel"
+              style={{
+                width: 180,
+                padding: 10,
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: 12,
+              }}
+            >
+              <span className="muted">1 photo on Free — upgrade to Pro for up to 8.</span>
+            </div>
+          ) : null}
         </div>
         <input
           ref={fileInputRef}
@@ -284,20 +316,23 @@ export default function AddCarPage() {
             />
 
             <label htmlFor="rarity">Rarity</label>
-            <input
-              id="rarity"
-              value={rarity}
-              onChange={(e) => setRarity(e.target.value)}
-              placeholder="e.g. Super Treasure Hunt"
-            />
+            <select id="rarity" value={rarity} onChange={(e) => setRarity(e.target.value)}>
+              <option value="">Select…</option>
+              {RARITIES.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
 
             <label htmlFor="condition">Condition</label>
             <select id="condition" value={condition} onChange={(e) => setCondition(e.target.value)}>
               <option value="">Select…</option>
-              <option value="mint">Mint / sealed</option>
-              <option value="good">Good</option>
-              <option value="fair">Fair</option>
-              <option value="poor">Poor</option>
+              {CONDITIONS.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
             </select>
 
             <label htmlFor="qty">Quantity owned</label>

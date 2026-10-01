@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { listGarage } from '@/domain/garage';
@@ -30,7 +31,12 @@ export default async function GaragePage({
 
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
-      <h1 style={{ fontSize: 24 }}>My Garage</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <h1 style={{ fontSize: 24 }}>My Garage</h1>
+        <Link href="/garage/trash" className="muted" style={{ fontSize: 13 }}>
+          Trash
+        </Link>
+      </div>
       <GarageView initialItems={items} initialCursor={cursor} />
     </main>
   );
