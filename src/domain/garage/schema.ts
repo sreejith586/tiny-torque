@@ -14,8 +14,6 @@ export const collectionItemInputSchema = z.object({
   qty: z.number().int().min(1).max(9999).default(1),
   pricePaid: z.number().min(0).max(9_999_999).default(0),
   source: optText(80),
-  photo: z.string().url().nullish(),
-  photos: z.array(z.string().url()).max(8).default([]),
   isPublic: z.boolean().default(false),
   forSale: z.boolean().default(false),
   openToOffers: z.boolean().default(false),

@@ -1,15 +1,51 @@
 // Garage (My Garage) service. Components import from here, never from repo.
 import type { Client, TablesInsert } from '@/lib/supabase/types';
+import { listMediaForEntities, listItemMedia } from '@/domain/media';
 import * as repo from './repo';
 import { collectionItemInputSchema } from './schema';
-import type { CollectionItemInput, CollectionItemRow } from './types';
+import type { CollectionItemInput, CollectionItemRow, GarageItem } from './types';
 
-export const listCollectionItems = repo.listByOwner;
-export const listPublicCollectionItems = repo.listPublicByOwner;
-export const getCollectionItem = repo.getById;
 export const updateCollectionItem = repo.update;
 export const deleteCollectionItem = repo.remove;
-export const uploadCarPhoto = repo.uploadPhoto;
+
+/** Attach each item's photos (media rows → display ids) in one batched query. */
+async function attachMedia(supabase: Client, items: CollectionItemRow[]): Promise<GarageItem[]> {
+  if (items.length === 0) return [];
+  const media = await listMediaForEntities(
+    supabase,
+    'item',
+    items.map((i) => i.id)
+  );
+  const byItem = new Map<string, { id: string }[]>();
+  for (const m of media) {
+    if (!m.entity_id) continue;
+    const list = byItem.get(m.entity_id) ?? [];
+    list.push({ id: m.id });
+    byItem.set(m.entity_id, list);
+  }
+  return items.map((item) => ({ ...item, media: byItem.get(item.id) ?? [] }));
+}
+
+export async function listCollectionItems(supabase: Client, userId: string): Promise<GarageItem[]> {
+  return attachMedia(supabase, await repo.listByOwner(supabase, userId));
+}
+
+export async function listPublicCollectionItems(
+  supabase: Client,
+  userId: string
+): Promise<GarageItem[]> {
+  return attachMedia(supabase, await repo.listPublicByOwner(supabase, userId));
+}
+
+export async function getCollectionItem(
+  supabase: Client,
+  itemId: string
+): Promise<GarageItem | null> {
+  const item = await repo.getById(supabase, itemId);
+  if (!item) return null;
+  const media = await listItemMedia(supabase, itemId);
+  return { ...item, media: media.map((m) => ({ id: m.id })) };
+}
 
 /** Non-blocking duplicate warning: same brand + model + variant for this owner. */
 export function findPossibleDuplicates(
@@ -40,8 +76,6 @@ export function toInsertRow(
     qty: v.qty,
     price_paid: v.pricePaid,
     source: v.source ?? null,
-    photo: v.photo ?? v.photos[0] ?? null,
-    photos: v.photos,
     is_public: v.isPublic,
     for_sale: v.forSale,
     open_to_offers: v.openToOffers,
@@ -72,4 +106,4 @@ export async function addCollectionItems(
   );
 }
 
-export type { CollectionItemInput, CollectionItemRow };
+export type { CollectionItemInput, CollectionItemRow, GarageItem, DisplayMedia } from './types';

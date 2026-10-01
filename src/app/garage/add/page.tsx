@@ -5,8 +5,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { addCollectionItem, findPossibleDuplicates, uploadCarPhoto } from '@/domain/garage';
-import type { CollectionItemRow } from '@/types/database';
+import { addCollectionItem, findPossibleDuplicates } from '@/domain/garage';
+import type { CollectionItemRow } from '@/domain/garage';
+import { uploadItemMedia } from '@/domain/media';
+import { compressImage } from '@/lib/image';
 import { CameraIcon } from '@/components/icons';
 
 const MAX_PHOTOS = 3;
@@ -109,12 +111,6 @@ export default function AddCarPage() {
 
     setSaving(true);
     try {
-      const photoUrls: string[] = [];
-      for (const file of photoFiles) {
-        const url = await uploadCarPhoto(supabase, userId, file);
-        photoUrls.push(url);
-      }
-
       const item = await addCollectionItem(supabase, userId, {
         brand: brand.trim(),
         model: model.trim() || null,
@@ -127,10 +123,14 @@ export default function AddCarPage() {
         qty: qty ? Number(qty) : 1,
         pricePaid: pricePaid ? Number(pricePaid) : 0,
         source: source.trim() || null,
-        photo: photoUrls[0] ?? null,
-        photos: photoUrls,
         isPublic,
       });
+
+      // Photos are media rows now (D-010): compress client-side, then upload to item-media.
+      for (let i = 0; i < photoFiles.length; i++) {
+        const blob = await compressImage(photoFiles[i]!);
+        await uploadItemMedia(supabase, userId, item.id, blob, { sortOrder: i, bytes: blob.size });
+      }
 
       router.push(`/garage/${item.id}`);
       router.refresh();

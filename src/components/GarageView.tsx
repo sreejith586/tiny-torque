@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import type { CollectionItemRow } from '@/types/database';
+import type { GarageItem } from '@/domain/garage';
 import CarCard from './CarCard';
 
 type SortKey = 'newest' | 'brand-az' | 'qty-desc' | 'price-desc';
 
-export default function GarageView({ items }: { items: CollectionItemRow[] }) {
+export default function GarageView({ items }: { items: GarageItem[] }) {
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [query, setQuery] = useState('');
   const [brandFilter, setBrandFilter] = useState('all');
@@ -60,7 +60,11 @@ export default function GarageView({ items }: { items: CollectionItemRow[] }) {
     return (
       <div className="empty-state">
         <p>Your garage is empty.</p>
-        <Link href="/garage/add" className="btn-primary" style={{ marginTop: 12, display: 'inline-flex' }}>
+        <Link
+          href="/garage/add"
+          className="btn-primary"
+          style={{ marginTop: 12, display: 'inline-flex' }}
+        >
           Add your first car
         </Link>
       </div>
@@ -90,7 +94,9 @@ export default function GarageView({ items }: { items: CollectionItemRow[] }) {
         <select value={brandFilter} onChange={(e) => setBrandFilter(e.target.value)}>
           <option value="all">All brands</option>
           {brands.map((b) => (
-            <option key={b} value={b}>{b}</option>
+            <option key={b} value={b}>
+              {b}
+            </option>
           ))}
         </select>
         <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>

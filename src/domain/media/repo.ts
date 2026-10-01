@@ -90,3 +90,21 @@ export async function getById(
   if (error) throw error;
   return data;
 }
+
+export async function listForEntities(
+  supabase: Client,
+  kind: MediaRow['kind'],
+  entityIds: string[]
+): Promise<MediaRow[]> {
+  if (entityIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from('media')
+    .select('*')
+    .eq('kind', kind)
+    .in('entity_id', entityIds)
+    .in('status', ['uploading', 'ready'])
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}

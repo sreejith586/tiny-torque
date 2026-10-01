@@ -7,13 +7,13 @@ export type Database = {
           Tables: {
             "collection_items": {
                   Row: {
-                    "ask_price": number | null,"brand": string,"card_type": string | null,"condition": string | null,"created_at": string,"deleted_at": string | null,"for_sale": boolean,"id": string,"is_public": boolean,"model": string | null,"open_to_offers": boolean,"open_to_trade": boolean,"owner_id": string,"photo": string | null,"photos": NonNullable<Json>,"price_paid": number,"qty": number,"rarity": string | null,"scale": string | null,"series": string | null,"source": string | null,"updated_at": string,"variant": string | null
+                    "ask_price": number | null,"brand": string,"card_type": string | null,"catalog_model_id": string | null,"color": string | null,"condition": string | null,"created_at": string,"currency": string | null,"deleted_at": string | null,"for_sale": boolean,"id": string,"is_favorite": boolean,"is_public": boolean,"model": string | null,"notes": string | null,"open_to_offers": boolean,"open_to_trade": boolean,"owner_id": string,"photo": string | null,"photos": NonNullable<Json>,"price_paid": number,"qty": number,"rarity": string | null,"scale": string | null,"search": unknown,"series": string | null,"source": string | null,"updated_at": string,"variant": string | null
                   }
                   Insert: {
-                    "ask_price"?: number | null,"brand": string,"card_type"?: string | null,"condition"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"for_sale"?: boolean,"id"?: string,"is_public"?: boolean,"model"?: string | null,"open_to_offers"?: boolean,"open_to_trade"?: boolean,"owner_id": string,"photo"?: string | null,"photos"?: NonNullable<Json>,"price_paid"?: number,"qty"?: number,"rarity"?: string | null,"scale"?: string | null,"series"?: string | null,"source"?: string | null,"updated_at"?: string,"variant"?: string | null
+                    "ask_price"?: number | null,"brand": string,"card_type"?: string | null,"catalog_model_id"?: string | null,"color"?: string | null,"condition"?: string | null,"created_at"?: string,"currency"?: string | null,"deleted_at"?: string | null,"for_sale"?: boolean,"id"?: string,"is_favorite"?: boolean,"is_public"?: boolean,"model"?: string | null,"notes"?: string | null,"open_to_offers"?: boolean,"open_to_trade"?: boolean,"owner_id": string,"photo"?: string | null,"photos"?: NonNullable<Json>,"price_paid"?: number,"qty"?: number,"rarity"?: string | null,"scale"?: string | null,"search"?: never,"series"?: string | null,"source"?: string | null,"updated_at"?: string,"variant"?: string | null
                   }
                   Update: {
-                    "ask_price"?: number | null,"brand"?: string,"card_type"?: string | null,"condition"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"for_sale"?: boolean,"id"?: string,"is_public"?: boolean,"model"?: string | null,"open_to_offers"?: boolean,"open_to_trade"?: boolean,"owner_id"?: string,"photo"?: string | null,"photos"?: NonNullable<Json>,"price_paid"?: number,"qty"?: number,"rarity"?: string | null,"scale"?: string | null,"series"?: string | null,"source"?: string | null,"updated_at"?: string,"variant"?: string | null
+                    "ask_price"?: number | null,"brand"?: string,"card_type"?: string | null,"catalog_model_id"?: string | null,"color"?: string | null,"condition"?: string | null,"created_at"?: string,"currency"?: string | null,"deleted_at"?: string | null,"for_sale"?: boolean,"id"?: string,"is_favorite"?: boolean,"is_public"?: boolean,"model"?: string | null,"notes"?: string | null,"open_to_offers"?: boolean,"open_to_trade"?: boolean,"owner_id"?: string,"photo"?: string | null,"photos"?: NonNullable<Json>,"price_paid"?: number,"qty"?: number,"rarity"?: string | null,"scale"?: string | null,"search"?: never,"series"?: string | null,"source"?: string | null,"updated_at"?: string,"variant"?: string | null
                   }
                   Relationships: [
                     {
@@ -464,7 +464,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "account_type": "individual"|"shop","listing_status": "active"|"sold"|"removed","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","plan_tier": "free"|"pro","report_status": "open"|"reviewed"|"dismissed","user_role": "user"|"admin"
+            "account_type": "individual"|"shop","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","plan_tier": "free"|"pro","report_status": "open"|"reviewed"|"dismissed","user_role": "user"|"admin"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -580,7 +580,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "account_type": ["individual", "shop"],"listing_status": ["active", "sold", "removed"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"plan_tier": ["free", "pro"],"report_status": ["open", "reviewed", "dismissed"],"user_role": ["user", "admin"]
+            "account_type": ["individual", "shop"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"plan_tier": ["free", "pro"],"report_status": ["open", "reviewed", "dismissed"],"user_role": ["user", "admin"]
           }
         }
 } as const

@@ -13,8 +13,10 @@ async function selectOne(supabase: Client, itemId: string) {
   return data;
 }
 
+// Images live in `media` now (D-010); the legacy photo/photos columns remain on the row until
+// their drop (2nd release, D-006) but the app no longer reads or writes them.
 function toRow(r: NonNullable<ItemRowRaw>): CollectionItemRow {
-  return { ...r, photos: Array.isArray(r.photos) ? (r.photos as string[]) : [] };
+  return r as CollectionItemRow;
 }
 
 export async function listByOwner(supabase: Client, userId: string): Promise<CollectionItemRow[]> {
@@ -93,13 +95,4 @@ export async function update(
 export async function remove(supabase: Client, itemId: string) {
   const { error } = await supabase.from('collection_items').delete().eq('id', itemId);
   if (error) throw error;
-}
-
-export async function uploadPhoto(supabase: Client, userId: string, file: File): Promise<string> {
-  // Key MUST start with "<uid>/" — storage policy (0001) enforces the prefix.
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-  const path = `${userId}/${Date.now()}-${safeName}`;
-  const { error } = await supabase.storage.from('car-photos').upload(path, file);
-  if (error) throw error;
-  return supabase.storage.from('car-photos').getPublicUrl(path).data.publicUrl;
 }
