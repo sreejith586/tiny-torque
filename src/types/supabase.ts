@@ -5,7 +5,118 @@ export type Database = {
   
   "public": {
           Tables: {
-            "collection_items": {
+            "ai_scan_jobs": {
+                  Row: {
+                    "accepted_count": number,"candidates": NonNullable<Json>,"cost_usd": number | null,"created_at": string,"error": string | null,"id": string,"input_tokens": number | null,"kind": Database["public"]['Enums']["scan_kind"],"latency_ms": number | null,"media_id": string | null,"model": string | null,"output_tokens": number | null,"status": Database["public"]['Enums']["scan_status"],"user_id": string
+                  }
+                  Insert: {
+                    "accepted_count"?: number,"candidates"?: NonNullable<Json>,"cost_usd"?: number | null,"created_at"?: string,"error"?: string | null,"id"?: string,"input_tokens"?: number | null,"kind": Database["public"]['Enums']["scan_kind"],"latency_ms"?: number | null,"media_id"?: string | null,"model"?: string | null,"output_tokens"?: number | null,"status"?: Database["public"]['Enums']["scan_status"],"user_id": string
+                  }
+                  Update: {
+                    "accepted_count"?: number,"candidates"?: NonNullable<Json>,"cost_usd"?: number | null,"created_at"?: string,"error"?: string | null,"id"?: string,"input_tokens"?: number | null,"kind"?: Database["public"]['Enums']["scan_kind"],"latency_ms"?: number | null,"media_id"?: string | null,"model"?: string | null,"output_tokens"?: number | null,"status"?: Database["public"]['Enums']["scan_status"],"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ai_scan_jobs_media_id_fkey"
+      columns: ["media_id"]
+isOneToOne: false
+      referencedRelation: "media"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ai_scan_jobs_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ai_scan_jobs_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"catalog_brands": {
+                  Row: {
+                    "created_at": string,"id": string,"logo_media_id": string | null,"name": string,"proposed_by": string | null,"slug": string,"status": Database["public"]['Enums']["catalog_status"]
+                  }
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"logo_media_id"?: string | null,"name": string,"proposed_by"?: string | null,"slug": string,"status"?: Database["public"]['Enums']["catalog_status"]
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"logo_media_id"?: string | null,"name"?: string,"proposed_by"?: string | null,"slug"?: string,"status"?: Database["public"]['Enums']["catalog_status"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "catalog_brands_logo_media_id_fkey"
+      columns: ["logo_media_id"]
+isOneToOne: false
+      referencedRelation: "media"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "catalog_brands_proposed_by_fkey"
+      columns: ["proposed_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "catalog_brands_proposed_by_fkey"
+      columns: ["proposed_by"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"catalog_models": {
+                  Row: {
+                    "brand_id": string,"casting_code": string | null,"color_variants": NonNullable<Json>,"created_at": string,"id": string,"merged_into_id": string | null,"name": string,"proposed_by": string | null,"scale": string | null,"search": unknown,"series": string | null,"status": Database["public"]['Enums']["model_status"],"verified_by": string | null,"year": number | null
+                  }
+                  Insert: {
+                    "brand_id": string,"casting_code"?: string | null,"color_variants"?: NonNullable<Json>,"created_at"?: string,"id"?: string,"merged_into_id"?: string | null,"name": string,"proposed_by"?: string | null,"scale"?: string | null,"search"?: never,"series"?: string | null,"status"?: Database["public"]['Enums']["model_status"],"verified_by"?: string | null,"year"?: number | null
+                  }
+                  Update: {
+                    "brand_id"?: string,"casting_code"?: string | null,"color_variants"?: NonNullable<Json>,"created_at"?: string,"id"?: string,"merged_into_id"?: string | null,"name"?: string,"proposed_by"?: string | null,"scale"?: string | null,"search"?: never,"series"?: string | null,"status"?: Database["public"]['Enums']["model_status"],"verified_by"?: string | null,"year"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "catalog_models_brand_id_fkey"
+      columns: ["brand_id"]
+isOneToOne: false
+      referencedRelation: "catalog_brands"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "catalog_models_merged_into_id_fkey"
+      columns: ["merged_into_id"]
+isOneToOne: false
+      referencedRelation: "catalog_models"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "catalog_models_proposed_by_fkey"
+      columns: ["proposed_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "catalog_models_proposed_by_fkey"
+      columns: ["proposed_by"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "catalog_models_verified_by_fkey"
+      columns: ["verified_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "catalog_models_verified_by_fkey"
+      columns: ["verified_by"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"collection_items": {
                   Row: {
                     "ask_price": number | null,"brand": string,"card_type": string | null,"catalog_model_id": string | null,"color": string | null,"condition": string | null,"created_at": string,"currency": string | null,"deleted_at": string | null,"for_sale": boolean,"id": string,"is_favorite": boolean,"is_public": boolean,"model": string | null,"notes": string | null,"open_to_offers": boolean,"open_to_trade": boolean,"owner_id": string,"photo": string | null,"photos": NonNullable<Json>,"price_paid": number,"qty": number,"rarity": string | null,"scale": string | null,"search": unknown,"series": string | null,"source": string | null,"updated_at": string,"variant": string | null
                   }
@@ -17,6 +128,12 @@ export type Database = {
                   }
                   Relationships: [
                     {
+      foreignKeyName: "collection_items_catalog_model_fk"
+      columns: ["catalog_model_id"]
+isOneToOne: false
+      referencedRelation: "catalog_models"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "collection_items_owner_id_fkey"
       columns: ["owner_id"]
 isOneToOne: false
@@ -444,6 +561,9 @@ isOneToOne: false
 "emit_event":
 { Args: { "p_actor_id": string,"p_entity": string,"p_entity_id"?: string,"p_payload"?: Json,"p_type": string }; Returns: undefined
                            },
+"entitlement_scan_quota":
+{ Args: { "p_user": string }; Returns: number
+                           },
 "gen_random_uuid":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
@@ -461,10 +581,16 @@ isOneToOne: false
                            },
 "redeem_invite":
 { Args: { "p_code": string }; Returns: undefined
+                           },
+"show_limit":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"show_trgm":
+{ Args: { "": string }; Returns: (string)[]
                            }
           }
           Enums: {
-            "account_type": "individual"|"shop","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","plan_tier": "free"|"pro","report_status": "open"|"reviewed"|"dismissed","user_role": "user"|"admin"
+            "account_type": "individual"|"shop","catalog_status": "proposed"|"verified","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","model_status": "proposed"|"verified"|"merged","plan_tier": "free"|"pro","report_status": "open"|"reviewed"|"dismissed","scan_kind": "single"|"group"|"visual_search","scan_status": "queued"|"running"|"done"|"failed","user_role": "user"|"admin"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -580,7 +706,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "account_type": ["individual", "shop"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"plan_tier": ["free", "pro"],"report_status": ["open", "reviewed", "dismissed"],"user_role": ["user", "admin"]
+            "account_type": ["individual", "shop"],"catalog_status": ["proposed", "verified"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"model_status": ["proposed", "verified", "merged"],"plan_tier": ["free", "pro"],"report_status": ["open", "reviewed", "dismissed"],"scan_kind": ["single", "group", "visual_search"],"scan_status": ["queued", "running", "done", "failed"],"user_role": ["user", "admin"]
           }
         }
 } as const

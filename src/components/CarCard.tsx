@@ -27,7 +27,29 @@ export default function CarCard({ item, view }: { item: GarageItem; view: 'grid'
   return (
     <Link href={`/garage/${item.id}`} className="car-card">
       <div className="car-photo">
-        <MediaImage src={primary?.url} mediaId={primary?.id} alt={item.brand} />
+        {item.media.length > 1 ? (
+          // CSS-only swipe carousel (scroll-snap) — no JS needed, works inside the card link.
+          <div
+            style={{
+              display: 'flex',
+              width: '100%',
+              height: '100%',
+              overflowX: 'auto',
+              scrollSnapType: 'x mandatory',
+            }}
+          >
+            {item.media.map((m) => (
+              <div
+                key={m.id}
+                style={{ flex: '0 0 100%', height: '100%', scrollSnapAlign: 'center' }}
+              >
+                <MediaImage src={m.url} mediaId={m.id} alt={item.brand} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <MediaImage src={primary?.url} mediaId={primary?.id} alt={item.brand} />
+        )}
       </div>
       <div className="car-body">
         <div className="car-brand">{item.brand}</div>

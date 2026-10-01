@@ -9,6 +9,8 @@ import CarCard from './CarCard';
 type Page = { items: GarageItem[]; nextCursor: string | null };
 
 const VIEW_KEY = 'mini-vault-garage-view';
+const RARITIES = ['common', 'uncommon', 'rare', 'super-rare', 'treasure-hunt', 'chase'];
+const CONDITIONS = ['mint', 'near-mint', 'good', 'played', 'damaged'];
 
 async function fetchPage(params: URLSearchParams, cursor: string | null): Promise<Page> {
   const sp = new URLSearchParams(params);
@@ -29,7 +31,11 @@ export default function GarageView({
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
   const [brand, setBrand] = useState('all');
+  const [rarity, setRarity] = useState('all');
+  const [condition, setCondition] = useState('all');
   const [publicOnly, setPublicOnly] = useState(false);
+  const [favouriteOnly, setFavouriteOnly] = useState(false);
+  const [forSaleOnly, setForSaleOnly] = useState(false);
   const [sort, setSort] = useState<GarageSort>('newest');
 
   // Restore the grid/list choice (per-device). Read in an effect, not a lazy initializer, so SSR
@@ -66,10 +72,14 @@ export default function GarageView({
     const sp = new URLSearchParams();
     if (debouncedQ) sp.set('q', debouncedQ);
     if (brand !== 'all') sp.set('brand', brand);
+    if (rarity !== 'all') sp.set('rarity', rarity);
+    if (condition !== 'all') sp.set('condition', condition);
     if (publicOnly) sp.set('isPublic', 'true');
+    if (favouriteOnly) sp.set('isFavorite', 'true');
+    if (forSaleOnly) sp.set('forSale', 'true');
     if (sort !== 'newest') sp.set('sort', sort);
     return sp;
-  }, [debouncedQ, brand, publicOnly, sort]);
+  }, [debouncedQ, brand, rarity, condition, publicOnly, favouriteOnly, forSaleOnly, sort]);
 
   const isDefault = params.toString() === '';
 
@@ -163,13 +173,50 @@ export default function GarageView({
         </select>
       </div>
 
-      <label className="toggle-row" style={{ marginBottom: 12 }}>
-        <span>Show public items only</span>
+      <div className="garage-toolbar">
+        <select value={rarity} onChange={(e) => setRarity(e.target.value)}>
+          <option value="all">Any rarity</option>
+          {RARITIES.map((r) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
+        </select>
+        <select value={condition} onChange={(e) => setCondition(e.target.value)}>
+          <option value="all">Any condition</option>
+          {CONDITIONS.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <label className="toggle-row">
+        <span>Public items only</span>
         <input
           type="checkbox"
           style={{ width: 'auto' }}
           checked={publicOnly}
           onChange={(e) => setPublicOnly(e.target.checked)}
+        />
+      </label>
+      <label className="toggle-row">
+        <span>Favourites only</span>
+        <input
+          type="checkbox"
+          style={{ width: 'auto' }}
+          checked={favouriteOnly}
+          onChange={(e) => setFavouriteOnly(e.target.checked)}
+        />
+      </label>
+      <label className="toggle-row" style={{ marginBottom: 12 }}>
+        <span>For sale only</span>
+        <input
+          type="checkbox"
+          style={{ width: 'auto' }}
+          checked={forSaleOnly}
+          onChange={(e) => setForSaleOnly(e.target.checked)}
         />
       </label>
 

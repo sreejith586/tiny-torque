@@ -10,3 +10,5 @@ export const PHOTO_LIMITS: Record<Plan, number> = {
 export function photoLimit(plan: Plan): number {
   return PHOTO_LIMITS[plan] ?? 1;
 }
+
+export { scanQuotaRemaining as scanQuota } from './repo';
