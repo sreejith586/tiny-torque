@@ -104,7 +104,7 @@ describe('browseListings filters (MV-S4-02)', () => {
     const listing = { id: 'l1', source_item_id: 'it1', brand: 'HW' };
     const c = mockClient({ listings: [listing], media: [{ id: 'm1', entity_id: 'it1' }] });
     const { items } = await browseListings(c, {}, 'AE');
-    expect(items[0].media).toEqual([{ id: 'm1' }]);
+    expect(items[0]!.media).toEqual([{ id: 'm1' }]);
   });
 });
 
