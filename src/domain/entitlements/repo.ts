@@ -7,3 +7,10 @@ export async function scanQuotaRemaining(supabase: Client, userId: string): Prom
   if (error) throw error;
   return data ?? 0;
 }
+
+/** Total active-listing slots for a user (base plan + grants; DB function is the backstop, D-021). */
+export async function listingSlots(supabase: Client, userId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('entitlement_listing_slots', { p_user: userId });
+  if (error) throw error;
+  return data ?? 0;
+}

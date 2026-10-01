@@ -11,4 +11,4 @@ export function photoLimit(plan: Plan): number {
   return PHOTO_LIMITS[plan] ?? 1;
 }
 
-export { scanQuotaRemaining as scanQuota } from './repo';
+export { scanQuotaRemaining as scanQuota, listingSlots } from './repo';
