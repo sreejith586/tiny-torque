@@ -1,4 +1,5 @@
-import type { CollectionItemRow, ProfileRow, CountryRow, PublicProfileRow } from '@/types/database';
+import type { ProfileRow, CountryRow, PublicProfileRow } from '@/types/database';
+import type { GarageItem } from '@/domain/garage';
 
 // D-027 / D-041 visual-baseline harness. `?__visual=1` makes the signed-in pages (garage, car
 // detail, profile; add/scan/offers need no data) render this deterministic fixture data with no
@@ -43,9 +44,18 @@ const base = {
   is_public: true,
   photos: [] as string[],
   photo: null as string | null,
+  // garage_v2 (MV-S2-03) additive columns
+  catalog_model_id: null as string | null,
+  color: null as string | null,
+  is_favorite: false,
+  notes: null as string | null,
+  currency: null as string | null,
+  search: null as string | null,
+  // media for display (DisplayMedia[]) — data-URL previews so the harness renders photos
+  media: [] as { id: string; url?: string | null }[],
 };
 
-export const FIXTURE_ITEMS: CollectionItemRow[] = [
+export const FIXTURE_ITEMS: GarageItem[] = [
   {
     ...base,
     id: '10000000-0000-4000-8000-000000000001',
@@ -62,6 +72,10 @@ export const FIXTURE_ITEMS: CollectionItemRow[] = [
     for_sale: true,
     open_to_offers: true,
     ask_price: 120,
+    media: [
+      { id: 'fix-1a', url: PHOTO },
+      { id: 'fix-1b', url: PHOTO },
+    ],
   },
   {
     ...base,
@@ -74,6 +88,7 @@ export const FIXTURE_ITEMS: CollectionItemRow[] = [
     price_paid: 12,
     photo: PHOTO,
     photos: [PHOTO],
+    media: [{ id: 'fix-2', url: PHOTO }],
   },
   {
     ...base,
@@ -95,6 +110,7 @@ export const FIXTURE_ITEMS: CollectionItemRow[] = [
     photo: PHOTO,
     photos: [PHOTO],
     open_to_trade: true,
+    media: [{ id: 'fix-4', url: PHOTO }],
   },
 ];
 

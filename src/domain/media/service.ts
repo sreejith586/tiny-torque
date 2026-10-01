@@ -8,6 +8,7 @@ export const listMediaForEntity = repo.listForEntity;
 export const signMediaUrl = repo.signUrl;
 export const removeMedia = repo.removeMedia;
 export const getMediaById = repo.getById;
+export const listMediaForEntities = repo.listForEntities;
 
 export type { MediaRow, UploadMeta } from './types';
 export { ITEM_MEDIA_BUCKET, PROFILE_MEDIA_BUCKET } from './types';

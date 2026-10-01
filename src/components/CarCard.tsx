@@ -1,21 +1,16 @@
 import Link from 'next/link';
-import type { CollectionItemRow } from '@/types/database';
+import type { GarageItem } from '@/domain/garage';
 import MediaImage from './MediaImage';
 
-export default function CarCard({
-  item,
-  view,
-}: {
-  item: CollectionItemRow;
-  view: 'grid' | 'list';
-}) {
+export default function CarCard({ item, view }: { item: GarageItem; view: 'grid' | 'list' }) {
   const subtitle = [item.model, item.variant].filter(Boolean).join(' · ');
+  const primary = item.media[0];
 
   if (view === 'list') {
     return (
       <Link href={`/garage/${item.id}`} className="car-card" style={{ flexDirection: 'row' }}>
         <div className="car-photo" style={{ width: 72, height: 72, flex: '0 0 auto' }}>
-          <MediaImage src={item.photo} alt={item.brand} />
+          <MediaImage src={primary?.url} mediaId={primary?.id} alt={item.brand} />
         </div>
         <div className="car-body" style={{ flex: 1 }}>
           <div className="car-brand">{item.brand}</div>
@@ -32,7 +27,7 @@ export default function CarCard({
   return (
     <Link href={`/garage/${item.id}`} className="car-card">
       <div className="car-photo">
-        <MediaImage src={item.photo} alt={item.brand} />
+        <MediaImage src={primary?.url} mediaId={primary?.id} alt={item.brand} />
       </div>
       <div className="car-body">
         <div className="car-brand">{item.brand}</div>

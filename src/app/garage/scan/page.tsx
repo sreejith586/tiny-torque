@@ -3,7 +3,9 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { addCollectionItems, uploadCarPhoto } from '@/domain/garage';
+import { addCollectionItems } from '@/domain/garage';
+import { uploadItemMedia } from '@/domain/media';
+import { compressImage } from '@/lib/image';
 import { scanPhotoForCars, type ScanCandidate } from '@/domain/ai';
 import { CameraIcon } from '@/components/icons';
 
@@ -83,15 +85,8 @@ export default function BatchScanPage() {
       const userId = userData.user?.id;
       if (!userId) throw new Error('You need to be signed in.');
 
-      // The same source photo is attached to every car detected in it —
-      // one upload, reused as the .photo for each accepted row.
-      let photoUrl: string | null = null;
-      if (photoFile) {
-        photoUrl = await uploadCarPhoto(supabase, userId, photoFile);
-      }
-
       const toSave = rows.filter((r) => r.include);
-      await addCollectionItems(
+      const items = await addCollectionItems(
         supabase,
         userId,
         toSave.map((r) => ({
@@ -100,10 +95,17 @@ export default function BatchScanPage() {
           variant: r.variant,
           series: r.series,
           scale: r.scale,
-          photo: photoUrl,
-          photos: photoUrl ? [photoUrl] : [],
         }))
       );
+
+      // The same source photo backs every car detected in it — compress once, attach a media
+      // row (its own storage object) to each created item (D-010).
+      if (photoFile && items.length > 0) {
+        const blob = await compressImage(photoFile);
+        for (const item of items) {
+          await uploadItemMedia(supabase, userId, item.id, blob, { bytes: blob.size });
+        }
+      }
 
       router.push('/garage');
       router.refresh();
