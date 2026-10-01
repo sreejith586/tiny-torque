@@ -31,6 +31,7 @@ export default function CarDetailView({ item, isOwner }: { item: GarageItem; isO
   const [qty, setQty] = useState(String(item.qty));
   const [pricePaid, setPricePaid] = useState(String(item.price_paid));
   const [isPublic, setIsPublic] = useState(item.is_public);
+  const [isFavorite, setIsFavorite] = useState(item.is_favorite);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +68,17 @@ export default function CarDetailView({ item, isOwner }: { item: GarageItem; isO
       router.refresh();
     } catch {
       setIsPublic(!next);
+    }
+  }
+
+  async function handleToggleFavourite() {
+    const next = !isFavorite;
+    setIsFavorite(next);
+    try {
+      await updateCollectionItem(supabase, item.id, { is_favorite: next });
+      router.refresh();
+    } catch {
+      setIsFavorite(!next);
     }
   }
 
@@ -134,6 +146,15 @@ export default function CarDetailView({ item, isOwner }: { item: GarageItem; isO
                   style={{ width: 'auto' }}
                   checked={isPublic}
                   onChange={handleTogglePublic}
+                />
+              </label>
+              <label className="toggle-row">
+                <span>Favourite</span>
+                <input
+                  type="checkbox"
+                  style={{ width: 'auto' }}
+                  checked={isFavorite}
+                  onChange={handleToggleFavourite}
                 />
               </label>
 
