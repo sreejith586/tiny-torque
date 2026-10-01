@@ -185,7 +185,8 @@ export default function GarageView({
         </div>
       )}
 
-      <div ref={sentinel} aria-hidden style={{ height: 1 }} />
+      {/* 0-height so it adds no layout; IntersectionObserver still fires via the 400px rootMargin. */}
+      <div ref={sentinel} aria-hidden style={{ height: 0 }} />
       {query.isFetchingNextPage && (
         <p className="muted" style={{ textAlign: 'center', marginTop: 12 }}>
           Loading more…
