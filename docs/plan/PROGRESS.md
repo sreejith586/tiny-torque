@@ -8,11 +8,16 @@
 - **Production:** LIVE — **`https://tinytorque.hypermaxsolutions.com`** (custom domain; Vercel project `tiny-torque`, branch `main`; the `tiny-torque-git-main-*.vercel.app` alias is behind Vercel SSO). First deploy 2026-09-28. **S1 promoted to prod 2026-09-30** (PR #20 merged, main @ `b473361`); prod DB at all 8 migrations. Verified end-to-end: `migration list`=8, anon REST `public_profiles`/`countries`=200, and prod page `/u/{unknown}` → 404 (not 500). No real data on prod yet; not public.
 - **Supabase:** parent project **Tiny Torque = `whjqwcaoexbytspkaxfh`** (region ap-south-1); Branching on, with branch DBs **`main` = `whjqwcaoexbytspkaxfh`** (default) and **`staging` = `bjhowyyyypeacfkgxwqr`** (the ref PROGRESS/the app have always called "the project" is actually the _staging branch_). **Both `staging` and `main`/prod now have all 8 migrations applied** (2026-09-30) — verified on each via `supabase migration list` (8 local==remote, no phantom) + live anon REST (`public_profiles` and `countries` = 200, PGRST205 gone). Root cause they were ever missing (D-048/D-049): the Supabase GitHub integration was never connected, so nothing auto-applied migrations. **Prod had an extra wrinkle (D-051):** its history carried a phantom `20260927181713` from initial setup and _none_ of the repo's 8 recorded as applied, so the D-050 workflow's first `main` run failed on the mismatch; resolved with `supabase db reset --linked` (safe — no real data), re-running all 8 clean. Auto-apply now healthy on both branches (D-050). Edge Function `scan-photo` deployed with `ANTHROPIC_API_KEY`.
 - **Auth:** email OTP via Resend SMTP (`hello@tinytorque.hypermaxsolutions.com`); templates "Confirm signup" + "Magic Link" carry `{{ .Token }}`; Site URL = prod URL; redirect URLs for main/staging/previews/localhost. Phone OTP: later (D-037).
-- **Active task:** **S2 essentially feature-complete.** Data layer (S2-01…04) merged + live on staging. **PR #26 (S2-05 UI infinite-scroll + S2-06 form + S2-08 CSV import + S2-09 trash) is CI+e2e green, ready to merge.** New: `domain/entitlements` (photoLimit). Remaining polish: S2-05 filter sheet + CarCard carousel, S2-07 item-detail v2. Login-gated: live upload click-through + CSV import run.
-
-- **Last session (2026-09-29):** built MV-S1-07 — `getPublicProfile()`/`listPublicCollectionItems()`, a new `/u/[handle]` server page + `PublicProfileView`, a D-041 baseline, and a 404 smoke test. **That smoke test caught a real bug**: every `/u/{handle}` request 500s with PostgREST `PGRST205: Could not find the table 'public.public_profiles' in the schema cache` — the first-ever anonymous SSR read in the app, so the gap was invisible until now. A `NOTIFY pgrst, 'reload schema'` migration and two Supabase database restarts (one on a PR-preview branch, one on `staging` itself) all failed to clear it.
-- **This session (2026-09-30):** a background investigation proposed a root cause (D-046: `public_profiles` missing its own explicit `grant select`, relying only on a default-privilege inheritance that per Postgres docs only covers objects created by the exact same role — fragile on Branching). Shipped `supabase/migrations/20260929030000_public_profiles_explicit_grant.sql`, independently verified the SQL itself was sound and safe (not just trusting the agent's self-report — its notification was flagged by the harness's security classifier; verification found nothing concerning about the _content_, only that the _theory_ turned out wrong). Vercel was separately refusing to deploy this branch at all (unrelated git-author/team-access issue); **Sreejith fixed that**, which let the real Playwright run finally execute — and it showed **D-046 did not fix anything**: identical PGRST205, byte-for-byte, before and after the grant. Logged as D-047 (supersedes D-046, refuted).
-- **Next action:** Build S2 in dependency order (S2-01→03→02/04→05/06/07→08→09), one PR per task (or small bundles) into `staging`; **Sreejith merges each**, then `db-migrate` auto-applies. Carry-forward: authenticated prod smoke of S1 (Account panel export/delete) via `https://tinytorque.hypermaxsolutions.com`; enable phone-OTP on a branch (D-037) for MV-S1-09's gated test; CLI-pin (`d2baee4`) rides the next `staging→main`. Minor open items: `follows` public-read-count question (below), button/card `globals.css` diff (PR #16's comment).
+- **Active task:** **S2 feature-complete + merged to staging (through #26); S3 foundation started.** Open PRs ready to merge: **#27** (S2-05 garage filters/carousel + S2-07 favourite + regenerated baselines + **S3-01 catalogue migration 0005** + S3-03 domain/catalog). Everything below is on `sprint-1`, green locally.
+- **Next action (overnight autonomous batch):** continuing S3 — S3-06 Paywall component, S3-02 ai-scan Edge Function v2 (+ Deno tests), S3-07 admin catalogue. Each stacks on `sprint-1`; `db-migrate` applies 0005 when #27 merges.
+- **⚠️ PARKED FOR SREEJITH (tomorrow):**
+  1. **Merge the open PRs** (#27, then any new ones) — all green; `gh pr merge` is reserved for you.
+  2. **Scan-quota base numbers** — `entitlement_scan_quota` uses placeholders (free 10 / pro 100); confirm real values (relates to D-024 pricing).
+  3. **Varun's content** — ~200 starter castings CSV (S3-01 seed) + 20-photo scan-accuracy fixture set (S3-08).
+  4. **ai-scan Edge Function deploy** to staging (`supabase functions deploy`) once S3-02 is built — needs your Supabase access.
+  5. **Login-gated verification** (needs email-OTP session): the live media **upload** click-through, the **CSV import** run, and the **scan** flow.
+  6. **Sprint-end `staging → main`** promotion for the whole of S2 (+S3 when ready).
+  7. Carry-over: enable phone-OTP on a branch (D-037, MV-S1-09 test); CLI-pin (`d2baee4`) rides next `staging→main`; `follows` public-read-count question; button/card `globals.css` diff (PR #16 comment).
 
 ## S0 closing board
 
@@ -24,29 +29,26 @@
 
 ## S1 — COMPLETE (all 9 tasks, promoted to prod 2026-10-01, PR #22). Details in git + 05-sprint-plan.md.
 
-## S2 task board — Garage v2 (media, server-side search, CSV import). Locked 2026-10-01.
+## S2 — Garage v2: COMPLETE (feature set), merged to staging through #26; #27 pending (filters/carousel/favourite polish). Details in git/PRs.
 
-| Task                                        | Status                                                                                                      | Notes                                                                                                                                                                                |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| MV-S2-01 Migration 0003 media + buckets     | **in-review [#23](https://github.com/sreejith586/tiny-torque/pull/23)** — CI green (pgTAP+migrations+build) | `media` table, private buckets item-media/profile-media, storage policies by key prefix, backfill photos→media, compat view `collection_items_v1`. pgTAP.                            |
-| MV-S2-02 Client image pipeline + MediaImage | **done (#23 core + #24 infra)**                                                                             | `src/lib/image.ts` fitWithin/compressImage + 7 Vitest done. Signed-upload flow + `<MediaImage>` + media domain land with the write path (need live buckets = #23 merged). Dep: S2-01 |
-| MV-S2-03 Migration 0004 garage_v2           | **done (sprint-1)**                                                                                         | collection_items: catalog_model_id/color/is_favorite/notes/currency + enums + tsvector+GIN + indexes. **Drop photo/photos PARKED (D-006 2-release).** pgTAP. Dep: S2-01              |
-| MV-S2-04 domain/garage service              | **done (#25)** — listPage(filters/sort/keyset) + stats + soft-delete/restore/trash; +9 Vitest               | server-side list(query/filters/sort/cursor), add/update/softDelete/restore, findDuplicates, stats. Vitest + 1 integration. Dep: S2-03                                                |
-| MV-S2-05 Garage UI v2                       | **done (#26, e2e green)** — infinite scroll, server search/filter/sort; filter-sheet+carousel polish todo   | todo                                                                                                                                                                                 | toolbar (search debounced/URL state), filter sheet, sort, grid/list persisted, infinite scroll, CarCard carousel. Dep: S2-04 |
-| MV-S2-06 Add/Edit item form v2              | **upload path done (sprint-1)**; form v2 polish (enum selects, paywall gate) TODO                           | shadcn form + zod, enum selects, multi-photo uploader w/ entitlement gate → Paywall, duplicate banner. Dep: S2-02,S2-04                                                              |
-| MV-S2-07 Item detail v2                     | todo                                                                                                        | gallery, edit, public toggle, favourite, delete (checks active listing). Dep: S2-06                                                                                                  |
-| MV-S2-08 CSV / XLSX import                  | **done (#26)** — papaparse+SheetJS, auto header-map, zod preview, batched 100/row, flag-gated; +7 Vitest    | template dl, papaparse+SheetJS, header mapping, zod preview, batched server action, flag `csv_import`. Dep: S2-04                                                                    |
-| MV-S2-09 STRETCH Trash 30-day restore       | service done (listTrashItems/restore); Settings›Trash page TODO                                             | Settings › Trash lists soft-deleted, restore. Dep: S2-04                                                                                                                             |
+- **S2 parks:** destructive `photo`/`photos` drop is a 2nd migration after prod backfill (D-006); Supabase image transforms may need a paid tier (signed-URL fallback in place).
+- **Local DB validation:** throwaway Postgres 17.6 at `127.0.0.1:54329` (scratchpad `pgdata`, socket `/tmp`); `bash scripts/db-validate.sh` + `gen:types:db` reproduce CI byte-for-byte. pgTAP still needs the CI job.
 
 Status vocabulary: `todo` · `in-progress (branch)` · `in-review (PR #)` · `done` · `blocked (why)` · `carried → Sn`.
 
-**Local DB validation available this session:** throwaway Postgres 17.6 at `127.0.0.1:54329` (scratchpad `pgdata`, socket `/tmp`); `DATABASE_URL=…/postgres bash scripts/db-validate.sh` + `gen:types:db` reproduce CI exactly (verified byte-identical). pgTAP still needs the CI job (no local pgtap ext).
+## S3 task board — AI scanning v2, canonical catalogue, metering (started 2026-10-01)
 
-### Parked for Sreejith (S2)
-
-- **Destructive drop of `photo`/`photos`** — ships as a _separate_ migration after backfill is verified on prod (D-006). S2-03 keeps them + adds `collection_items_v1` compat view.
-- **Supabase image transforms** for `<MediaImage>` — may need a paid tier; building with a signed-URL fallback, will flag if transforms are unavailable.
-- **PR merges** to `staging`/`main` (D-039/D-040) — each migration/feature PR needs your merge; the `db-migrate` workflow then auto-applies.
+| Task                                            | Status                                                                    |
+| ----------------------------------------------- | ------------------------------------------------------------------------- |
+| MV-S3-01 Migration 0005 catalog + ai_scan_jobs  | **done (#27)** — brands/models/scan-jobs + scan-quota fn + FK; pgTAP 0006 |
+| MV-S3-02 Edge Function ai-scan v2               | todo (build + Deno tests; deploy parked)                                  |
+| MV-S3-03 domain/ai + domain/catalog + scanQuota | **catalog+scanQuota done (#27)**; domain/ai orchestration todo            |
+| MV-S3-04 Single-car scan → prefill              | todo (dep S3-02)                                                          |
+| MV-S3-05 Group scan review v2                   | todo (dep S3-02)                                                          |
+| MV-S3-06 Paywall for scan quota                 | todo (buildable now)                                                      |
+| MV-S3-07 Admin catalogue proposals + scan jobs  | todo (buildable now)                                                      |
+| MV-S3-08 Scan accuracy harness                  | todo (needs Varun's fixtures)                                             |
+| MV-S3-09 Playwright scan smoke (mocked)         | todo (dep S3-05)                                                          |
 
 ## Release procedure (every sprint end, D-035/D-039/D-040)
 
