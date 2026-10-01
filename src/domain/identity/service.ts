@@ -1,6 +1,7 @@
 // Identity service — auth + profile. Components import from here, never from repo.
-import type { Client } from '@/lib/supabase/types';
+import type { Client, TablesUpdate } from '@/lib/supabase/types';
 import { emitEvent } from '@/domain/events';
+import type { CollectionItemRow } from '@/domain/garage/types';
 import * as repo from './repo';
 import { profileCreateSchema, profilePatchSchema, RESERVED_HANDLES } from './schema';
 import type {
@@ -147,6 +148,49 @@ export async function patchProfile(supabase: Client, userId: string, patch: Prof
     entity: 'profile',
     entityId: userId,
   });
+}
+
+// ---------- Account: delete + export (F-14, MV-S1-08) ----------
+
+/**
+ * The columns a delete overwrites. Soft-delete via `deleted_at` (public_profiles filters it
+ * out, so the profile vanishes from every other user immediately) plus anonymising the PII and
+ * personal free-text (rule 15 / D-015: `mobile` above all). `handle` is kept — it is NOT NULL +
+ * unique-constrained and isn't PII — and `country_code` is kept (also NOT NULL). Full erasure of
+ * the auth user, storage objects, and owned rows is finalised in S8; this is the stub.
+ */
+export function anonymisedProfileFields(now: Date = new Date()): TablesUpdate<'profiles'> {
+  return {
+    deleted_at: now.toISOString(),
+    display_name: 'Deleted collector',
+    mobile: null,
+    bio: null,
+    city: null,
+    location: null,
+    store_name: null,
+    photo_url: null,
+  };
+}
+
+/** Anonymise + soft-delete the caller's own profile, then emit `user.deleted` (D-009). */
+export async function deleteAccount(supabase: Client, userId: string) {
+  await repo.updateProfile(supabase, userId, anonymisedProfileFields());
+  await emitEvent(supabase, {
+    actorId: userId,
+    type: 'user.deleted',
+    entity: 'profile',
+    entityId: userId,
+  });
+}
+
+/** Shape the caller's own data (their profile + every collection item) for a JSON download. */
+export function buildExportPayload(profile: ProfileRow, items: CollectionItemRow[]) {
+  return {
+    format: 'mini-vault-export-v1',
+    exported_at: new Date().toISOString(),
+    profile,
+    items,
+  };
 }
 
 export type { ProfileRow, ProfileCreateInput, ProfilePatch, CountryRow, PublicProfileRow };
