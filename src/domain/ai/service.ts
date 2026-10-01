@@ -18,3 +18,5 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 export type { ScanCandidate };
+
+export { listRecentScanJobs, scanCostThisMonth } from './repo';
