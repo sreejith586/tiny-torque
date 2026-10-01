@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { patchProfile, signOut } from '@/domain/identity';
+import { deleteAccountAction } from '@/app/profile/actions';
 import type { AccountType, ProfileRow } from '@/types/database';
 import ThemeSwitcher from './ThemeSwitcher';
 
@@ -18,6 +19,7 @@ export default function ProfileView({ profile }: { profile: ProfileRow }) {
   const [location, setLocation] = useState(profile.location ?? '');
   const [saving, setSaving] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSave() {
@@ -47,6 +49,22 @@ export default function ProfileView({ profile }: { profile: ProfileRow }) {
       router.refresh();
     } catch {
       setSigningOut(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (
+      !window.confirm(
+        'Delete your account? This removes your profile from public view and erases your personal details. This cannot be undone.'
+      )
+    )
+      return;
+    setDeleting(true);
+    try {
+      await deleteAccountAction(); // anonymises + soft-deletes, signs out, redirects to /login
+    } catch {
+      setError('Could not delete your account. Please try again.');
+      setDeleting(false);
     }
   }
 
@@ -85,17 +103,29 @@ export default function ProfileView({ profile }: { profile: ProfileRow }) {
               <span className="muted">Plan</span>
               <span>{profile.plan === 'pro' ? 'Pro' : 'Free'}</span>
             </div>
-            <button className="btn-secondary" style={{ marginTop: 14 }} onClick={() => setEditing(true)}>
+            <button
+              className="btn-secondary"
+              style={{ marginTop: 14 }}
+              onClick={() => setEditing(true)}
+            >
               Edit profile
             </button>
           </>
         ) : (
           <>
             <label htmlFor="displayName">Display name</label>
-            <input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+            <input
+              id="displayName"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+            />
 
             <label htmlFor="accountType">Account type</label>
-            <select id="accountType" value={accountType} onChange={(e) => setAccountType(e.target.value as AccountType)}>
+            <select
+              id="accountType"
+              value={accountType}
+              onChange={(e) => setAccountType(e.target.value as AccountType)}
+            >
               <option value="individual">Collector (personal use)</option>
               <option value="shop">Shop / store</option>
             </select>
@@ -103,7 +133,11 @@ export default function ProfileView({ profile }: { profile: ProfileRow }) {
             {accountType === 'shop' && (
               <>
                 <label htmlFor="storeName">Store name</label>
-                <input id="storeName" value={storeName} onChange={(e) => setStoreName(e.target.value)} />
+                <input
+                  id="storeName"
+                  value={storeName}
+                  onChange={(e) => setStoreName(e.target.value)}
+                />
               </>
             )}
 
@@ -130,6 +164,26 @@ export default function ProfileView({ profile }: { profile: ProfileRow }) {
           Theme choice is saved on this device only.
         </p>
         <ThemeSwitcher />
+      </div>
+
+      <div className="panel" style={{ marginBottom: 16 }}>
+        <h2 style={{ fontSize: 16 }}>Account</h2>
+        <p className="muted" style={{ fontSize: 13, marginTop: 4 }}>
+          Download a copy of your collection, or delete your account.
+        </p>
+        <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
+          <a className="btn-secondary" href="/api/export">
+            Export my data
+          </a>
+          <button className="btn-danger" onClick={handleDelete} disabled={deleting}>
+            {deleting ? 'Deleting…' : 'Delete account'}
+          </button>
+        </div>
+        {error && !editing && (
+          <p className="field-error" style={{ marginTop: 10 }}>
+            {error}
+          </p>
+        )}
       </div>
 
       <button className="btn-danger" onClick={handleSignOut} disabled={signingOut}>
