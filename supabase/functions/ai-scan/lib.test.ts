@@ -6,6 +6,7 @@ import {
   parseToolUse,
   estimateCostUsd,
   scoreBand,
+  bestMatch,
   isFlagEnabled,
   SCAN_TOOL,
 } from './lib.ts';
@@ -95,6 +96,27 @@ Deno.test('scoreBand: trigram bands', () => {
   assertEquals(scoreBand(0.3), 'weak');
   assertEquals(scoreBand(0.29), null);
   assertEquals(scoreBand(0), null);
+});
+
+Deno.test('bestMatch: picks the top row and bands it', () => {
+  const m = bestMatch([
+    { id: 'a', brand_id: 'b1', name: 'Skyline', score: 0.41 },
+    { id: 'c', brand_id: 'b2', name: 'Skyline GT-R', score: 0.82 },
+  ]);
+  assertEquals(m, {
+    model_id: 'c',
+    brand_id: 'b2',
+    name: 'Skyline GT-R',
+    score: 0.82,
+    band: 'strong',
+  });
+});
+
+Deno.test('bestMatch: below-weak-threshold -> null (no misleading chip)', () => {
+  assertEquals(bestMatch([{ id: 'a', brand_id: 'b', name: 'x', score: 0.25 }]), null);
+  assertEquals(bestMatch([]), null);
+  assertEquals(bestMatch(null), null);
+  assertEquals(bestMatch(undefined), null);
 });
 
 Deno.test('isFlagEnabled: hard kill switch wins', () => {

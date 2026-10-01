@@ -25,6 +25,8 @@ import {
   parseToolUse,
   estimateCostUsd,
   isFlagEnabled,
+  bestMatch,
+  type CatalogMatchRow,
   type ScanCandidate,
 } from './lib.ts';
 
@@ -193,7 +195,24 @@ serve(async (req: Request) => {
   const latency_ms = Date.now() - started;
   const cost_usd = estimateCostUsd(usage.input_tokens, usage.output_tokens, MODEL);
 
-  // ---------- 7. meter into ai_scan_jobs ----------
+  // ---------- 7. enrich with a verified-catalogue match (trigram; empty until the catalogue has data) ----------
+  let enriched = candidates;
+  if (candidates && candidates.length) {
+    enriched = await Promise.all(
+      candidates.map(async (c) => {
+        const term = c.model ?? c.brand;
+        if (!term || term === 'Unknown') return c;
+        const { data: rows } = await admin.rpc('match_catalog_models', {
+          p_name: term,
+          p_limit: 3,
+        });
+        const match = bestMatch((rows ?? []) as CatalogMatchRow[]);
+        return match ? { ...c, match } : c;
+      })
+    );
+  }
+
+  // ---------- 8. meter into ai_scan_jobs ----------
   if (candidates === null) {
     await admin.from('ai_scan_jobs').insert({
       user_id: user.id,
@@ -217,7 +236,7 @@ serve(async (req: Request) => {
       kind: body.kind,
       media_id: body.media_id,
       status: 'done',
-      candidates,
+      candidates: enriched,
       model: MODEL,
       input_tokens: usage.input_tokens,
       output_tokens: usage.output_tokens,
@@ -227,7 +246,11 @@ serve(async (req: Request) => {
     .select('id')
     .maybeSingle();
 
-  return json({ candidates, quota_remaining: Math.max(0, remaining - 1), job_id: job?.id ?? null });
+  return json({
+    candidates: enriched,
+    quota_remaining: Math.max(0, remaining - 1),
+    job_id: job?.id ?? null,
+  });
 });
 
 // Chunked base64 so a multi-MB photo never blows the call-stack of btoa(String.fromCharCode(...all)).

@@ -123,11 +123,44 @@ export function estimateCostUsd(inputTokens: number, outputTokens: number, model
   return Math.round(raw * 1e5) / 1e5;
 }
 
-/** Trigram-similarity banding for catalogue match chips (match itself lands with Varun's CSV). */
+/** Trigram-similarity banding for catalogue match chips. */
 export function scoreBand(score: number): 'strong' | 'weak' | null {
   if (score >= 0.6) return 'strong';
   if (score >= 0.3) return 'weak';
   return null;
+}
+
+export interface CatalogMatchRow {
+  id: string;
+  brand_id: string;
+  name: string;
+  score: number;
+}
+export interface CatalogMatch {
+  model_id: string;
+  brand_id: string;
+  name: string;
+  score: number;
+  band: 'strong' | 'weak';
+}
+
+/**
+ * Pick the best catalogue match from the rows match_catalog_models returned for one candidate.
+ * Returns null when nothing clears the `weak` band (score < 0.3) so the UI shows no chip rather
+ * than a misleading weak suggestion. Pure — the RPC call lives in index.ts.
+ */
+export function bestMatch(rows: CatalogMatchRow[] | null | undefined): CatalogMatch | null {
+  if (!rows?.length) return null;
+  const top = rows.reduce((a, b) => (b.score > a.score ? b : a));
+  const band = scoreBand(top.score);
+  if (!band) return null;
+  return {
+    model_id: top.id,
+    brand_id: top.brand_id,
+    name: top.name,
+    score: Math.round(top.score * 1000) / 1000,
+    band,
+  };
 }
 
 // ---------- feature-flag kill switch (mirrors src/domain/flags/evaluate.ts) ----------

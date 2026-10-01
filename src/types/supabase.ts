@@ -573,6 +573,11 @@ isOneToOne: false
 "is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"match_catalog_models":
+{ Args: { "p_limit"?: number,"p_name": string }; Returns: {
+              "brand_id": string,"id": string,"name": string,"score": number
+            }[]
+                           },
 "media_is_public":
 { Args: { "p_media_id": string }; Returns: boolean
                            },
