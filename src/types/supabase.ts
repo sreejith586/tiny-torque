@@ -249,6 +249,37 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "collection_items"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "marketplace_listings_source_item_id_fkey"
+      columns: ["source_item_id"]
+isOneToOne: false
+      referencedRelation: "collection_items_v1"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"media": {
+                  Row: {
+                    "bucket": string,"bytes": number | null,"created_at": string,"entity_id": string | null,"height": number | null,"id": string,"kind": Database["public"]['Enums']["media_kind"],"owner_id": string,"path": string,"sort_order": number,"status": Database["public"]['Enums']["media_status"],"width": number | null
+                  }
+                  Insert: {
+                    "bucket": string,"bytes"?: number | null,"created_at"?: string,"entity_id"?: string | null,"height"?: number | null,"id"?: string,"kind": Database["public"]['Enums']["media_kind"],"owner_id": string,"path": string,"sort_order"?: number,"status"?: Database["public"]['Enums']["media_status"],"width"?: number | null
+                  }
+                  Update: {
+                    "bucket"?: string,"bytes"?: number | null,"created_at"?: string,"entity_id"?: string | null,"height"?: number | null,"id"?: string,"kind"?: Database["public"]['Enums']["media_kind"],"owner_id"?: string,"path"?: string,"sort_order"?: number,"status"?: Database["public"]['Enums']["media_status"],"width"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "media_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "media_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
     }
                   ]
                 },"profiles": {
@@ -360,7 +391,32 @@ isOneToOne: false
                 }
           }
           Views: {
-            "public_profiles": {
+            "collection_items_v1": {
+                  Row: {
+                    "ask_price": number | null,"brand": string | null,"card_type": string | null,"condition": string | null,"created_at": string | null,"deleted_at": string | null,"for_sale": boolean | null,"id": string | null,"is_public": boolean | null,"model": string | null,"open_to_offers": boolean | null,"open_to_trade": boolean | null,"owner_id": string | null,"photo": string | null,"photos": Json | null,"price_paid": number | null,"qty": number | null,"rarity": string | null,"scale": string | null,"series": string | null,"source": string | null,"updated_at": string | null,"variant": string | null
+                  }
+                  Insert: {
+                           "ask_price"?: number | null,"brand"?: string | null,"card_type"?: string | null,"condition"?: string | null,"created_at"?: string | null,"deleted_at"?: string | null,"for_sale"?: boolean | null,"id"?: string | null,"is_public"?: boolean | null,"model"?: string | null,"open_to_offers"?: boolean | null,"open_to_trade"?: boolean | null,"owner_id"?: string | null,"photo"?: string | null,"photos"?: Json | null,"price_paid"?: number | null,"qty"?: number | null,"rarity"?: string | null,"scale"?: string | null,"series"?: string | null,"source"?: string | null,"updated_at"?: string | null,"variant"?: string | null
+                         }
+                        Update: {
+                           "ask_price"?: number | null,"brand"?: string | null,"card_type"?: string | null,"condition"?: string | null,"created_at"?: string | null,"deleted_at"?: string | null,"for_sale"?: boolean | null,"id"?: string | null,"is_public"?: boolean | null,"model"?: string | null,"open_to_offers"?: boolean | null,"open_to_trade"?: boolean | null,"owner_id"?: string | null,"photo"?: string | null,"photos"?: Json | null,"price_paid"?: number | null,"qty"?: number | null,"rarity"?: string | null,"scale"?: string | null,"series"?: string | null,"source"?: string | null,"updated_at"?: string | null,"variant"?: string | null
+                         }
+                        Relationships: [
+                    {
+      foreignKeyName: "collection_items_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "collection_items_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"public_profiles": {
                   Row: {
                     "account_type": Database["public"]['Enums']["account_type"] | null,"bio": string | null,"city": string | null,"country_code": string | null,"created_at": string | null,"display_name": string | null,"handle": string | null,"id": string | null,"is_pro": boolean | null,"level": number | null,"store_name": string | null,"xp": number | null
                   }
@@ -397,6 +453,9 @@ isOneToOne: false
 "is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"media_is_public":
+{ Args: { "p_media_id": string }; Returns: boolean
+                           },
 "pgp_armor_headers":
 { Args: { "": string }; Returns: Record<string, unknown>[]
                            },
@@ -405,7 +464,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "account_type": "individual"|"shop","listing_status": "active"|"sold"|"removed","plan_tier": "free"|"pro","report_status": "open"|"reviewed"|"dismissed","user_role": "user"|"admin"
+            "account_type": "individual"|"shop","listing_status": "active"|"sold"|"removed","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","plan_tier": "free"|"pro","report_status": "open"|"reviewed"|"dismissed","user_role": "user"|"admin"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -521,7 +580,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "account_type": ["individual", "shop"],"listing_status": ["active", "sold", "removed"],"plan_tier": ["free", "pro"],"report_status": ["open", "reviewed", "dismissed"],"user_role": ["user", "admin"]
+            "account_type": ["individual", "shop"],"listing_status": ["active", "sold", "removed"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"plan_tier": ["free", "pro"],"report_status": ["open", "reviewed", "dismissed"],"user_role": ["user", "admin"]
           }
         }
 } as const
