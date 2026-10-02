@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { connection } from 'next/server';
+import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { browseListings } from '@/domain/marketplace';
 import MarketView from '@/components/MarketView';
@@ -9,11 +9,9 @@ export const metadata: Metadata = {
   title: 'Market',
 };
 
-export const dynamic = 'force-dynamic';
-
-async function loadFirstPage(searchParams: Record<string, string | string[] | undefined>) {
+async function loadFirstPage(harness: boolean) {
   // D-041 baseline harness (non-production): one page of fixtures, no session.
-  if (isVisualHarness(searchParams)) {
+  if (harness) {
     return { items: FIXTURE_LISTINGS, cursor: null, signedIn: false, harness: true };
   }
   const supabase = await createClient();
@@ -38,20 +36,17 @@ export default async function MarketPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  // This page reads searchParams (the ?__visual harness flag) + renders per request; opt out of
-  // any static prerendering so searchParams is always the real request's (Vercel was otherwise
-  // prerendering a shell with empty searchParams — the anon market path never bails to dynamic the
-  // way garage's redirect() does).
-  await connection();
+  // The harness flag reaches us two ways: the `?__visual` query (local/dev) and the x-mv-visual
+  // request header the proxy sets (reliable on Vercel, where the anon market route otherwise gets
+  // empty searchParams). Reading headers() also opts this route out of static prerendering.
   const sp = await searchParams;
-  const { items, cursor, signedIn, harness } = await loadFirstPage(sp);
+  const harnessHeader = (await headers()).get('x-mv-visual') === '1';
+  const { items, cursor, signedIn, harness } = await loadFirstPage(
+    harnessHeader || isVisualHarness(sp)
+  );
 
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
-      <p data-testid="mkt-debug" style={{ fontSize: 11, color: 'red' }}>
-        dbg harness={String(harness)} n={items.length} env={process.env.VERCEL_ENV ?? 'none'} sp=
-        {JSON.stringify(sp)}
-      </p>
       <h1 style={{ fontSize: 24, marginBottom: 4 }}>Marketplace</h1>
       <p className="muted" style={{ marginBottom: 12 }}>
         Buy, sell and trade with other collectors.

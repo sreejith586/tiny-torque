@@ -27,8 +27,15 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // D-041 visual-baseline harness: `?__visual=1` renders signed-in screens with fixture data and no
-  // session (see src/lib/visual-fixtures.ts). Never honoured in production.
-  if (isVisualHarness(request.nextUrl.searchParams)) return response;
+  // session (see src/lib/visual-fixtures.ts). Never honoured in production. We also forward it as a
+  // request header: on Vercel some dynamic routes (e.g. the anon /market) don't receive the query
+  // string in their Server Component `searchParams`, but a request header set here always reaches
+  // `headers()`, so pages can detect the harness reliably either way.
+  if (isVisualHarness(request.nextUrl.searchParams)) {
+    const headers = new Headers(request.headers);
+    headers.set('x-mv-visual', '1');
+    return NextResponse.next({ request: { headers } });
+  }
 
   if (!user && !isPublicPath(pathname)) {
     const redirectUrl = new URL('/login', request.url);
