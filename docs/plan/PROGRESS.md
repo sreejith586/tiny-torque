@@ -4,21 +4,22 @@
 
 ## Current position
 
-- **Sprint:** **S4 — Marketplace (publish & browse).** (S1 in prod; S2+S3 merged to staging through #27.) Executing autonomously in dependency order; parking criticals (see Parked list below). S4 board below.
+- **Sprint:** **S4 — Marketplace (publish & browse); S5-01 offers backend pulled forward.** (S1 in prod; S2+S3 merged to staging through #28.) Executing autonomously in dependency order; parking criticals (see Parked list below). Boards below.
 - **Production:** LIVE — **`https://tinytorque.hypermaxsolutions.com`** (custom domain; Vercel project `tiny-torque`, branch `main`; the `tiny-torque-git-main-*.vercel.app` alias is behind Vercel SSO). First deploy 2026-09-28. **S1 promoted to prod 2026-09-30** (PR #20 merged, main @ `b473361`); prod DB at all 8 migrations. Verified end-to-end: `migration list`=8, anon REST `public_profiles`/`countries`=200, and prod page `/u/{unknown}` → 404 (not 500). No real data on prod yet; not public.
 - **Supabase:** parent project **Tiny Torque = `whjqwcaoexbytspkaxfh`** (region ap-south-1); Branching on, with branch DBs **`main` = `whjqwcaoexbytspkaxfh`** (default) and **`staging` = `bjhowyyyypeacfkgxwqr`** (the ref PROGRESS/the app have always called "the project" is actually the _staging branch_). **Both `staging` and `main`/prod now have all 8 migrations applied** (2026-09-30) — verified on each via `supabase migration list` (8 local==remote, no phantom) + live anon REST (`public_profiles` and `countries` = 200, PGRST205 gone). Root cause they were ever missing (D-048/D-049): the Supabase GitHub integration was never connected, so nothing auto-applied migrations. **Prod had an extra wrinkle (D-051):** its history carried a phantom `20260927181713` from initial setup and _none_ of the repo's 8 recorded as applied, so the D-050 workflow's first `main` run failed on the mismatch; resolved with `supabase db reset --linked` (safe — no real data), re-running all 8 clean. Auto-apply now healthy on both branches (D-050). Edge Function `scan-photo` deployed with `ANTHROPIC_API_KEY`.
 - **Auth:** email OTP via Resend SMTP (`hello@tinytorque.hypermaxsolutions.com`); templates "Confirm signup" + "Magic Link" carry `{{ .Token }}`; Site URL = prod URL; redirect URLs for main/staging/previews/localhost. Phone OTP: later (D-037).
-- **Active task:** **S3-02 + S4 foundation in PR [#28](https://github.com/sreejith586/tiny-torque/pull/28) (`sprint-1 → staging`), awaiting your merge.** NB: #27 merged _before_ the S3-02 batch landed, so staging has migrations only **through `catalog` (0005)** — `catalog_match` + `marketplace_v2` + the ai-scan Edge Function are all in #28, not yet on staging. #28 = S3-02 (ai-scan v2 + catalog_match) + S4-01 (marketplace_v2) + S4-02 (domain/marketplace). CI green; all local-green (typecheck/lint/87 vitest/guard; 8 migrations validated).
-- **Next action:** merge #28 (`db-migrate` then applies `catalog_match` + `marketplace_v2` to staging). Then S4-03/04/05 frontend (publish sheet, /market browse, listing detail) — buildable; each needs baseline regen + a Vercel preview. S4-08 Playwright after S4-04.
+- **Active task:** **#28 merged** (S3-02 + S4-01/02 → staging; `db-migrate` applied `catalog_match` + `marketplace_v2`; staging now at 13 migrations). **MV-S5-01 offers backend now in PR [#29](https://github.com/sreejith586/tiny-torque/pull/29)** (`sprint-1 → staging`): migration 0007 deals (offers + `transition_offer` RPC + rate limit + notifications + review FK). CI green; local-green (typecheck/lint/87 vitest/guard; 10 migrations validated; pgTAP 0009).
+- **Next action:** merge #29 (`db-migrate` applies 0007). Then **S5-02 domain/deals** — but it needs a `buy_now` definer RPC (instant reserve) + the `blocks` table (S6-01) for its block check; decide whether to pull those forward (see parks). Meanwhile S4-03/04/05 frontend (publish sheet, /market browse, listing detail) are buildable but each needs baseline regen + a Vercel preview.
 - **⚠️ PARKED FOR SREEJITH (tomorrow):**
-  1. **Merge PR #28** (`sprint-1 → staging`; `gh pr merge` is reserved for you) — then any later ones.
-  2. **marketplace_v2 release 2 (destructive, D-006):** drop `seller_*`/`offers` jsonb/`photo(s)` once the read path fully uses public_profiles joins + media refs. Decide: one destructive migration (prod has no real data) or keep two-release. Same pending drop as garage_v2's `photos`.
-  3. **Base limit numbers (D-024 pricing):** scan quota (free 10 / pro 100) + listing slots (free 2 / Pro ∞) are placeholders; grants wire in S7.
-  4. **Varun's content** — ~200 starter castings CSV (S3-01 seed) + 20-photo scan-accuracy fixture set (S3-08).
-  5. **ai-scan deploy** (`supabase functions deploy ai-scan`, verify `SUPABASE_SERVICE_ROLE_KEY` secret) + **enable `ai_scan` flag**; dark until then.
-  6. **Login-gated verification**: scan flow (real Anthropic), media upload, CSV import, and (S4) publish→anon-browse.
-  7. **Product fork (S3-05):** which item a group-scan photo attaches to.
-  8. **Sprint-end `staging → main`** promotion (S2+S3, then S4). Carry-over: phone-OTP branch (D-037); CLI-pin `d2baee4`; `follows` public-read-count; `globals.css` diff (PR #16).
+  1. **Merge PR #29** (`sprint-1 → staging`; `gh pr merge` is reserved for you) — #28 already merged.
+  2. **S5-02 deps:** domain/deals needs a `buy_now` definer RPC (Buy Now reserves instantly, not via the seller-only accept path) + the `blocks` table (S6-01) for its block check. Decide: add a `buy_now` RPC to a deals follow-up migration + pull `blocks` forward, or defer those two guards.
+  3. **marketplace_v2 release 2 (destructive, D-006):** drop `seller_*`/`offers` jsonb/`photo(s)` once the read path fully uses public_profiles joins + media refs. Decide: one destructive migration (prod has no real data) or keep two-release. Same pending drop as garage_v2's `photos`.
+  4. **Base limit numbers (D-024 pricing):** scan quota (free 10 / pro 100) + listing slots (free 2 / Pro ∞) are placeholders; grants wire in S7.
+  5. **Varun's content** — ~200 starter castings CSV (S3-01 seed) + 20-photo scan-accuracy fixture set (S3-08).
+  6. **ai-scan deploy** (`supabase functions deploy ai-scan`, verify `SUPABASE_SERVICE_ROLE_KEY` secret) + **enable `ai_scan` flag**; dark until then.
+  7. **Login-gated verification**: scan flow (real Anthropic), media upload, CSV import, and (S4) publish→anon-browse.
+  8. **Product fork (S3-05):** which item a group-scan photo attaches to.
+  9. **Sprint-end `staging → main`** promotion (S2+S3, then S4). Carry-over: phone-OTP branch (D-037); CLI-pin `d2baee4`; `follows` public-read-count; `globals.css` diff (PR #16).
 
 ## S0 — COMPLETE (prod live 2026-09-28). S1 — COMPLETE (9 tasks, prod 2026-10-01, PR #22). Details in git + 05-sprint-plan.md.
 
@@ -43,6 +44,10 @@ Status vocabulary: `todo` · `in-progress (branch)` · `in-review (PR #)` · `do
 | MV-S4-06 Wishlist + favourites UI             | todo (dep S4-02; frontend)                                                                                                                                             |
 | MV-S4-07 My listings management               | todo (dep S4-02; frontend)                                                                                                                                             |
 | MV-S4-08 Playwright: publish → anon-visible   | todo (dep S4-04)                                                                                                                                                       |
+
+## S5 — Offers/deals (pulled forward, dark behind `offers`)
+
+- **MV-S5-01 done** (PR #29): migration 0007 deals — offers + `transition_offer` RPC (state machine, row locks, auto-decline, events) + rate-limit trigger + notifications table + seller_reviews FK; pgTAP 0009. **S5-02 domain/deals** blocked on a `buy_now` RPC + `blocks` table (see parks). S5-03/04/05 frontend; S5-06 notification consumer.
 
 ## Release procedure (every sprint end, D-035/D-039/D-040)
 
