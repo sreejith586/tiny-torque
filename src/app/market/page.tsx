@@ -40,13 +40,16 @@ export default async function MarketPage({
   // request header the proxy sets (reliable on Vercel, where the anon market route otherwise gets
   // empty searchParams). Reading headers() also opts this route out of static prerendering.
   const sp = await searchParams;
-  const harnessHeader = (await headers()).get('x-mv-visual') === '1';
+  const hdr = (await headers()).get('x-mv-visual');
+  const harnessHeader = hdr === '1';
   const { items, cursor, signedIn, harness } = await loadFirstPage(
     harnessHeader || isVisualHarness(sp)
   );
+  const dbg = `dbg h=${String(harness)} hdr=${hdr ?? 'none'} sp=${JSON.stringify(sp)} env=${process.env.VERCEL_ENV ?? 'none'}`;
 
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
+      <p style={{ fontSize: 10, color: 'red' }}>{dbg}</p>
       <h1 style={{ fontSize: 24, marginBottom: 4 }}>Marketplace</h1>
       <p className="muted" style={{ marginBottom: 12 }}>
         Buy, sell and trade with other collectors.
