@@ -1,19 +1,22 @@
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { browseListings } from '@/domain/marketplace';
 import MarketView from '@/components/MarketView';
-import { FIXTURE_LISTINGS, isVisualHarness } from '@/lib/visual-fixtures';
+import {
+  FIXTURE_LISTINGS,
+  isVisualHarness,
+  harnessAllowed,
+  VISUAL_COOKIE,
+} from '@/lib/visual-fixtures';
 
 export const metadata: Metadata = {
   title: 'Market',
 };
 
-// Always run the function per request — never serve a static shell. Vercel was intermittently
-// serving a prerendered empty shell for this anon route (the harness fixtures then vanished); this
-// + headers() below keeps the render deterministic for both the live feed and the ?__visual baseline.
+// Browse is per-request (live listings); reading cookies()/headers() below also keeps it off any
+// static shell, which is what made the ?__visual baseline render flaky on Vercel.
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 async function loadFirstPage(harness: boolean) {
   // D-041 baseline harness (non-production): one page of fixtures, no session.
@@ -42,13 +45,14 @@ export default async function MarketPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  // The harness flag reaches us two ways: the `?__visual` query (local/dev) and the x-mv-visual
-  // request header the proxy sets (reliable on Vercel, where the anon market route otherwise gets
-  // empty searchParams). Reading headers() also opts this route out of static prerendering.
+  // Detect the harness from any reliable channel: the proxy-set x-mv-visual header, the mv_visual
+  // cookie (the dependable one on Vercel for this anon route), or the ?__visual query (local/dev).
+  // Reading cookies()/headers() also forces a per-request render (no static shell).
   const sp = await searchParams;
   const harnessHeader = (await headers()).get('x-mv-visual') === '1';
+  const harnessCookie = harnessAllowed() && (await cookies()).get(VISUAL_COOKIE)?.value === '1';
   const { items, cursor, signedIn, harness } = await loadFirstPage(
-    harnessHeader || isVisualHarness(sp)
+    harnessHeader || harnessCookie || isVisualHarness(sp)
   );
 
   return (

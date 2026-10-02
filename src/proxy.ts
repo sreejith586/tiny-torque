@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getUserRole, refreshSession } from '@/lib/supabase/proxy';
-import { isVisualHarness } from '@/lib/visual-fixtures';
+import { isVisualHarness, harnessAllowed, VISUAL_COOKIE } from '@/lib/visual-fixtures';
 
 // Next.js 16 "proxy" (formerly middleware). Refreshes the Supabase session on
 // every request so Server Components always see a valid session, and guards
@@ -26,12 +26,15 @@ export async function proxy(request: NextRequest) {
   const { response, user } = await refreshSession(request);
   const { pathname } = request.nextUrl;
 
-  // D-041 visual-baseline harness: `?__visual=1` renders signed-in screens with fixture data and no
-  // session (see src/lib/visual-fixtures.ts). Never honoured in production. We also forward it as a
-  // request header: on Vercel some dynamic routes (e.g. the anon /market) don't receive the query
-  // string in their Server Component `searchParams`, but a request header set here always reaches
-  // `headers()`, so pages can detect the harness reliably either way.
-  if (isVisualHarness(request.nextUrl.searchParams)) {
+  // D-041 visual-baseline harness: renders screens with fixture data and no session (see
+  // src/lib/visual-fixtures.ts). Never honoured in production. Triggered by the `?__visual` query
+  // OR the mv_visual cookie the visual spec sets — the cookie is the reliable channel for anon
+  // routes (e.g. /market), where Vercel doesn't consistently deliver the query to the Server
+  // Component. We forward it as an x-mv-visual request header so pages can read it via headers().
+  const harness =
+    isVisualHarness(request.nextUrl.searchParams) ||
+    (harnessAllowed() && request.cookies.get(VISUAL_COOKIE)?.value === '1');
+  if (harness) {
     const headers = new Headers(request.headers);
     headers.set('x-mv-visual', '1');
     return NextResponse.next({ request: { headers } });

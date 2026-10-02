@@ -15,6 +15,7 @@ const THEMES = [
 ];
 const MOBILE = { width: 390, height: 844 };
 const DESKTOP = { width: 1280, height: 800 };
+const BASE = process.env.BASE_URL || 'http://localhost:3000';
 type Screen = { name: string; path: string; prepare?: (page: Page) => Promise<void> };
 
 // Public screens.
@@ -26,12 +27,7 @@ const PUBLIC_SCREENS: Screen[] = [
     path: '/login',
     prepare: (page) => page.getByRole('button', { name: 'Use mobile number instead' }).click(),
   },
-  // NB: `market` is intentionally NOT in the pixel suite. The real /market browse (S4-04) renders
-  // fine locally + the e2e preview DID show the fixtures, but the ?__visual harness render is
-  // non-deterministic on Vercel for this anon route (a static-shell/function race that force-dynamic
-  // doesn't resolve), so a committed baseline flakily mismatches. Re-add once the anon-route harness
-  // is made deterministic (see PROGRESS.md parked item). The ListingCard reuses the car-card that
-  // garage's baselines already cover.
+  { name: 'market', path: '/market?__visual=1' }, // S4-04 browse; harness via the mv_visual cookie
 ];
 
 // Signed-in screens rendered with fixture data through the `?__visual=1` harness
@@ -73,7 +69,10 @@ async function settle(page: Page) {
 for (const theme of THEMES) {
   test.describe(`theme ${theme}`, () => {
     test.use({ viewport: MOBILE });
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(async ({ context, page }) => {
+      // The mv_visual cookie triggers the fixture harness reliably on anon routes (/market), where
+      // the ?__visual query isn't dependably delivered to the Server Component on Vercel.
+      await context.addCookies([{ name: 'mv_visual', value: '1', url: BASE }]);
       await page.addInitScript((t) => localStorage.setItem('mini-vault-theme', t), theme);
     });
 
