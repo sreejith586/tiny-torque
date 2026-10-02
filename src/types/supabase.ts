@@ -684,7 +684,53 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "dearmor":
+            "buy_now":
+{ Args: { "p_listing_id": string }; Returns: {
+              "amount": number | null,
+"buyer_id": string,
+"completed_at": string | null,
+"created_at": string,
+"currency": string | null,
+"expires_at": string,
+"id": string,
+"listing_id": string,
+"message": string | null,
+"responded_at": string | null,
+"seller_id": string,
+"status": Database["public"]['Enums']["offer_status"],
+"trade_item_ids": (string)[],
+"type": Database["public"]['Enums']["offer_type"]
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "offers"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"create_offer":
+{ Args: { "p_amount"?: number,"p_listing_id": string,"p_message"?: string,"p_trade_item_ids"?: (string)[],"p_type": Database["public"]['Enums']["offer_type"] }; Returns: {
+              "amount": number | null,
+"buyer_id": string,
+"completed_at": string | null,
+"created_at": string,
+"currency": string | null,
+"expires_at": string,
+"id": string,
+"listing_id": string,
+"message": string | null,
+"responded_at": string | null,
+"seller_id": string,
+"status": Database["public"]['Enums']["offer_status"],
+"trade_item_ids": (string)[],
+"type": Database["public"]['Enums']["offer_type"]
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "offers"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"dearmor":
 { Args: { "": string }; Returns: string
                            },
 "emit_event":
