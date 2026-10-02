@@ -78,6 +78,11 @@ export default function MarketView({
     initialData: isDefault
       ? { pages: [{ items: initialListings, nextCursor: initialCursor }], pageParams: [null] }
       : undefined,
+    // The SSR-seeded default page is already fresh — don't immediately refetch it on mount (which
+    // for this public feed would also overwrite the ?__visual harness fixtures). Filter changes use
+    // a new queryKey and fetch normally.
+    refetchOnMount: false,
+    staleTime: 30_000,
   });
 
   const items = useMemo(() => query.data?.pages.flatMap((p) => p.items) ?? [], [query.data]);
