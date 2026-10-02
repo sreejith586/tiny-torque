@@ -90,7 +90,10 @@ export default function MarketView({
     staleTime: 30_000,
   });
 
-  const items = useMemo(() => query.data?.pages.flatMap((p) => p.items) ?? [], [query.data]);
+  const queryItems = useMemo(() => query.data?.pages.flatMap((p) => p.items) ?? [], [query.data]);
+  // Under the harness the query is disabled; render the SSR-seeded listings directly so the
+  // baseline screenshot is deterministic regardless of TanStack's disabled-query data handling.
+  const items = harness ? initialListings : queryItems;
 
   const brands = useMemo(() => {
     const set = new Set(items.map((i) => i.brand).filter(Boolean));
