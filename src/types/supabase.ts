@@ -404,6 +404,12 @@ isOneToOne: false
       referencedRelation: "public_profiles"
       referencedColumns: ["id"]
     },{
+      foreignKeyName: "marketplace_listings_sold_offer_fk"
+      columns: ["sold_offer_id"]
+isOneToOne: false
+      referencedRelation: "offers"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "marketplace_listings_source_item_id_fkey"
       columns: ["source_item_id"]
 isOneToOne: false
@@ -437,6 +443,74 @@ isOneToOne: false
     },{
       foreignKeyName: "media_owner_id_fkey"
       columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"notifications": {
+                  Row: {
+                    "created_at": string,"id": string,"payload": NonNullable<Json>,"read_at": string | null,"type": Database["public"]['Enums']["notification_type"],"user_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"payload"?: NonNullable<Json>,"read_at"?: string | null,"type": Database["public"]['Enums']["notification_type"],"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"payload"?: NonNullable<Json>,"read_at"?: string | null,"type"?: Database["public"]['Enums']["notification_type"],"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notifications_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "notifications_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"offers": {
+                  Row: {
+                    "amount": number | null,"buyer_id": string,"completed_at": string | null,"created_at": string,"currency": string | null,"expires_at": string,"id": string,"listing_id": string,"message": string | null,"responded_at": string | null,"seller_id": string,"status": Database["public"]['Enums']["offer_status"],"trade_item_ids": (string)[],"type": Database["public"]['Enums']["offer_type"]
+                  }
+                  Insert: {
+                    "amount"?: number | null,"buyer_id": string,"completed_at"?: string | null,"created_at"?: string,"currency"?: string | null,"expires_at"?: string,"id"?: string,"listing_id": string,"message"?: string | null,"responded_at"?: string | null,"seller_id": string,"status"?: Database["public"]['Enums']["offer_status"],"trade_item_ids"?: (string)[],"type": Database["public"]['Enums']["offer_type"]
+                  }
+                  Update: {
+                    "amount"?: number | null,"buyer_id"?: string,"completed_at"?: string | null,"created_at"?: string,"currency"?: string | null,"expires_at"?: string,"id"?: string,"listing_id"?: string,"message"?: string | null,"responded_at"?: string | null,"seller_id"?: string,"status"?: Database["public"]['Enums']["offer_status"],"trade_item_ids"?: (string)[],"type"?: Database["public"]['Enums']["offer_type"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "offers_buyer_id_fkey"
+      columns: ["buyer_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "offers_buyer_id_fkey"
+      columns: ["buyer_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "offers_listing_id_fkey"
+      columns: ["listing_id"]
+isOneToOne: false
+      referencedRelation: "marketplace_listings"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "offers_seller_id_fkey"
+      columns: ["seller_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "offers_seller_id_fkey"
+      columns: ["seller_id"]
 isOneToOne: false
       referencedRelation: "public_profiles"
       referencedColumns: ["id"]
@@ -508,6 +582,12 @@ isOneToOne: false
       columns: ["buyer_id"]
 isOneToOne: false
       referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "seller_reviews_offer_fk"
+      columns: ["offer_id"]
+isOneToOne: false
+      referencedRelation: "offers"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "seller_reviews_seller_id_fkey"
@@ -647,10 +727,33 @@ isOneToOne: false
                            },
 "show_trgm":
 { Args: { "": string }; Returns: (string)[]
-                           }
+                           },
+"transition_offer":
+{ Args: { "p_action": string,"p_offer_id": string }; Returns: {
+              "amount": number | null,
+"buyer_id": string,
+"completed_at": string | null,
+"created_at": string,
+"currency": string | null,
+"expires_at": string,
+"id": string,
+"listing_id": string,
+"message": string | null,
+"responded_at": string | null,
+"seller_id": string,
+"status": Database["public"]['Enums']["offer_status"],
+"trade_item_ids": (string)[],
+"type": Database["public"]['Enums']["offer_type"]
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "offers"
+        isOneToOne: true
+        isSetofReturn: false
+      } }
           }
           Enums: {
-            "account_type": "individual"|"shop","catalog_status": "proposed"|"verified","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed","listing_type": "sale"|"trade"|"both","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","model_status": "proposed"|"verified"|"merged","plan_tier": "free"|"pro","report_status": "open"|"reviewed"|"dismissed","scan_kind": "single"|"group"|"visual_search","scan_status": "queued"|"running"|"done"|"failed","user_role": "user"|"admin"
+            "account_type": "individual"|"shop","catalog_status": "proposed"|"verified","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed"|"reserved","listing_type": "sale"|"trade"|"both","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","model_status": "proposed"|"verified"|"merged","notification_type": "offer_received"|"offer_accepted"|"offer_declined"|"message"|"listing_sold"|"review_received"|"badge_unlocked"|"wishlist_match"|"system","offer_status": "pending"|"accepted"|"declined"|"withdrawn"|"expired"|"completed"|"cancelled","offer_type": "cash"|"buy_now"|"trade","plan_tier": "free"|"pro","report_status": "open"|"reviewed"|"dismissed","scan_kind": "single"|"group"|"visual_search","scan_status": "queued"|"running"|"done"|"failed","user_role": "user"|"admin"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -766,7 +869,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "account_type": ["individual", "shop"],"catalog_status": ["proposed", "verified"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed"],"listing_type": ["sale", "trade", "both"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"model_status": ["proposed", "verified", "merged"],"plan_tier": ["free", "pro"],"report_status": ["open", "reviewed", "dismissed"],"scan_kind": ["single", "group", "visual_search"],"scan_status": ["queued", "running", "done", "failed"],"user_role": ["user", "admin"]
+            "account_type": ["individual", "shop"],"catalog_status": ["proposed", "verified"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed", "reserved"],"listing_type": ["sale", "trade", "both"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"model_status": ["proposed", "verified", "merged"],"notification_type": ["offer_received", "offer_accepted", "offer_declined", "message", "listing_sold", "review_received", "badge_unlocked", "wishlist_match", "system"],"offer_status": ["pending", "accepted", "declined", "withdrawn", "expired", "completed", "cancelled"],"offer_type": ["cash", "buy_now", "trade"],"plan_tier": ["free", "pro"],"report_status": ["open", "reviewed", "dismissed"],"scan_kind": ["single", "group", "visual_search"],"scan_status": ["queued", "running", "done", "failed"],"user_role": ["user", "admin"]
           }
         }
 } as const
