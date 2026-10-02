@@ -8,18 +8,17 @@
 - **Production:** LIVE — **`https://tinytorque.hypermaxsolutions.com`** (custom domain; Vercel project `tiny-torque`, branch `main`; the `tiny-torque-git-main-*.vercel.app` alias is behind Vercel SSO). First deploy 2026-09-28. **S1 promoted to prod 2026-09-30** (PR #20 merged, main @ `b473361`); prod DB at all 8 migrations. Verified end-to-end: `migration list`=8, anon REST `public_profiles`/`countries`=200, and prod page `/u/{unknown}` → 404 (not 500). No real data on prod yet; not public.
 - **Supabase:** parent project **Tiny Torque = `whjqwcaoexbytspkaxfh`** (region ap-south-1); Branching on, with branch DBs **`main` = `whjqwcaoexbytspkaxfh`** (default) and **`staging` = `bjhowyyyypeacfkgxwqr`** (the ref PROGRESS/the app have always called "the project" is actually the _staging branch_). **Both `staging` and `main`/prod now have all 8 migrations applied** (2026-09-30) — verified on each via `supabase migration list` (8 local==remote, no phantom) + live anon REST (`public_profiles` and `countries` = 200, PGRST205 gone). Root cause they were ever missing (D-048/D-049): the Supabase GitHub integration was never connected, so nothing auto-applied migrations. **Prod had an extra wrinkle (D-051):** its history carried a phantom `20260927181713` from initial setup and _none_ of the repo's 8 recorded as applied, so the D-050 workflow's first `main` run failed on the mismatch; resolved with `supabase db reset --linked` (safe — no real data), re-running all 8 clean. Auto-apply now healthy on both branches (D-050). Edge Function `scan-photo` deployed with `ANTHROPIC_API_KEY`.
 - **Auth:** email OTP via Resend SMTP (`hello@tinytorque.hypermaxsolutions.com`); templates "Confirm signup" + "Magic Link" carry `{{ .Token }}`; Site URL = prod URL; redirect URLs for main/staging/previews/localhost. Phone OTP: later (D-037).
-- **Active task:** **#28/#29/#30 merged** (S3-02, S4-01/02, S5-01/02 → staging; staging at 16 migrations). **MV-S5-06 notification consumer in PR [#31](https://github.com/sreejith586/tiny-torque/pull/31)**: migration 0007c — `AFTER INSERT` trigger on `domain_events` → `notifications` for offer events. CI green (pgTAP 0011). The whole marketplace+offers **backend** (S4-01/02, S5-01/02/06) is now done + dark behind `marketplace_publish`/`offers`.
-- **Next action:** merge #31. The remaining non-frontend DB task is **S6-01** (messaging + `blocks` + reports v2 + Realtime publication) — buildable/pgTAP-verifiable, and it unblocks the deferred offer block-check. Everything else outstanding in S4/S5 is **frontend** (publish/browse/detail, offer inbox, bell) and needs a Vercel-preview baseline regen — the recurring line that needs you.
+- **Active task:** **#28–#31 merged** (S3-02, S4-01/02, S5-01/02/06 → staging). **MV-S6-01 messaging+trust in PR [#32](https://github.com/sreejith586/tiny-torque/pull/32)**: migration 0008 — deal_messages + blocks + reports v2 + profiles.suspended_until + Realtime publication; also closes the deferred offer block check (create_offer/buy_now reject a blocked pair). CI green (pgTAP 0012). Marketplace→offers→chat/trust **backend** all done + dark.
+- **Next action:** merge #32. The next headless DB slice is **S7-02** (migration 0009 tokens: token_packs/ledger/purchases/grants, `spend_tokens` RPC — pgTAP-verifiable) — but we're now ~4 sprints of backend ahead of any UI. Everything else across S4/S5/S6 is **frontend** (publish/browse/detail, offer inbox, chat, reviews, report/block, bell, admin queues) + needs Vercel-preview baseline regen. Worth deciding with Sreejith whether to keep stacking backend or start the frontend.
 - **⚠️ PARKED FOR SREEJITH (tomorrow):**
-  1. **Merge PR #31** (`sprint-1 → staging`; `gh pr merge` is reserved for you) — #28/#29/#30 already merged.
-  2. **Offer block check deferred:** `create_offer`/`buy_now` don't yet reject a blocked user — wires in with the `blocks` table (S6-01). (The `buy_now` RPC dep is resolved — built in S5-02.)
-  3. **marketplace_v2 release 2 (destructive, D-006):** drop `seller_*`/`offers` jsonb/`photo(s)` once the read path fully uses public_profiles joins + media refs. Decide: one destructive migration (prod has no real data) or keep two-release. Same pending drop as garage_v2's `photos`.
-  4. **Base limit numbers (D-024 pricing):** scan quota (free 10 / pro 100) + listing slots (free 2 / Pro ∞) are placeholders; grants wire in S7.
-  5. **Varun's content** — ~200 starter castings CSV (S3-01 seed) + 20-photo scan-accuracy fixture set (S3-08).
-  6. **ai-scan deploy** (`supabase functions deploy ai-scan`, verify `SUPABASE_SERVICE_ROLE_KEY` secret) + **enable `ai_scan` flag**; dark until then.
-  7. **Login-gated verification**: scan flow (real Anthropic), media upload, CSV import, and (S4) publish→anon-browse.
-  8. **Product fork (S3-05):** which item a group-scan photo attaches to.
-  9. **Sprint-end `staging → main`** promotion (S2+S3, then S4). Carry-over: phone-OTP branch (D-037); CLI-pin `d2baee4`; `follows` public-read-count; `globals.css` diff (PR #16).
+  1. **Merge PR #32** (`sprint-1 → staging`; `gh pr merge` is reserved for you) — #28–#31 already merged.
+  2. **marketplace_v2 release 2 (destructive, D-006):** drop `seller_*`/`offers` jsonb/`photo(s)` once the read path fully uses public_profiles joins + media refs. Decide: one destructive migration (prod has no real data) or keep two-release. Same pending drop as garage_v2's `photos`.
+  3. **Base limit numbers (D-024 pricing):** scan quota (free 10 / pro 100) + listing slots (free 2 / Pro ∞) are placeholders; grants wire in S7.
+  4. **Varun's content** — ~200 starter castings CSV (S3-01 seed) + 20-photo scan-accuracy fixture set (S3-08).
+  5. **ai-scan deploy** (`supabase functions deploy ai-scan`, verify `SUPABASE_SERVICE_ROLE_KEY` secret) + **enable `ai_scan` flag**; dark until then.
+  6. **Login-gated verification**: scan flow (real Anthropic), media upload, CSV import, and (S4) publish→anon-browse.
+  7. **Product fork (S3-05):** which item a group-scan photo attaches to.
+  8. **Sprint-end `staging → main`** promotion (S2+S3, then S4). Carry-over: phone-OTP branch (D-037); CLI-pin `d2baee4`; `follows` public-read-count; `globals.css` diff (PR #16).
 
 ## S0 — COMPLETE (prod live 2026-09-28). S1 — COMPLETE (9 tasks, prod 2026-10-01, PR #22). Details in git + 05-sprint-plan.md.
 
@@ -32,24 +31,19 @@ Status vocabulary: `todo` · `in-progress (branch)` · `in-review (PR #)` · `do
 
 ## S3 — AI scan v2 + catalogue + metering: backend COMPLETE (merged via #27). S3-01/02/03/06/07 done (migrations 0005 catalogue + ai_scan_jobs + scan-quota, 0007 trigram match RPC; ai-scan Edge Function v2; domain/ai+catalog; Paywall; admin). Parked: S3-04/05 scan UI (deploy+login+baseline, S3-05 product fork), S3-08 (Varun's fixtures), S3-09 (dep S3-05). Details in git/PRs.
 
-## S4 task board — Marketplace: publish & browse (started 2026-10-01)
+## S4 — Marketplace: publish & browse (dark behind `marketplace_publish`)
 
-| Task                                          | Status                                                                                                                                                                 |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| MV-S4-01 Migration 0006 marketplace_v2        | **done** (local) — additive v2 (release 1/2, D-006); favourites+count trigger; listing-limit trigger + entitlement_listing_slots; seller_mobile PII locked; pgTAP 0008 |
-| MV-S4-02 domain/marketplace service           | **done** (local) — publish/update/renew/remove, browse(filters/cursor/country), wishlist, favourites, canPublish; 20 Vitest                                            |
-| MV-S4-03 Publish flow from item detail        | todo (dep S4-02; frontend — baseline regen)                                                                                                                            |
-| MV-S4-04 /market browse UI                    | todo (dep S4-02; frontend — baseline regen)                                                                                                                            |
-| MV-S4-05 Listing detail + seller card + share | todo (dep S4-02; frontend)                                                                                                                                             |
-| MV-S4-06 Wishlist + favourites UI             | todo (dep S4-02; frontend)                                                                                                                                             |
-| MV-S4-07 My listings management               | todo (dep S4-02; frontend)                                                                                                                                             |
-| MV-S4-08 Playwright: publish → anon-visible   | todo (dep S4-04)                                                                                                                                                       |
+- **MV-S4-01/02 done** (merged #28): migration 0006 marketplace_v2 (additive release 1/2, D-006; favourites+count trigger, listing-limit trigger + entitlement_listing_slots, **seller_mobile PII locked**; pgTAP 0008) + domain/marketplace (publish/update/renew/remove, browse filters/cursor/country, wishlist, favourites, canPublish; 20 Vitest). S4-03…08 (publish sheet, /market browse, listing detail, wishlist/favourites UI, my-listings, Playwright) are frontend.
 
 ## S5 — Offers/deals (pulled forward, dark behind `offers`)
 
 - **MV-S5-01 done** (merged #29): migration 0007 deals — offers + `transition_offer` RPC (state machine, row locks, auto-decline, events) + rate-limit trigger + notifications table + seller_reviews FK; pgTAP 0009.
 - **MV-S5-02 done** (merged #30): migration 0007b offer_rpcs (`create_offer` + `buy_now`, definer + server-validated) + domain/deals (create/buyNow/propose/transitions/inbox + pure state helpers); pgTAP 0010; 25 Vitest.
-- **MV-S5-06 done** (PR #31): migration 0007c — domain_events→notifications trigger for offer events; pgTAP 0011. **Offers backend complete.** S5-03/04/05 offer UI + inbox + bell are frontend. Offer block check still deferred (S6-01 `blocks`).
+- **MV-S5-06 done** (merged #31): migration 0007c — domain_events→notifications trigger for offer events; pgTAP 0011. **Offers backend complete.** S5-03/04/05 offer UI + inbox + bell are frontend.
+
+## S6 — Messaging + trust (pulled forward, dark behind `deal_chat`)
+
+- **MV-S6-01 done** (PR #32): migration 0008 — deal_messages (party-read, live-deal + no-block insert), blocks + `is_blocked`, reports v2 (resolution fields), profiles.suspended_until, Realtime publication; closed the offer block check in create_offer/buy_now; pgTAP 0012. S6-02…07 (chat UI, reviews, report/block, notif centre, admin queues) are frontend.
 
 ## Release procedure (every sprint end, D-035/D-039/D-040)
 
