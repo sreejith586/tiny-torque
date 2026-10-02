@@ -1,5 +1,6 @@
 import type { ProfileRow, CountryRow, PublicProfileRow } from '@/types/database';
 import type { GarageItem } from '@/domain/garage';
+import type { Listing } from '@/domain/marketplace';
 
 // D-027 / D-041 visual-baseline harness. `?__visual=1` makes the signed-in pages (garage, car
 // detail, profile; add/scan/offers need no data) render this deterministic fixture data with no
@@ -164,3 +165,78 @@ export const FIXTURE_PUBLIC_PROFILE: PublicProfileRow = {
   created_at: FIXTURE_PROFILE.created_at,
   is_pro: FIXTURE_PROFILE.plan === 'pro',
 };
+
+// F-06: /market browse renders these through the `?__visual=1` harness (anon-friendly, no session).
+const listingBase = {
+  source_item_id: null as string | null,
+  seller_id: OWNER,
+  seller_type: 'individual' as string | null,
+  seller_photo: null as string | null,
+  seller_name: 'Varun' as string | null,
+  seller_location: null as string | null,
+  seller_mobile: null as string | null,
+  model: null as string | null,
+  variant: null as string | null,
+  rarity: null as string | null,
+  condition: 'mint' as string | null,
+  qty: 1,
+  open_to_offers: true,
+  open_to_trade: false,
+  photo: null as string | null,
+  photos: [] as unknown as Listing['photos'],
+  offers: [] as unknown as Listing['offers'],
+  status: 'active' as Listing['status'],
+  created_at: '2026-09-20T08:00:00.000Z',
+  updated_at: '2026-09-20T08:00:00.000Z',
+  deleted_at: null as string | null,
+  catalog_model_id: null as string | null,
+  listing_type: 'sale' as Listing['listing_type'],
+  currency: 'AED',
+  country_code: 'AE' as string | null,
+  min_offer: null as number | null,
+  description: null as string | null,
+  view_count: 0,
+  favorite_count: 0,
+  offer_count: 0,
+  expires_at: '2026-11-20T08:00:00.000Z',
+  sold_at: null as string | null,
+  sold_offer_id: null as string | null,
+  search: null as unknown as Listing['search'],
+};
+
+export const FIXTURE_LISTINGS: Listing[] = [
+  {
+    ...listingBase,
+    id: '20000000-0000-4000-8000-000000000001',
+    brand: 'Hot Wheels',
+    model: 'Nissan Skyline GT-R',
+    variant: 'Blue',
+    price: 45,
+    listing_type: 'sale',
+    favorite_count: 3,
+    media: [{ id: 'fix-l1', url: PHOTO }],
+  },
+  {
+    ...listingBase,
+    id: '20000000-0000-4000-8000-000000000002',
+    brand: 'Tomica',
+    model: 'Toyota Supra',
+    variant: 'Red',
+    price: 30,
+    listing_type: 'both',
+    open_to_trade: true,
+    offer_count: 2,
+    media: [{ id: 'fix-l2', url: PHOTO }],
+  },
+  {
+    ...listingBase,
+    id: '20000000-0000-4000-8000-000000000003',
+    brand: 'Mini GT',
+    model: 'Lamborghini Huracán',
+    price: 60,
+    listing_type: 'trade',
+    open_to_offers: false,
+    open_to_trade: true,
+    media: [{ id: 'fix-l3', url: PHOTO }],
+  },
+];
