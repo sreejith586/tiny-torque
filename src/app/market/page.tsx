@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { connection } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { browseListings } from '@/domain/marketplace';
 import MarketView from '@/components/MarketView';
@@ -37,6 +38,11 @@ export default async function MarketPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  // This page reads searchParams (the ?__visual harness flag) + renders per request; opt out of
+  // any static prerendering so searchParams is always the real request's (Vercel was otherwise
+  // prerendering a shell with empty searchParams — the anon market path never bails to dynamic the
+  // way garage's redirect() does).
+  await connection();
   const sp = await searchParams;
   const { items, cursor, signedIn, harness } = await loadFirstPage(sp);
 
