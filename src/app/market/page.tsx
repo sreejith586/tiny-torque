@@ -37,12 +37,14 @@ export default async function MarketPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { items, cursor, signedIn, harness } = await loadFirstPage(await searchParams);
+  const sp = await searchParams;
+  const { items, cursor, signedIn, harness } = await loadFirstPage(sp);
 
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
       <p data-testid="mkt-debug" style={{ fontSize: 11, color: 'red' }}>
-        dbg harness={String(harness)} n={items.length} env={process.env.VERCEL_ENV ?? 'none'}
+        dbg harness={String(harness)} n={items.length} env={process.env.VERCEL_ENV ?? 'none'} sp=
+        {JSON.stringify(sp)}
       </p>
       <h1 style={{ fontSize: 24, marginBottom: 4 }}>Marketplace</h1>
       <p className="muted" style={{ marginBottom: 12 }}>
