@@ -146,6 +146,7 @@ export const FIXTURE_PROFILE: ProfileRow = {
   scan_quota_reset_at: '2026-09-01T08:00:00.000Z',
   onboarding_completed_at: '2026-09-01T08:00:00.000Z',
   tutorial_dismissed_at: null,
+  suspended_until: null,
 };
 
 // F-14: /u/{handle} reads public_profiles, not profiles — a distinct (narrower) shape.
