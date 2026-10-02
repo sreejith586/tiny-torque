@@ -1,5 +1,10 @@
 -- pgTAP for the offer-creation RPCs (MV-S5-02, F-08). create_offer validation + buy_now instant
 -- reserve / auto-decline / owner / not-for-sale guards. Run via CI's pgTAP job.
+--
+-- NOTE on reads: RPCs are called while authenticated (they need auth.uid()), but verification
+-- SELECTs run after clear_authentication() — a reserved listing / another user's offer are hidden
+-- from the buyer by RLS, so reading them as the buyer would see nothing (that is correct RLS, not
+-- a bug). RPC return values are visible to the caller regardless.
 
 begin;
 select plan(10);
@@ -12,9 +17,10 @@ insert into public.profiles (id, display_name, account_type, handle, plan) value
   ('60000000-0000-0000-0000-00000000000a', 'Seller', 'individual', 'bn_s', 'pro'),
   ('60000000-0000-0000-0000-00000000000b', 'Buyer', 'individual', 'bn_b', 'free'),
   ('60000000-0000-0000-0000-00000000000c', 'Buyer2', 'individual', 'bn_b2', 'free');
-insert into public.marketplace_listings (id, seller_id, brand, status, price, currency, listing_type) values
-  ('60000000-0000-0000-0000-0000000000f0', '60000000-0000-0000-0000-00000000000a', 'HW', 'active', 100, 'AED', 'sale'),
-  ('60000000-0000-0000-0000-0000000000f1', '60000000-0000-0000-0000-00000000000a', 'HW', 'active', 80, 'AED', 'trade');
+insert into public.marketplace_listings (id, seller_id, brand, status, price, currency, listing_type, open_to_offers, min_offer) values
+  ('60000000-0000-0000-0000-0000000000f0', '60000000-0000-0000-0000-00000000000a', 'HW', 'active', 100, 'AED', 'sale', false, null),
+  ('60000000-0000-0000-0000-0000000000f1', '60000000-0000-0000-0000-00000000000a', 'HW', 'active', 80, 'AED', 'trade', false, null),
+  ('60000000-0000-0000-0000-0000000000f2', '60000000-0000-0000-0000-00000000000a', 'HW', 'active', 100, 'AED', 'both', true, 50);
 -- a competing pending offer that buy_now should auto-decline
 insert into public.offers (id, listing_id, buyer_id, seller_id, type, amount, status) values
   ('60000000-0000-0000-0000-0000000000e2', '60000000-0000-0000-0000-0000000000f0', '60000000-0000-0000-0000-00000000000c', '60000000-0000-0000-0000-00000000000a', 'cash', 70, 'pending');
@@ -27,26 +33,32 @@ begin
   perform set_config('role', 'authenticated', true);
 end; $$;
 create or replace function tests.clear_authentication() returns void language plpgsql as $$
-begin perform set_config('role', 'supabase_admin', true); end; $$;
+begin
+  perform set_config('role', 'supabase_admin', true);
+  perform set_config('request.jwt.claim.sub', '', true);
+end; $$;
 grant usage on schema tests to anon, authenticated;
 grant execute on all functions in schema tests to anon, authenticated;
 
--- seller cannot buy their own listing
+-- 1. seller cannot buy their own listing
 select tests.authenticate_as('60000000-0000-0000-0000-00000000000a');
 select throws_ok(
   $$select public.buy_now('60000000-0000-0000-0000-0000000000f0')$$,
   'P0001', 'cannot_buy_own_listing', 'seller cannot buy their own listing');
 
--- buy_now on a trade-only listing is rejected
+-- 2. buy_now on a trade-only listing is rejected
 select tests.clear_authentication();
 select tests.authenticate_as('60000000-0000-0000-0000-00000000000b');
 select throws_ok(
   $$select public.buy_now('60000000-0000-0000-0000-0000000000f1')$$,
   'P0001', 'not_for_sale', 'buy_now is rejected on a trade-only listing');
 
--- buyer buys now: offer born accepted at the listing price
+-- 3. buyer buys now: the RPC returns an accepted offer at the listing price (return value is visible)
 select is((select status::text from public.buy_now('60000000-0000-0000-0000-0000000000f0')),
-  'accepted', 'buy_now creates an accepted offer');
+  'accepted', 'buy_now returns an accepted offer');
+
+-- 4-6. verify the side effects as an unauthenticated admin (buyer's RLS would hide these rows)
+select tests.clear_authentication();
 select is((select amount from public.offers where listing_id = '60000000-0000-0000-0000-0000000000f0' and type = 'buy_now'),
   100::numeric, 'the buy_now offer is at the listing price');
 select is((select status::text from public.marketplace_listings where id = '60000000-0000-0000-0000-0000000000f0'),
@@ -54,13 +66,8 @@ select is((select status::text from public.marketplace_listings where id = '6000
 select is((select status::text from public.offers where id = '60000000-0000-0000-0000-0000000000e2'),
   'declined', 'buy_now auto-declines the other pending offer');
 
--- ---------- create_offer validation ----------
--- a fresh open-to-offers listing (price 100, min 50) for cash-offer checks
-insert into public.marketplace_listings (id, seller_id, brand, status, price, currency, listing_type, open_to_offers, min_offer)
-  values ('60000000-0000-0000-0000-0000000000f2', '60000000-0000-0000-0000-00000000000a', 'HW', 'active', 100, 'AED', 'both', true, 50);
-select tests.clear_authentication();
+-- 7-10. create_offer validation (as the buyer; create_offer returns its row, visible to the caller)
 select tests.authenticate_as('60000000-0000-0000-0000-00000000000b');
-
 select throws_ok(
   $$select public.create_offer('60000000-0000-0000-0000-0000000000f2','cash',40)$$,
   'P0001', 'below_min_offer', 'create_offer rejects a cash amount below the floor');
@@ -70,7 +77,6 @@ select throws_ok(
 select is(
   (select status::text from public.create_offer('60000000-0000-0000-0000-0000000000f2','cash',60)),
   'pending', 'create_offer inserts a valid pending cash offer');
--- trade with an item the buyer does not own/public → rejected
 select throws_ok(
   $$select public.create_offer('60000000-0000-0000-0000-0000000000f2','trade',null,array['99999999-9999-4999-8999-999999999999'::uuid])$$,
   'P0001', 'trade_item_invalid', 'create_offer rejects a trade with a non-owned item');
