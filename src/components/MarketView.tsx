@@ -21,10 +21,14 @@ export default function MarketView({
   initialListings,
   initialCursor = null,
   signedIn = false,
+  harness = false,
 }: {
   initialListings: Listing[];
   initialCursor?: string | null;
   signedIn?: boolean;
+  /** Visual-baseline harness: show the seeded fixtures and never fetch (the public feed would
+   * otherwise replace them with the empty live list). */
+  harness?: boolean;
 }) {
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [q, setQ] = useState('');
@@ -78,9 +82,10 @@ export default function MarketView({
     initialData: isDefault
       ? { pages: [{ items: initialListings, nextCursor: initialCursor }], pageParams: [null] }
       : undefined,
-    // The SSR-seeded default page is already fresh — don't immediately refetch it on mount (which
-    // for this public feed would also overwrite the ?__visual harness fixtures). Filter changes use
-    // a new queryKey and fetch normally.
+    // The SSR-seeded default page is already fresh — don't immediately refetch it on mount.
+    // Filter changes use a new queryKey and fetch normally. Under the baseline harness, disable
+    // fetching entirely so the seeded fixtures are what gets screenshotted.
+    enabled: !harness,
     refetchOnMount: false,
     staleTime: 30_000,
   });

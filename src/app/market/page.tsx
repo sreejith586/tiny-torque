@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 async function loadFirstPage(searchParams: Record<string, string | string[] | undefined>) {
   // D-041 baseline harness (non-production): one page of fixtures, no session.
   if (isVisualHarness(searchParams)) {
-    return { items: FIXTURE_LISTINGS, cursor: null, signedIn: false };
+    return { items: FIXTURE_LISTINGS, cursor: null, signedIn: false, harness: true };
   }
   const supabase = await createClient();
   const {
@@ -27,7 +27,7 @@ async function loadFirstPage(searchParams: Record<string, string | string[] | un
     viewerCountry = profile?.country_code ?? undefined;
   }
   const { items, nextCursor } = await browseListings(supabase, {}, viewerCountry);
-  return { items, cursor: nextCursor, signedIn: !!user };
+  return { items, cursor: nextCursor, signedIn: !!user, harness: false };
 }
 
 export default async function MarketPage({
@@ -35,7 +35,7 @@ export default async function MarketPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { items, cursor, signedIn } = await loadFirstPage(await searchParams);
+  const { items, cursor, signedIn, harness } = await loadFirstPage(await searchParams);
 
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
@@ -43,7 +43,12 @@ export default async function MarketPage({
       <p className="muted" style={{ marginBottom: 12 }}>
         Buy, sell and trade with other collectors.
       </p>
-      <MarketView initialListings={items} initialCursor={cursor} signedIn={signedIn} />
+      <MarketView
+        initialListings={items}
+        initialCursor={cursor}
+        signedIn={signedIn}
+        harness={harness}
+      />
     </main>
   );
 }
