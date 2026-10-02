@@ -37,7 +37,13 @@ export async function proxy(request: NextRequest) {
   if (harness) {
     const headers = new Headers(request.headers);
     headers.set('x-mv-visual', '1');
-    return NextResponse.next({ request: { headers } });
+    const res = NextResponse.next({ request: { headers } });
+    // Stop Vercel's edge/CDN from serving a cached shell for the harness render (the anon /market
+    // baseline was intermittently empty because of this). Belt-and-braces alongside force-dynamic.
+    res.headers.set('Cache-Control', 'no-store, max-age=0');
+    res.headers.set('CDN-Cache-Control', 'no-store');
+    res.headers.set('Vercel-CDN-Cache-Control', 'no-store');
+    return res;
   }
 
   if (!user && !isPublicPath(pathname)) {
