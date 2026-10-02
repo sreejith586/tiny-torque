@@ -26,7 +26,7 @@ const PUBLIC_SCREENS: Screen[] = [
     path: '/login',
     prepare: (page) => page.getByRole('button', { name: 'Use mobile number instead' }).click(),
   },
-  { name: 'market', path: '/market' }, // static "coming soon" shell until S3; re-baseline then
+  { name: 'market', path: '/market?__visual=1' }, // S4-04: real browse, fixture listings via harness
 ];
 
 // Signed-in screens rendered with fixture data through the `?__visual=1` harness

@@ -1,18 +1,49 @@
 import type { Metadata } from 'next';
-
-// Marketplace (buy/sell/trade listings) is Phase 2 — see
-// /mnt/user-data/outputs/mini-vault-features.md for the full spec. This
-// stub only exists so the bottom nav's Market tab doesn't 404.
+import { createClient } from '@/lib/supabase/server';
+import { browseListings } from '@/domain/marketplace';
+import MarketView from '@/components/MarketView';
+import { FIXTURE_LISTINGS, isVisualHarness } from '@/lib/visual-fixtures';
 
 export const metadata: Metadata = {
   title: 'Market',
 };
 
-export default function MarketPage() {
+async function loadFirstPage(searchParams: Record<string, string | string[] | undefined>) {
+  // D-041 baseline harness (non-production): one page of fixtures, no session.
+  if (isVisualHarness(searchParams)) {
+    return { items: FIXTURE_LISTINGS, cursor: null, signedIn: false };
+  }
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  let viewerCountry: string | undefined;
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('country_code')
+      .eq('id', user.id)
+      .maybeSingle();
+    viewerCountry = profile?.country_code ?? undefined;
+  }
+  const { items, nextCursor } = await browseListings(supabase, {}, viewerCountry);
+  return { items, cursor: nextCursor, signedIn: !!user };
+}
+
+export default async function MarketPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { items, cursor, signedIn } = await loadFirstPage(await searchParams);
+
   return (
-    <main style={{ padding: '48px 20px', flex: 1, textAlign: 'center' }}>
-      <h1 style={{ fontSize: 22 }}>Marketplace</h1>
-      <p className="muted">Coming soon — buy, sell and trade with other collectors.</p>
+    <main style={{ padding: '20px 16px', flex: 1 }}>
+      <h1 style={{ fontSize: 24, marginBottom: 4 }}>Marketplace</h1>
+      <p className="muted" style={{ marginBottom: 12 }}>
+        Buy, sell and trade with other collectors.
+      </p>
+      <MarketView initialListings={items} initialCursor={cursor} signedIn={signedIn} />
     </main>
   );
 }
