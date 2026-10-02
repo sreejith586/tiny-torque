@@ -9,6 +9,12 @@ export const metadata: Metadata = {
   title: 'Market',
 };
 
+// Always run the function per request — never serve a static shell. Vercel was intermittently
+// serving a prerendered empty shell for this anon route (the harness fixtures then vanished); this
+// + headers() below keeps the render deterministic for both the live feed and the ?__visual baseline.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 async function loadFirstPage(harness: boolean) {
   // D-041 baseline harness (non-production): one page of fixtures, no session.
   if (harness) {
