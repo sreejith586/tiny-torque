@@ -337,18 +337,61 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"marketplace_listings": {
+                },"listing_favorites": {
                   Row: {
-                    "brand": string,"condition": string | null,"created_at": string,"deleted_at": string | null,"id": string,"model": string | null,"offers": NonNullable<Json>,"open_to_offers": boolean,"open_to_trade": boolean,"photo": string | null,"photos": NonNullable<Json>,"price": number,"qty": number,"rarity": string | null,"seller_id": string,"seller_location": string | null,"seller_mobile": string | null,"seller_name": string | null,"seller_photo": string | null,"seller_type": string | null,"source_item_id": string | null,"status": Database["public"]['Enums']["listing_status"],"updated_at": string,"variant": string | null
+                    "created_at": string,"listing_id": string,"user_id": string
                   }
                   Insert: {
-                    "brand": string,"condition"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"id"?: string,"model"?: string | null,"offers"?: NonNullable<Json>,"open_to_offers"?: boolean,"open_to_trade"?: boolean,"photo"?: string | null,"photos"?: NonNullable<Json>,"price"?: number,"qty"?: number,"rarity"?: string | null,"seller_id": string,"seller_location"?: string | null,"seller_mobile"?: string | null,"seller_name"?: string | null,"seller_photo"?: string | null,"seller_type"?: string | null,"source_item_id"?: string | null,"status"?: Database["public"]['Enums']["listing_status"],"updated_at"?: string,"variant"?: string | null
+                    "created_at"?: string,"listing_id": string,"user_id": string
                   }
                   Update: {
-                    "brand"?: string,"condition"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"id"?: string,"model"?: string | null,"offers"?: NonNullable<Json>,"open_to_offers"?: boolean,"open_to_trade"?: boolean,"photo"?: string | null,"photos"?: NonNullable<Json>,"price"?: number,"qty"?: number,"rarity"?: string | null,"seller_id"?: string,"seller_location"?: string | null,"seller_mobile"?: string | null,"seller_name"?: string | null,"seller_photo"?: string | null,"seller_type"?: string | null,"source_item_id"?: string | null,"status"?: Database["public"]['Enums']["listing_status"],"updated_at"?: string,"variant"?: string | null
+                    "created_at"?: string,"listing_id"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
+      foreignKeyName: "listing_favorites_listing_id_fkey"
+      columns: ["listing_id"]
+isOneToOne: false
+      referencedRelation: "marketplace_listings"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "listing_favorites_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "listing_favorites_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"marketplace_listings": {
+                  Row: {
+                    "brand": string,"catalog_model_id": string | null,"condition": string | null,"country_code": string | null,"created_at": string,"currency": string,"deleted_at": string | null,"description": string | null,"expires_at": string | null,"favorite_count": number,"id": string,"listing_type": Database["public"]['Enums']["listing_type"],"min_offer": number | null,"model": string | null,"offer_count": number,"offers": NonNullable<Json>,"open_to_offers": boolean,"open_to_trade": boolean,"photo": string | null,"photos": NonNullable<Json>,"price": number,"qty": number,"rarity": string | null,"search": unknown,"seller_id": string,"seller_location": string | null,"seller_mobile": string | null,"seller_name": string | null,"seller_photo": string | null,"seller_type": string | null,"sold_at": string | null,"sold_offer_id": string | null,"source_item_id": string | null,"status": Database["public"]['Enums']["listing_status"],"updated_at": string,"variant": string | null,"view_count": number
+                  }
+                  Insert: {
+                    "brand": string,"catalog_model_id"?: string | null,"condition"?: string | null,"country_code"?: string | null,"created_at"?: string,"currency"?: string,"deleted_at"?: string | null,"description"?: string | null,"expires_at"?: string | null,"favorite_count"?: number,"id"?: string,"listing_type"?: Database["public"]['Enums']["listing_type"],"min_offer"?: number | null,"model"?: string | null,"offer_count"?: number,"offers"?: NonNullable<Json>,"open_to_offers"?: boolean,"open_to_trade"?: boolean,"photo"?: string | null,"photos"?: NonNullable<Json>,"price"?: number,"qty"?: number,"rarity"?: string | null,"search"?: never,"seller_id": string,"seller_location"?: string | null,"seller_mobile"?: string | null,"seller_name"?: string | null,"seller_photo"?: string | null,"seller_type"?: string | null,"sold_at"?: string | null,"sold_offer_id"?: string | null,"source_item_id"?: string | null,"status"?: Database["public"]['Enums']["listing_status"],"updated_at"?: string,"variant"?: string | null,"view_count"?: number
+                  }
+                  Update: {
+                    "brand"?: string,"catalog_model_id"?: string | null,"condition"?: string | null,"country_code"?: string | null,"created_at"?: string,"currency"?: string,"deleted_at"?: string | null,"description"?: string | null,"expires_at"?: string | null,"favorite_count"?: number,"id"?: string,"listing_type"?: Database["public"]['Enums']["listing_type"],"min_offer"?: number | null,"model"?: string | null,"offer_count"?: number,"offers"?: NonNullable<Json>,"open_to_offers"?: boolean,"open_to_trade"?: boolean,"photo"?: string | null,"photos"?: NonNullable<Json>,"price"?: number,"qty"?: number,"rarity"?: string | null,"search"?: never,"seller_id"?: string,"seller_location"?: string | null,"seller_mobile"?: string | null,"seller_name"?: string | null,"seller_photo"?: string | null,"seller_type"?: string | null,"sold_at"?: string | null,"sold_offer_id"?: string | null,"source_item_id"?: string | null,"status"?: Database["public"]['Enums']["listing_status"],"updated_at"?: string,"variant"?: string | null,"view_count"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "marketplace_listings_catalog_model_id_fkey"
+      columns: ["catalog_model_id"]
+isOneToOne: false
+      referencedRelation: "catalog_models"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "marketplace_listings_country_code_fkey"
+      columns: ["country_code"]
+isOneToOne: false
+      referencedRelation: "countries"
+      referencedColumns: ["code"]
+    },{
       foreignKeyName: "marketplace_listings_seller_id_fkey"
       columns: ["seller_id"]
 isOneToOne: false
@@ -482,16 +525,22 @@ isOneToOne: false
                   ]
                 },"wishlist_items": {
                   Row: {
-                    "brand": string | null,"created_at": string,"deleted_at": string | null,"id": string,"model": string | null,"notes": string | null,"owner_id": string,"updated_at": string
+                    "brand": string | null,"catalog_model_id": string | null,"created_at": string,"currency": string | null,"deleted_at": string | null,"id": string,"max_price": number | null,"model": string | null,"notes": string | null,"notify": boolean,"owner_id": string,"updated_at": string
                   }
                   Insert: {
-                    "brand"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"id"?: string,"model"?: string | null,"notes"?: string | null,"owner_id": string,"updated_at"?: string
+                    "brand"?: string | null,"catalog_model_id"?: string | null,"created_at"?: string,"currency"?: string | null,"deleted_at"?: string | null,"id"?: string,"max_price"?: number | null,"model"?: string | null,"notes"?: string | null,"notify"?: boolean,"owner_id": string,"updated_at"?: string
                   }
                   Update: {
-                    "brand"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"id"?: string,"model"?: string | null,"notes"?: string | null,"owner_id"?: string,"updated_at"?: string
+                    "brand"?: string | null,"catalog_model_id"?: string | null,"created_at"?: string,"currency"?: string | null,"deleted_at"?: string | null,"id"?: string,"max_price"?: number | null,"model"?: string | null,"notes"?: string | null,"notify"?: boolean,"owner_id"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
+      foreignKeyName: "wishlist_items_catalog_model_id_fkey"
+      columns: ["catalog_model_id"]
+isOneToOne: false
+      referencedRelation: "catalog_models"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "wishlist_items_owner_id_fkey"
       columns: ["owner_id"]
 isOneToOne: false
@@ -561,6 +610,9 @@ isOneToOne: false
 "emit_event":
 { Args: { "p_actor_id": string,"p_entity": string,"p_entity_id"?: string,"p_payload"?: Json,"p_type": string }; Returns: undefined
                            },
+"entitlement_listing_slots":
+{ Args: { "p_user": string }; Returns: number
+                           },
 "entitlement_scan_quota":
 { Args: { "p_user": string }; Returns: number
                            },
@@ -572,6 +624,14 @@ isOneToOne: false
                            },
 "is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"is_pro":
+{ Args: { "p_user"?: string }; Returns: boolean
+                           },
+"match_catalog_models":
+{ Args: { "p_limit"?: number,"p_name": string }; Returns: {
+              "brand_id": string,"id": string,"name": string,"score": number
+            }[]
                            },
 "media_is_public":
 { Args: { "p_media_id": string }; Returns: boolean
@@ -590,7 +650,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "account_type": "individual"|"shop","catalog_status": "proposed"|"verified","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","model_status": "proposed"|"verified"|"merged","plan_tier": "free"|"pro","report_status": "open"|"reviewed"|"dismissed","scan_kind": "single"|"group"|"visual_search","scan_status": "queued"|"running"|"done"|"failed","user_role": "user"|"admin"
+            "account_type": "individual"|"shop","catalog_status": "proposed"|"verified","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed","listing_type": "sale"|"trade"|"both","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","model_status": "proposed"|"verified"|"merged","plan_tier": "free"|"pro","report_status": "open"|"reviewed"|"dismissed","scan_kind": "single"|"group"|"visual_search","scan_status": "queued"|"running"|"done"|"failed","user_role": "user"|"admin"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -706,7 +766,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "account_type": ["individual", "shop"],"catalog_status": ["proposed", "verified"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"model_status": ["proposed", "verified", "merged"],"plan_tier": ["free", "pro"],"report_status": ["open", "reviewed", "dismissed"],"scan_kind": ["single", "group", "visual_search"],"scan_status": ["queued", "running", "done", "failed"],"user_role": ["user", "admin"]
+            "account_type": ["individual", "shop"],"catalog_status": ["proposed", "verified"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed"],"listing_type": ["sale", "trade", "both"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"model_status": ["proposed", "verified", "merged"],"plan_tier": ["free", "pro"],"report_status": ["open", "reviewed", "dismissed"],"scan_kind": ["single", "group", "visual_search"],"scan_status": ["queued", "running", "done", "failed"],"user_role": ["user", "admin"]
           }
         }
 } as const

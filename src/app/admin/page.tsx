@@ -1,13 +1,19 @@
-// Shell only (MV-S1-06): role-gated layout + RLS backstop are what this task builds. The actual
-// pages (Overview, Reports, Users, Catalogue, Flags, Invites, Scan jobs — F-16) are later tasks
-// (MV-S10-04 and others); F-16 exempts /admin from prototype fidelity but still asks for the
-// same tokens and plain tables/forms, no dashboards — this placeholder follows that.
+import Link from 'next/link';
+
+// Admin console overview (F-16). Sub-pages land across sprints; Catalogue + Scan jobs ship in S3.
 export default function AdminOverviewPage() {
   return (
-    <div className="panel" style={{ padding: 16 }}>
-      <p className="muted">
-        Admin console pages (Overview, Reports, Users, Catalogue, Flags, Invites, Scan jobs) land in
-        later sprints.
+    <div className="panel" style={{ padding: 16, marginTop: 12 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <Link href="/admin/catalogue" className="btn-secondary">
+          Catalogue proposals
+        </Link>
+        <Link href="/admin/scan-jobs" className="btn-secondary">
+          Scan jobs
+        </Link>
+      </div>
+      <p className="muted" style={{ fontSize: 13, marginTop: 14 }}>
+        More pages (Overview stats, Reports, Users, Flags, Invites) land in later sprints.
       </p>
     </div>
   );

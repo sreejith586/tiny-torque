@@ -35,3 +35,35 @@ export async function getModelById(supabase: Client, id: string): Promise<Catalo
   if (error) throw error;
   return data;
 }
+
+export async function listAllBrands(supabase: Client): Promise<CatalogBrandRow[]> {
+  const { data, error } = await supabase
+    .from('catalog_brands')
+    .select('*')
+    .order('name', { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function listProposedModels(supabase: Client): Promise<CatalogModelRow[]> {
+  const { data, error } = await supabase
+    .from('catalog_models')
+    .select('*')
+    .eq('status', 'proposed')
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function verifyModel(supabase: Client, id: string, verifierId: string) {
+  const { error } = await supabase
+    .from('catalog_models')
+    .update({ status: 'verified', verified_by: verifierId })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+export async function rejectModel(supabase: Client, id: string) {
+  const { error } = await supabase.from('catalog_models').delete().eq('id', id);
+  if (error) throw error;
+}
