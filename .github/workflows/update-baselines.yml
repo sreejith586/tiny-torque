@@ -31,5 +31,13 @@ jobs:
           E2E_ENABLE_PHONE_SIGNIN: ${{ vars.E2E_ENABLE_PHONE_SIGNIN }}
           E2E_TEST_PHONE: '+919999900001'
           E2E_TEST_OTP: '246810'
+      # Anon fixture screens (/market) are baselined against a local server (deterministic), not the
+      # preview — see e2e/visual-local.spec.ts. LOCAL_VISUAL=1 starts the webServer.
+      - run: pnpm exec playwright test --project=visual-local --update-snapshots
+        env:
+          LOCAL_VISUAL: '1'
+          NEXT_TELEMETRY_DISABLED: 1
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
       - uses: actions/upload-artifact@v4
         with: { name: updated-baselines, path: e2e/__screenshots__, retention-days: 7 }

@@ -39,13 +39,23 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], deviceScaleFactor: 1 },
       testMatch: /visual\.spec\.ts/,
     },
+    {
+      // Anon fixture screens (e.g. /market) that must render deterministically — run against a
+      // local server, NOT the Vercel preview, whose edge serves this route's harness render
+      // inconsistently (cold prerendered shell vs warm function). Set LOCAL_VISUAL=1 so webServer
+      // starts even when BASE_URL points at a preview for the `visual` project.
+      name: 'visual-local',
+      use: { ...devices['Desktop Chrome'], deviceScaleFactor: 1, baseURL: 'http://localhost:3000' },
+      testMatch: /visual-local\.spec\.ts/,
+    },
   ],
-  webServer: process.env.BASE_URL
-    ? undefined
-    : {
-        command: 'pnpm build && pnpm start',
-        url: 'http://localhost:3000',
-        reuseExistingServer: !process.env.CI,
-        timeout: 180_000,
-      },
+  webServer:
+    process.env.BASE_URL && !process.env.LOCAL_VISUAL
+      ? undefined
+      : {
+          command: 'pnpm build && pnpm start',
+          url: 'http://localhost:3000',
+          reuseExistingServer: !process.env.CI,
+          timeout: 180_000,
+        },
 });

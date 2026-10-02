@@ -15,7 +15,6 @@ const THEMES = [
 ];
 const MOBILE = { width: 390, height: 844 };
 const DESKTOP = { width: 1280, height: 800 };
-const BASE = process.env.BASE_URL || 'http://localhost:3000';
 type Screen = { name: string; path: string; prepare?: (page: Page) => Promise<void> };
 
 // Public screens.
@@ -27,7 +26,8 @@ const PUBLIC_SCREENS: Screen[] = [
     path: '/login',
     prepare: (page) => page.getByRole('button', { name: 'Use mobile number instead' }).click(),
   },
-  { name: 'market', path: '/market?__visual=1' }, // S4-04 browse; harness via the mv_visual cookie
+  // `market` (anon, needs fixture data) lives in visual-local.spec.ts — it runs against a local
+  // server because the Vercel preview renders this route's harness inconsistently (see that file).
 ];
 
 // Signed-in screens rendered with fixture data through the `?__visual=1` harness
@@ -69,10 +69,7 @@ async function settle(page: Page) {
 for (const theme of THEMES) {
   test.describe(`theme ${theme}`, () => {
     test.use({ viewport: MOBILE });
-    test.beforeEach(async ({ context, page }) => {
-      // The mv_visual cookie triggers the fixture harness reliably on anon routes (/market), where
-      // the ?__visual query isn't dependably delivered to the Server Component on Vercel.
-      await context.addCookies([{ name: 'mv_visual', value: '1', url: BASE }]);
+    test.beforeEach(async ({ page }) => {
       await page.addInitScript((t) => localStorage.setItem('mini-vault-theme', t), theme);
     });
 

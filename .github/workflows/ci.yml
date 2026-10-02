@@ -40,6 +40,31 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
 
+  visual-local:
+    name: visual baselines (anon, local server)
+    if: github.event_name != 'deployment_status'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      # Anon fixture screens (/market) against a local `pnpm start` — deterministic, unlike the
+      # Vercel preview. LOCAL_VISUAL=1 makes playwright.config start the webServer; VERCEL_ENV is
+      # unset so the fixture harness (mv_visual cookie) is honoured.
+      - run: pnpm exec playwright test --project=visual-local
+        env:
+          LOCAL_VISUAL: '1'
+          NEXT_TELEMETRY_DISABLED: 1
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with: { name: visual-local-report, path: playwright-report, retention-days: 7 }
+
   migrations:
     name: migrations apply cleanly (D-006)
     if: github.event_name != 'deployment_status'
