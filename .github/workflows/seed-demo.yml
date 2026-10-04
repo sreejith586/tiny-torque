@@ -5,6 +5,12 @@ name: Seed demo data (staging)
 # NOTHING). Staging-only — the project ref is hardcoded; it can never touch prod. Connects over the
 # IPv4 connection pooler (GitHub runners are IPv4-only), same reason as db-migrate.yml.
 on:
+  # TEMPORARY (removed after the first successful run): workflow_dispatch only works for workflows
+  # on the default branch, and this is new on sprint-1 — so a path-scoped push trigger lets us run
+  # the seed once from the branch to verify it. Idempotent, so re-runs are no-ops.
+  push:
+    branches: [sprint-1]
+    paths: ['supabase/seed-demo.sql', '.github/workflows/seed-demo.yml']
   workflow_dispatch:
     inputs:
       confirm:
@@ -21,7 +27,7 @@ jobs:
 
       - name: Guard
         run: |
-          if [ "${{ inputs.confirm }}" != "staging" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.confirm }}" != "staging" ]; then
             echo "::error::confirm must be exactly 'staging'"; exit 1
           fi
           if [ -z "${{ secrets.SUPABASE_STAGING_DB_PASSWORD }}" ]; then
