@@ -80,6 +80,27 @@ test.describe('tablet', () => {
   }
 });
 
+// Login OTP step — the new segmented OTP cells (D-054). Stub the OTP send so the screen advances
+// to the code step, then screenshot. Two themes: the Aurora Glass default + workshop-light.
+test.describe('login otp', () => {
+  test.use({ viewport: MOBILE });
+  for (const theme of ['aurora-glass', 'workshop-light'] as const) {
+    test(`login-otp ${theme} @360`, async ({ page }) => {
+      await page.addInitScript((t) => localStorage.setItem('mini-vault-theme', t), theme);
+      await page.route('**/auth/v1/otp**', (route) =>
+        route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
+      );
+      await page.goto('/login');
+      await settle(page);
+      await page.fill('#email', 'demo@example.com');
+      await page.getByRole('button', { name: 'Send code' }).click();
+      await page.locator('[aria-label="One-time code digit 1"]').waitFor();
+      await settle(page);
+      await expect(page).toHaveScreenshot(`login-otp-${theme}-mobile.png`, { fullPage: true });
+    });
+  }
+});
+
 // Wide desktop — one theme, to lock the >=1440px left side-rail nav (D-053). Playwright's
 // chromium desktop context reports hover:hover + pointer:fine, so the rail's media query fires.
 test.describe('desktop', () => {

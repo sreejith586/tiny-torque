@@ -13,6 +13,7 @@ import {
   type CountryRow,
 } from '@/domain/identity';
 import { Spinner, StatusRow } from '@/components/Loaders';
+import OtpInput from '@/components/OtpInput';
 
 // Two-step OTP login: choose phone or email -> send code -> enter code -> verify.
 // On first login (no profiles row yet) we send the person to /onboarding;
@@ -88,10 +89,17 @@ export default function LoginPage() {
     }
   }
 
-  async function handleVerifyOtp(e: FormEvent) {
+  function handleVerifyOtp(e: FormEvent) {
     e.preventDefault();
+    void verify();
+  }
+
+  // Accepts the code explicitly so OtpInput's onComplete can verify with the freshly
+  // completed value without waiting for the `code` state update to flush.
+  async function verify(submitted?: string) {
+    const c = (submitted ?? code).trim();
     setError(null);
-    if (code.trim().length < 4) {
+    if (c.length < 4) {
       setError('Enter the code we sent you.');
       return;
     }
@@ -99,8 +107,8 @@ export default function LoginPage() {
     try {
       const user =
         method === 'email'
-          ? await verifyEmailOtp(supabase, cleanEmail, code.trim())
-          : await verifyOtp(supabase, fullMobile, code.trim());
+          ? await verifyEmailOtp(supabase, cleanEmail, c)
+          : await verifyOtp(supabase, fullMobile, c);
       if (!user) throw new Error('Verification did not return a user.');
 
       // Signed in. Profile lookup is a separate concern — never report it as a bad code.
@@ -199,16 +207,15 @@ export default function LoginPage() {
 
       {step === 'otp' && (
         <form onSubmit={handleVerifyOtp} style={{ marginTop: 12 }}>
-          <label htmlFor="code">Enter the code sent to {destination}</label>
-          <input
-            id="code"
-            type="text"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            placeholder="123456"
+          <label id="code-label">Enter the code sent to {destination}</label>
+          <OtpInput
             value={code}
-            onChange={(e) => setCode(e.target.value)}
+            onChange={setCode}
+            onComplete={(full) => void verify(full)}
+            length={6}
+            disabled={loading}
             autoFocus
+            ariaLabel="One-time code"
           />
           {loading && (
             <StatusRow>
