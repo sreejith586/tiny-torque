@@ -5,12 +5,9 @@ name: Seed demo data (staging)
 # NOTHING). Staging-only — the project ref is hardcoded; it can never touch prod. Connects over the
 # IPv4 connection pooler (GitHub runners are IPv4-only), same reason as db-migrate.yml.
 on:
-  # TEMPORARY (removed after the first successful run): workflow_dispatch only works for workflows
-  # on the default branch, and this is new on sprint-1 — so a path-scoped push trigger lets us run
-  # the seed once from the branch to verify it. Idempotent, so re-runs are no-ops.
-  push:
-    branches: [sprint-1]
-    paths: ['supabase/seed-demo.sql', '.github/workflows/seed-demo.yml']
+  # Dispatch-only. Note: workflow_dispatch only lists/triggers once this workflow is on the default
+  # branch (main) — until then, run it locally or via a temporary push trigger (see git history).
+  # Verified working against staging on 2026-10-04 (run 37200561475: 3 sellers + 10 listings).
   workflow_dispatch:
     inputs:
       confirm:
@@ -46,4 +43,4 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f supabase/seed-demo.sql
           echo "----- post-seed counts -----"
           psql -c "select count(*) as active_listings from public.marketplace_listings where status = 'active';"
-          psql -c "select handle, display_name, account_type, country_code from public.profiles where id like 'a0000000-0000-4000-8000-%' order by handle;"
+          psql -c "select handle, display_name, account_type, country_code from public.profiles where id::text like 'a0000000-0000-4000-8000-%' order by handle;"
