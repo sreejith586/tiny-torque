@@ -1,0 +1,32 @@
+name: Verify staging seed (read-only)
+
+# TEMPORARY throwaway: a fresh, read-only check that the demo seed (D-055) is present in the
+# staging branch DB. Self-scoped push trigger so it runs once; removed right after. Never writes.
+on:
+  push:
+    branches: [sprint-1]
+    paths: ['.github/workflows/verify-staging.yml']
+
+jobs:
+  verify:
+    name: read staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: psql read
+        env:
+          PGPASSWORD: ${{ secrets.SUPABASE_STAGING_DB_PASSWORD }}
+          PGHOST: aws-0-ap-south-1.pooler.supabase.com
+          PGPORT: '5432'
+          PGUSER: postgres.bjhowyyyypeacfkgxwqr
+          PGDATABASE: postgres
+          PGSSLMODE: require
+        run: |
+          echo "== active listings total =="
+          psql -c "select count(*) as active_listings from public.marketplace_listings where status='active';"
+          echo "== demo listings (b0000000-%) =="
+          psql -c "select count(*) as demo_listings from public.marketplace_listings where id::text like 'b0000000-%';"
+          echo "== demo sellers =="
+          psql -c "select handle, display_name, account_type, plan, country_code from public.profiles where id::text like 'a0000000-%' order by handle;"
+          echo "== sample demo listings =="
+          psql -c "select brand, model, listing_type as type, currency, price, seller_name from public.marketplace_listings where id::text like 'b0000000-%' order by created_at desc;"
