@@ -9,8 +9,18 @@ import type { Listing } from '@/domain/marketplace';
 
 type SearchParams = URLSearchParams | Record<string, string | string[] | undefined>;
 
+/** Name of the cookie the visual spec sets to trigger the harness. A cookie (unlike the ?__visual
+ * query) reaches the server on every request and survives Vercel's redirects, so anon routes like
+ * /market detect the harness deterministically — see src/app/market/page.tsx + src/proxy.ts. */
+export const VISUAL_COOKIE = 'mv_visual';
+
+/** The harness is never honoured in production (real data only there). */
+export function harnessAllowed(): boolean {
+  return process.env.VERCEL_ENV !== 'production';
+}
+
 export function isVisualHarness(searchParams: SearchParams | undefined): boolean {
-  if (process.env.VERCEL_ENV === 'production' || !searchParams) return false;
+  if (!harnessAllowed() || !searchParams) return false;
   if (searchParams instanceof URLSearchParams) return searchParams.has('__visual');
   return '__visual' in searchParams;
 }
