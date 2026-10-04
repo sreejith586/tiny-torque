@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
+import './nav-rail.css';
 import shell from './layout.module.css';
 import ThemeInit from '@/components/ThemeInit';
 import ThemeStyles, { THEME_BOOT_SCRIPT } from '@/components/ThemeStyles';

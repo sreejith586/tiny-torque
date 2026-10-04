@@ -1,0 +1,35 @@
+/* Desktop side-rail nav — garage-log-147 (D-053).
+   At >=1440px on a real mouse (hover + fine pointer), the bottom tab bar becomes a fixed left
+   vertical rail and page content shifts right of it. Below 1440px, or on touch / coarse pointers
+   at any width, the centered bottom nav (globals.css) is unchanged. This is a plain global
+   stylesheet (imported in layout.tsx) rather than an edit to the hook-locked globals.css, and
+   rather than a CSS module (whose :global-only media block was dropped by the CSS pipeline).
+   Doubled class selectors win over the globals.css base rules regardless of import order. */
+@media (min-width: 1440px) and (hover: hover) and (pointer: fine) {
+  body {
+    padding-left: 88px;
+  }
+  .bottom-nav.bottom-nav {
+    top: 0;
+    right: auto;
+    bottom: 0;
+    width: 88px;
+    max-width: 88px;
+    margin: 0;
+    flex-direction: column;
+    gap: 10px;
+    padding: 26px 0 calc(16px + env(safe-area-inset-bottom));
+    border-top: none;
+    border-right: 1px solid var(--border);
+  }
+  /* Regular tabs keep flex:1 so they distribute down the full height of the rail (the Add FAB
+     stays its fixed circle); just inset them and round for the rail. */
+  .nav-item.nav-item {
+    margin: 0 8px;
+    border-radius: 8px;
+  }
+  /* No bottom bar to clear anymore — trim the shell's reserved bottom space. */
+  .page.page {
+    padding-bottom: 24px;
+  }
+}
