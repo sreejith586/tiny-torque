@@ -31,7 +31,7 @@ on conflict (id) do nothing;
 insert into public.profiles
   (id, display_name, account_type, store_name, country_code, handle, plan, created_at)
 values
-  ('a0000000-0000-4000-8000-000000000001', 'Aarav''s Garage',  'individual', null,                'IN', 'aarav',       'free', now() - interval '2 years'),
+  ('a0000000-0000-4000-8000-000000000001', 'Aarav''s Garage',  'individual', null,                'IN', 'aarav',       'pro',  now() - interval '2 years'),
   ('a0000000-0000-4000-8000-000000000002', 'Dubai Diecast Co.', 'shop',       'Dubai Diecast Co.', 'AE', 'dubaidiecast', 'pro',  now() - interval '3 years'),
   ('a0000000-0000-4000-8000-000000000003', 'Meera Collects',    'individual', null,                'AE', 'meera',       'free', now() - interval '1 year')
 on conflict (id) do nothing;
@@ -72,7 +72,7 @@ values
    800, 'INR', 'sale', 'IN', 1, true, false, 'active',
    'STH with the circle-flame logo. Protector included.', now() - interval '6 hours', now() + interval '30 days'),
 
-  ('b0000000-0000-4000-8000-000000000007', 'a0000000-0000-4000-8000-000000000003', 'individual', 'Meera Collects',
+  ('b0000000-0000-4000-8000-000000000007', 'a0000000-0000-4000-8000-000000000002', 'shop', 'Dubai Diecast Co.',
    'Tarmac Works', 'Nissan GT-R (R35) Nismo', 'Gunmetal', 'Mint', 'regular',
    180, 'AED', 'both', 'AE', 1, true, true, 'active',
    'Tarmac Works Global64. Rubber tyres, opening parts.', now() - interval '4 days', now() + interval '26 days'),
