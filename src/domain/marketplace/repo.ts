@@ -66,6 +66,12 @@ export async function browsePage(
   return { items, nextCursor };
 }
 
+/** Debounced view counter (F-06) — definer RPC bumps view_count for an active listing. */
+export async function incrementView(supabase: Client, listingId: string): Promise<void> {
+  const { error } = await supabase.rpc('increment_listing_view', { p_listing_id: listingId });
+  if (error) throw error;
+}
+
 export async function getById(supabase: Client, id: string): Promise<MarketplaceListingRow | null> {
   const { data, error } = await supabase
     .from('marketplace_listings')

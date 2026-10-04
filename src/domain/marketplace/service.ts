@@ -47,6 +47,9 @@ export async function getListing(supabase: Client, id: string): Promise<Listing 
   return (await attachMedia(supabase, [row]))[0] ?? null;
 }
 
+/** Bump a listing's view counter (F-06); callers debounce to once per view. */
+export const incrementListingView = repo.incrementView;
+
 export async function listMyListings(
   supabase: Client,
   sellerId: string,

@@ -99,3 +99,14 @@ export async function getPublicProfile(supabase: Client, handle: string) {
   if (error) throw error;
   return data;
 }
+
+/** Public profile by id — for places that hold a user id (e.g. a listing's seller), not a handle. */
+export async function getPublicProfileById(supabase: Client, id: string) {
+  const { data, error } = await supabase
+    .from('public_profiles')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
