@@ -15,6 +15,7 @@ const THEMES = [
 ];
 const MOBILE = { width: 390, height: 844 };
 const TABLET = { width: 834, height: 1112 };
+const DESKTOP = { width: 1440, height: 900 };
 const FIXTURE_LISTING = '20000000-0000-4000-8000-000000000001';
 type Screen = { name: string; path: string; prepare?: (page: Page) => Promise<void> };
 
@@ -73,6 +74,25 @@ test.describe('tablet', () => {
       await page.goto(screen.path);
       await settle(page);
       await expect(page).toHaveScreenshot(`${screen.name}-workshop-light-tablet.png`, {
+        fullPage: true,
+      });
+    });
+  }
+});
+
+// Wide desktop — one theme, to lock the >=1440px left side-rail nav (D-053). Playwright's
+// chromium desktop context reports hover:hover + pointer:fine, so the rail's media query fires.
+test.describe('desktop', () => {
+  test.use({ viewport: DESKTOP });
+  test.beforeEach(async ({ page }) => {
+    await seedHarness(page);
+    await page.addInitScript(() => localStorage.setItem('mini-vault-theme', 'workshop-light'));
+  });
+  for (const screen of SCREENS) {
+    test(`${screen.name} @1440`, async ({ page }) => {
+      await page.goto(screen.path);
+      await settle(page);
+      await expect(page).toHaveScreenshot(`${screen.name}-workshop-light-desktop.png`, {
         fullPage: true,
       });
     });
