@@ -1,0 +1,43 @@
+name: Seed demo data (staging)
+
+# Manual tool (D-055): loads supabase/seed-demo.sql into the STAGING branch DB so the marketplace
+# can be browsed with real data on the staging preview. Idempotent (fixed UUIDs + ON CONFLICT DO
+# NOTHING). Staging-only — the project ref is hardcoded; it can never touch prod. Connects over the
+# IPv4 connection pooler (GitHub runners are IPv4-only), same reason as db-migrate.yml.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "staging" to confirm seeding the staging branch DB'
+        required: true
+
+jobs:
+  seed:
+    name: psql seed-demo.sql → staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Guard
+        run: |
+          if [ "${{ inputs.confirm }}" != "staging" ]; then
+            echo "::error::confirm must be exactly 'staging'"; exit 1
+          fi
+          if [ -z "${{ secrets.SUPABASE_STAGING_DB_PASSWORD }}" ]; then
+            echo "::error::SUPABASE_STAGING_DB_PASSWORD secret is not set"; exit 1
+          fi
+
+      - name: Seed + verify
+        env:
+          PGPASSWORD: ${{ secrets.SUPABASE_STAGING_DB_PASSWORD }}
+          PGHOST: aws-0-ap-south-1.pooler.supabase.com
+          PGPORT: '5432'
+          PGUSER: postgres.bjhowyyyypeacfkgxwqr
+          PGDATABASE: postgres
+          PGSSLMODE: require
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/seed-demo.sql
+          echo "----- post-seed counts -----"
+          psql -c "select count(*) as active_listings from public.marketplace_listings where status = 'active';"
+          psql -c "select handle, display_name, account_type, country_code from public.profiles where id like 'a0000000-0000-4000-8000-%' order by handle;"
