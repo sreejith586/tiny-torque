@@ -22,6 +22,7 @@ export const redeemInvite = repo.redeemInvite;
 export const listEnabledCountries = repo.listEnabledCountries;
 export const isHandleAvailable = repo.isHandleAvailable;
 export const getPublicProfile = repo.getPublicProfile;
+export const getPublicProfileById = repo.getPublicProfileById;
 export { CITIES_BY_COUNTRY } from './cities';
 
 /**

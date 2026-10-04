@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { defaultMinOffer, listingExpiry, SORT_CONFIG, LISTING_TTL_DAYS } from './query';
+import {
+  defaultMinOffer,
+  listingExpiry,
+  SORT_CONFIG,
+  LISTING_TTL_DAYS,
+  listingPriceLabel,
+  LISTING_TYPE_LABEL,
+} from './query';
 import { listingPublishSchema } from './schema';
 
 describe('defaultMinOffer', () => {
@@ -50,5 +57,27 @@ describe('listingPublishSchema (D-013)', () => {
   });
   it('requires a brand', () => {
     expect(listingPublishSchema.safeParse({ brand: '', price: 1 }).success).toBe(false);
+  });
+});
+
+describe('listingPriceLabel', () => {
+  it('shows currency + price for sale/both, Trade only for trade', () => {
+    expect(listingPriceLabel({ listing_type: 'sale', currency: 'AED', price: 45 })).toBe('AED 45');
+    expect(listingPriceLabel({ listing_type: 'both', currency: 'INR', price: 1200 })).toBe(
+      'INR 1,200'
+    );
+    expect(listingPriceLabel({ listing_type: 'trade', currency: 'AED', price: 60 })).toBe(
+      'Trade only'
+    );
+  });
+  it('handles a missing currency', () => {
+    expect(listingPriceLabel({ listing_type: 'sale', currency: null, price: 20 })).toBe('20');
+  });
+  it('LISTING_TYPE_LABEL covers all three types', () => {
+    expect(LISTING_TYPE_LABEL).toEqual({
+      sale: 'For sale',
+      trade: 'For trade',
+      both: 'Sale or trade',
+    });
   });
 });

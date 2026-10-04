@@ -1,10 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
 
-// D-027 visual guard for ANON fixture screens (e.g. /market) — run against a LOCAL server, not the
-// Vercel preview. The preview serves this route's `?__visual` harness render inconsistently (a cold
-// prerendered-shell vs warm-function race at Vercel's edge), so these baselines live here and are
-// generated/compared against `pnpm start` on the Linux CI runner for determinism. Everything else
-// stays in visual.spec.ts against the preview. See src/lib/visual-fixtures.ts (mv_visual cookie).
+// D-027 visual guard for ANON fixture screens (market browse + listing detail) — run against a
+// LOCAL server, not the Vercel preview (which renders this route's harness inconsistently). These
+// are the garage-log-147.html-matched listing screens (D-044/D-045), checked at mobile AND tablet
+// (the mockup is responsive at min-width:700px → 3-column grid). Harness via the mv_visual cookie.
 
 const THEMES = [
   'workshop-light',
@@ -15,10 +14,13 @@ const THEMES = [
   'leather-chrome',
 ];
 const MOBILE = { width: 390, height: 844 };
+const TABLET = { width: 834, height: 1112 };
+const FIXTURE_LISTING = '20000000-0000-4000-8000-000000000001';
 type Screen = { name: string; path: string; prepare?: (page: Page) => Promise<void> };
 
 const SCREENS: Screen[] = [
-  { name: 'market', path: '/market' }, // harness via the mv_visual cookie (set in beforeEach)
+  { name: 'market', path: '/market' },
+  { name: 'listing-detail', path: `/market/${FIXTURE_LISTING}` },
 ];
 
 test.skip(process.platform !== 'linux', 'screenshot baselines are Linux-only (CI + cloud)');
@@ -28,11 +30,18 @@ async function settle(page: Page) {
   await page.waitForLoadState('load');
 }
 
+async function seedHarness(page: Page) {
+  await page
+    .context()
+    .addCookies([{ name: 'mv_visual', value: '1', url: 'http://localhost:3000' }]);
+}
+
+// Mobile — all six themes.
 for (const theme of THEMES) {
   test.describe(`theme ${theme}`, () => {
     test.use({ viewport: MOBILE });
-    test.beforeEach(async ({ context, page }) => {
-      await context.addCookies([{ name: 'mv_visual', value: '1', url: 'http://localhost:3000' }]);
+    test.beforeEach(async ({ page }) => {
+      await seedHarness(page);
       await page.addInitScript((t) => localStorage.setItem('mini-vault-theme', t), theme);
     });
 
@@ -51,3 +60,21 @@ for (const theme of THEMES) {
     }
   });
 }
+
+// Tablet — one theme, to lock the responsive (3-column) layout.
+test.describe('tablet', () => {
+  test.use({ viewport: TABLET });
+  test.beforeEach(async ({ page }) => {
+    await seedHarness(page);
+    await page.addInitScript(() => localStorage.setItem('mini-vault-theme', 'workshop-light'));
+  });
+  for (const screen of SCREENS) {
+    test(`${screen.name} @834`, async ({ page }) => {
+      await page.goto(screen.path);
+      await settle(page);
+      await expect(page).toHaveScreenshot(`${screen.name}-workshop-light-tablet.png`, {
+        fullPage: true,
+      });
+    });
+  }
+});

@@ -1,14 +1,9 @@
 import type { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { browseListings } from '@/domain/marketplace';
 import MarketView from '@/components/MarketView';
-import {
-  FIXTURE_LISTINGS,
-  isVisualHarness,
-  harnessAllowed,
-  VISUAL_COOKIE,
-} from '@/lib/visual-fixtures';
+import { FIXTURE_LISTINGS } from '@/lib/visual-fixtures';
+import { isHarnessRequest } from '@/lib/visual-harness.server';
 
 export const metadata: Metadata = {
   title: 'Market',
@@ -45,15 +40,8 @@ export default async function MarketPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  // Detect the harness from any reliable channel: the proxy-set x-mv-visual header, the mv_visual
-  // cookie (the dependable one on Vercel for this anon route), or the ?__visual query (local/dev).
-  // Reading cookies()/headers() also forces a per-request render (no static shell).
   const sp = await searchParams;
-  const harnessHeader = (await headers()).get('x-mv-visual') === '1';
-  const harnessCookie = harnessAllowed() && (await cookies()).get(VISUAL_COOKIE)?.value === '1';
-  const { items, cursor, signedIn, harness } = await loadFirstPage(
-    harnessHeader || harnessCookie || isVisualHarness(sp)
-  );
+  const { items, cursor, signedIn, harness } = await loadFirstPage(await isHarnessRequest(sp));
 
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>

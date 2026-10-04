@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
+import shell from './layout.module.css';
 import ThemeInit from '@/components/ThemeInit';
 import ThemeStyles, { THEME_BOOT_SCRIPT } from '@/components/ThemeStyles';
 import AnalyticsInit from '@/components/AnalyticsInit';
@@ -54,7 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeInit />
         <AnalyticsInit />
         <Providers>
-          <div className="page">{children}</div>
+          <div className={`page ${shell.shell}`}>{children}</div>
           <BottomNav />
         </Providers>
       </body>

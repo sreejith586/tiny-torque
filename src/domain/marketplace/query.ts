@@ -45,6 +45,22 @@ export function defaultMinOffer(
   return price;
 }
 
+/** Display price for a listing card/detail: a trade-only listing shows no price (F-06). */
+export function listingPriceLabel(l: {
+  listing_type: 'sale' | 'trade' | 'both';
+  currency: string | null;
+  price: number;
+}): string {
+  if (l.listing_type === 'trade') return 'Trade only';
+  return `${l.currency ?? ''} ${Number(l.price).toLocaleString()}`.trim();
+}
+
+export const LISTING_TYPE_LABEL: Record<'sale' | 'trade' | 'both', string> = {
+  sale: 'For sale',
+  trade: 'For trade',
+  both: 'Sale or trade',
+};
+
 /** Pilot listing lifetime (F-06): 60 days, renewable. */
 export const LISTING_TTL_DAYS = 60;
 

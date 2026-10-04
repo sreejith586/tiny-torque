@@ -1,76 +1,78 @@
 import Link from 'next/link';
-import type { Listing } from '@/domain/marketplace';
+import { type Listing, listingPriceLabel } from '@/domain/marketplace';
 import MediaImage from './MediaImage';
+import styles from './Market.module.css';
 
-const TYPE_LABEL: Record<Listing['listing_type'], string> = {
-  sale: 'For sale',
-  trade: 'For trade',
-  both: 'Sale or trade',
-};
+const HEART =
+  'M12,21.35l-1.45-1.32C5.4,15.36,2,12.28,2,8.5C2,5.42,4.42,3,7.5,3c1.74,0,3.41,0.81,4.5,2.09C13.09,3.81,14.76,3,16.5,3C19.58,3,22,5.42,22,8.5c0,3.78-3.4,6.86-8.55,11.54L12,21.35z';
 
-function price(listing: Listing): string {
-  if (listing.listing_type === 'trade') return 'Trade only';
-  return `${listing.currency ?? ''} ${Number(listing.price).toLocaleString()}`.trim();
+const DAY = 24 * 60 * 60 * 1000;
+function isNew(listing: Listing): boolean {
+  return Date.now() - new Date(listing.created_at).getTime() < 7 * DAY;
 }
 
-export default function ListingCard({
-  listing,
-  view,
-}: {
-  listing: Listing;
-  view: 'grid' | 'list';
-}) {
-  const subtitle = [listing.model, listing.variant].filter(Boolean).join(' · ');
-  const primary = listing.media[0];
-
-  if (view === 'list') {
-    return (
-      <Link href={`/market/${listing.id}`} className="car-card" style={{ flexDirection: 'row' }}>
-        <div className="car-photo" style={{ width: 72, height: 72, flex: '0 0 auto' }}>
-          <MediaImage src={primary?.url} mediaId={primary?.id} alt={listing.brand} />
-        </div>
-        <div className="car-body" style={{ flex: 1 }}>
-          <div className="car-brand">{listing.brand}</div>
-          {subtitle && <div className="car-meta">{subtitle}</div>}
-          <div className="car-meta">
-            {price(listing)} · {TYPE_LABEL[listing.listing_type]}
-          </div>
-        </div>
-      </Link>
-    );
-  }
+export default function ListingCard({ listing }: { listing: Listing; view?: 'grid' | 'list' }) {
+  const title = [listing.model || listing.brand, listing.variant].filter(Boolean).join(' · ');
+  const subtitle = [listing.brand, listing.condition].filter(Boolean).join(' · ');
+  const sellerName = listing.seller_name || 'Seller';
 
   return (
-    <Link href={`/market/${listing.id}`} className="car-card">
-      <div className="car-photo">
+    <Link href={`/market/${listing.id}`} className={styles.listing}>
+      <span className={`${styles.favHeart}`} aria-hidden>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d={HEART} />
+        </svg>
+      </span>
+
+      <div className={styles.thumb}>
         {listing.media.length > 1 ? (
-          <div
-            style={{
-              display: 'flex',
-              width: '100%',
-              height: '100%',
-              overflowX: 'auto',
-              scrollSnapType: 'x mandatory',
-            }}
-          >
+          <div className={styles.carousel}>
             {listing.media.map((m) => (
-              <div
-                key={m.id}
-                style={{ flex: '0 0 100%', height: '100%', scrollSnapAlign: 'center' }}
-              >
+              <div key={m.id} className={styles.carouselSlide}>
                 <MediaImage src={m.url} mediaId={m.id} alt={listing.brand} />
               </div>
             ))}
+            <span className={styles.carouselCount}>{listing.media.length} photos</span>
           </div>
         ) : (
-          <MediaImage src={primary?.url} mediaId={primary?.id} alt={listing.brand} />
+          <MediaImage
+            src={listing.media[0]?.url}
+            mediaId={listing.media[0]?.id}
+            alt={listing.brand}
+          />
         )}
       </div>
-      <div className="car-body">
-        <div className="car-brand">{listing.brand}</div>
-        {subtitle && <div className="car-meta">{subtitle}</div>}
-        <div className="car-meta">{price(listing)}</div>
-        <div className="car-meta muted">{TYPE_LABEL[listing.listing_type]}</div>
+
+      <div className={styles.info}>
+        <h3 className={styles.title}>{title}</h3>
+        {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
+
+        <div className={styles.chips}>
+          {isNew(listing) && <span className={`${styles.tagBadge} ${styles.tagNew}`}>New</span>}
+          {(listing.listing_type === 'trade' || listing.listing_type === 'both') && (
+            <span className={`${styles.tagBadge} ${styles.tagExchange}`}>Exchange</span>
+          )}
+          {listing.seller_type === 'shop' && (
+            <span className={`${styles.tagBadge} ${styles.tagShop}`}>Shop</span>
+          )}
+        </div>
+
+        <div className={styles.sellerRow}>
+          <div className={styles.sellerInfo}>
+            <span className={styles.sellerAvatar}>{sellerName.slice(0, 1).toUpperCase()}</span>
+            <div style={{ minWidth: 0 }}>
+              <div className={styles.seller}>{sellerName}</div>
+            </div>
+          </div>
+          <div className={styles.price}>{listingPriceLabel(listing)}</div>
+        </div>
       </div>
     </Link>
   );

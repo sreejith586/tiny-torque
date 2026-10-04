@@ -2,12 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import type { Listing, MarketSort } from '@/domain/marketplace';
+import type { Listing } from '@/domain/marketplace';
 import ListingCard from './ListingCard';
+import styles from './Market.module.css';
 
 type Page = { items: Listing[]; nextCursor: string | null };
 
 const CONDITIONS = ['mint', 'near-mint', 'good', 'played', 'damaged'];
+// Type-filter chips, matching garage-log-147.html's market screen.
+const CHIPS = ['All', 'For Sale', 'Exchange', 'New', 'Favorites', 'Trending'] as const;
+type Chip = (typeof CHIPS)[number];
 
 async function fetchPage(params: URLSearchParams, cursor: string | null): Promise<Page> {
   const sp = new URLSearchParams(params);
@@ -26,21 +30,15 @@ export default function MarketView({
   initialListings: Listing[];
   initialCursor?: string | null;
   signedIn?: boolean;
-  /** Visual-baseline harness: show the seeded fixtures and never fetch (the public feed would
-   * otherwise replace them with the empty live list). */
   harness?: boolean;
 }) {
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
+  const [chip, setChip] = useState<Chip>('All');
   const [brand, setBrand] = useState('all');
-  const [type, setType] = useState<'all' | 'sale' | 'trade' | 'both'>('all');
   const [condition, setCondition] = useState('all');
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
   const [allCountries, setAllCountries] = useState(false);
-  const [favouritesOnly, setFavouritesOnly] = useState(false);
-  const [sort, setSort] = useState<MarketSort>('newest');
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQ(q.trim()), 300);
@@ -51,26 +49,15 @@ export default function MarketView({
     const sp = new URLSearchParams();
     if (debouncedQ) sp.set('q', debouncedQ);
     if (brand !== 'all') sp.set('brand', brand);
-    if (type !== 'all') sp.set('type', type);
     if (condition !== 'all') sp.set('condition', condition);
-    if (minPrice) sp.set('minPrice', minPrice);
-    if (maxPrice) sp.set('maxPrice', maxPrice);
     if (allCountries) sp.set('country', 'all');
-    if (favouritesOnly && signedIn) sp.set('favourites', 'true');
-    if (sort !== 'newest') sp.set('sort', sort);
+    // Chips map onto the API's type / sort / favourites filters.
+    if (chip === 'For Sale') sp.set('type', 'sale');
+    else if (chip === 'Exchange') sp.set('type', 'trade');
+    else if (chip === 'Trending') sp.set('sort', 'offers');
+    else if (chip === 'Favorites' && signedIn) sp.set('favourites', 'true');
     return sp;
-  }, [
-    debouncedQ,
-    brand,
-    type,
-    condition,
-    minPrice,
-    maxPrice,
-    allCountries,
-    favouritesOnly,
-    signedIn,
-    sort,
-  ]);
+  }, [debouncedQ, brand, condition, allCountries, chip, signedIn]);
 
   const isDefault = params.toString() === '';
 
@@ -82,17 +69,12 @@ export default function MarketView({
     initialData: isDefault
       ? { pages: [{ items: initialListings, nextCursor: initialCursor }], pageParams: [null] }
       : undefined,
-    // The SSR-seeded default page is already fresh — don't immediately refetch it on mount.
-    // Filter changes use a new queryKey and fetch normally. Under the baseline harness, disable
-    // fetching entirely so the seeded fixtures are what gets screenshotted.
     enabled: !harness,
     refetchOnMount: false,
     staleTime: 30_000,
   });
 
   const queryItems = useMemo(() => query.data?.pages.flatMap((p) => p.items) ?? [], [query.data]);
-  // Under the harness the query is disabled; render the SSR-seeded listings directly so the
-  // baseline screenshot is deterministic regardless of TanStack's disabled-query data handling.
   const items = harness ? initialListings : queryItems;
 
   const brands = useMemo(() => {
@@ -118,26 +100,35 @@ export default function MarketView({
     return () => obs.disconnect();
   }, [onIntersect]);
 
+  const chips = CHIPS.filter((c) => c !== 'Favorites' || signedIn);
+
   return (
     <div>
-      <div className="garage-toolbar">
-        <input
-          placeholder="Search listings…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          style={{ flex: 1 }}
-        />
+      <div className={styles.searchBar}>
+        <input placeholder="Search listings…" value={q} onChange={(e) => setQ(e.target.value)} />
         <button
           type="button"
-          className="btn-secondary"
-          style={{ width: 'auto', padding: '10px 12px' }}
+          className={`btn-secondary ${styles.viewToggle}`}
           onClick={() => setView((v) => (v === 'grid' ? 'list' : 'grid'))}
         >
           {view === 'grid' ? 'List' : 'Grid'}
         </button>
       </div>
 
-      <div className="garage-toolbar">
+      <div className={styles.filterRow}>
+        {chips.map((c) => (
+          <button
+            key={c}
+            type="button"
+            className={`${styles.filterChip} ${chip === c ? styles.active : ''}`}
+            onClick={() => setChip(c)}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
+
+      <div className={styles.selectRow}>
         <select value={brand} onChange={(e) => setBrand(e.target.value)}>
           <option value="all">All brands</option>
           {brands.map((b) => (
@@ -145,21 +136,6 @@ export default function MarketView({
               {b}
             </option>
           ))}
-        </select>
-        <select value={sort} onChange={(e) => setSort(e.target.value as MarketSort)}>
-          <option value="newest">Newest first</option>
-          <option value="price_asc">Price (low to high)</option>
-          <option value="price_desc">Price (high to low)</option>
-          <option value="offers">Most offers</option>
-        </select>
-      </div>
-
-      <div className="garage-toolbar">
-        <select value={type} onChange={(e) => setType(e.target.value as typeof type)}>
-          <option value="all">Sale &amp; trade</option>
-          <option value="sale">For sale</option>
-          <option value="trade">For trade</option>
-          <option value="both">Sale or trade</option>
         </select>
         <select value={condition} onChange={(e) => setCondition(e.target.value)}>
           <option value="all">Any condition</option>
@@ -171,24 +147,7 @@ export default function MarketView({
         </select>
       </div>
 
-      <div className="garage-toolbar">
-        <input
-          type="number"
-          min="0"
-          placeholder="Min price"
-          value={minPrice}
-          onChange={(e) => setMinPrice(e.target.value)}
-        />
-        <input
-          type="number"
-          min="0"
-          placeholder="Max price"
-          value={maxPrice}
-          onChange={(e) => setMaxPrice(e.target.value)}
-        />
-      </div>
-
-      <label className="toggle-row">
+      <label className="toggle-row" style={{ marginBottom: 12 }}>
         <span>All countries</span>
         <input
           type="checkbox"
@@ -197,24 +156,13 @@ export default function MarketView({
           onChange={(e) => setAllCountries(e.target.checked)}
         />
       </label>
-      {signedIn && (
-        <label className="toggle-row" style={{ marginBottom: 12 }}>
-          <span>Favourites only</span>
-          <input
-            type="checkbox"
-            style={{ width: 'auto' }}
-            checked={favouritesOnly}
-            onChange={(e) => setFavouritesOnly(e.target.checked)}
-          />
-        </label>
-      )}
 
       {items.length === 0 ? (
         <div className="empty-state">
           <p>{query.isFetching ? 'Loading…' : 'No listings match your search or filters.'}</p>
         </div>
       ) : (
-        <div className={view === 'grid' ? 'garage-grid' : 'garage-list'}>
+        <div className={`${styles.grid} ${view === 'list' ? styles.listView : ''}`}>
           {items.map((listing) => (
             <ListingCard key={listing.id} listing={listing} view={view} />
           ))}
