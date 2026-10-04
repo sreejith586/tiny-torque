@@ -1,0 +1,10 @@
+/* Tablet / desktop app shell — garage-log-147 `#app`: center & widen the shell at >=700px
+   (max-width 1100px + a 1px hairline frame). The phone shell (480px `.page` in globals.css)
+   is unchanged below 700px. Doubled selector so this reliably wins over `.page`'s 480px cap
+   without touching the hook-locked globals.css. Varun sign-off: D-052. */
+@media (min-width: 700px) {
+  .shell.shell {
+    max-width: 1100px;
+    box-shadow: 0 0 0 1px var(--border);
+  }
+}
