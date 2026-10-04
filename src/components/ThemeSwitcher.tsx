@@ -1,8 +1,9 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
-import type { ThemeKey} from '@/lib/theme';
-import { THEMES, applyThemeToDocument, getStoredTheme, storeTheme } from '@/lib/theme';
+import type { ThemeKey } from '@/lib/theme';
+import { THEMES, applyThemeToDocument, storeTheme } from '@/lib/theme';
+import { resolveStoredTheme } from '@/lib/theme-default';
 
 const listeners = new Set<() => void>();
 function subscribeTheme(cb: () => void) {
@@ -19,7 +20,7 @@ function notifyTheme() {
 // Supabase).
 export default function ThemeSwitcher() {
   // Read the stored theme without a setState-in-effect (hydration-safe: null on the server).
-  const current = useSyncExternalStore(subscribeTheme, getStoredTheme, () => null);
+  const current = useSyncExternalStore(subscribeTheme, resolveStoredTheme, () => null);
 
   function select(key: ThemeKey) {
     applyThemeToDocument(key);
