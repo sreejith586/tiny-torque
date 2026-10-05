@@ -101,6 +101,27 @@ test.describe('login otp', () => {
   }
 });
 
+// Login is a single-column form — verify it stays a centered, readable column (not stretched
+// full-width) in the widened shell on tablet and laptop (D-052 fix via the (auth) layout).
+for (const [label, vp] of [
+  ['tablet', TABLET],
+  ['desktop', DESKTOP],
+] as const) {
+  test.describe(`login ${label}`, () => {
+    test.use({ viewport: vp });
+    test.beforeEach(async ({ page }) => {
+      await page.addInitScript(() => localStorage.setItem('mini-vault-theme', 'workshop-light'));
+    });
+    test(`login-identify @${label}`, async ({ page }) => {
+      await page.goto('/login');
+      await settle(page);
+      await expect(page).toHaveScreenshot(`login-identify-workshop-light-${label}.png`, {
+        fullPage: true,
+      });
+    });
+  });
+}
+
 // Wide desktop — one theme, to lock the >=1440px left side-rail nav (D-053). Playwright's
 // chromium desktop context reports hover:hover + pointer:fine, so the rail's media query fires.
 test.describe('desktop', () => {
