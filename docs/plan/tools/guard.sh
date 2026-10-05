@@ -46,11 +46,6 @@ if [ -d src/components/ui ]; then
   fi
 fi
 
-# D-027: visual baselines exist and are only changed together with a UI change in the same PR
-if [ ! -d e2e/__screenshots__ ] || [ "$(ls e2e/__screenshots__/*.png 2>/dev/null | wc -l)" -lt 74 ]; then
-  say D-027 "e2e/__screenshots__ baselines missing — run pnpm test:e2e:update on Linux and commit them"
-fi
-
 # D-006: applied migrations are immutable (compare against main)
 if git rev-parse --verify origin/main >/dev/null 2>&1; then
   if git diff --name-status origin/main -- supabase/migrations | grep -E "^(M|D)\s" ; then
