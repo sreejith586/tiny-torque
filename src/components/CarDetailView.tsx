@@ -98,8 +98,27 @@ export default function CarDetailView({ item, isOwner }: { item: GarageItem; isO
 
   return (
     <div>
-      <div className="car-photo" style={{ borderRadius: 14, marginBottom: 16 }}>
-        <MediaImage src={item.media[0]?.url} mediaId={item.media[0]?.id} alt={item.brand} />
+      {/* `.car-photo` in globals.css is scoped as `.car-card .car-photo` (the garage-grid card),
+          so it has no effect without that ancestor — without sizing, the <img> rendered its native
+          pixel size and overflowed the viewport on real (large) photos. Mirror those rule's values
+          inline here instead of editing the hook-locked globals.css. */}
+      <div
+        className="car-photo"
+        style={{
+          borderRadius: 14,
+          marginBottom: 16,
+          width: '100%',
+          aspectRatio: '4 / 3',
+          overflow: 'hidden',
+          background: 'var(--panel-alt)',
+        }}
+      >
+        <MediaImage
+          src={item.media[0]?.url}
+          mediaId={item.media[0]?.id}
+          alt={item.brand}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
       </div>
 
       {item.media.length > 1 && (
