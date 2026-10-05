@@ -35,15 +35,10 @@ export default defineConfig({
       testIgnore: /visual(-local)?\.spec\.ts/,
     },
     {
-      name: 'visual',
-      use: { ...devices['Desktop Chrome'], deviceScaleFactor: 1 },
-      testMatch: /visual\.spec\.ts/,
-    },
-    {
-      // Anon fixture screens (e.g. /market) that must render deterministically — run against a
-      // local server, NOT the Vercel preview, whose edge serves this route's harness render
-      // inconsistently (cold prerendered shell vs warm function). Set LOCAL_VISUAL=1 so webServer
-      // starts even when BASE_URL points at a preview for the `visual` project.
+      // ALL pixel baselines run here, against a local server built from the pushed code — never the
+      // Vercel preview, whose edge lags behind pushes and renders the fixture harness
+      // inconsistently. Deterministic, so regens never race a deploy. Set LOCAL_VISUAL=1 to start
+      // the webServer.
       name: 'visual-local',
       use: { ...devices['Desktop Chrome'], deviceScaleFactor: 1, baseURL: 'http://localhost:3000' },
       testMatch: /visual-local\.spec\.ts/,

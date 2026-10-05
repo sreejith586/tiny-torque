@@ -1,10 +1,11 @@
 import { test, expect, type Page } from '@playwright/test';
 
-// D-027 visual guard, run against a LOCAL server (not the Vercel preview). The preview lags behind
-// pushes and renders the fixture harness inconsistently, which made these screens flake; a local
-// server built from the pushed code is deterministic. Covers the public pages (landing, login) and
-// the marketplace fixture screens (market, listing-detail). Linux-only baselines; harness screens
-// use the mv_visual cookie (src/lib/visual-fixtures.ts). LOCAL_VISUAL=1 starts the webServer.
+// D-027 visual guard — ALL pixel baselines, generated against a LOCAL server built from the pushed
+// code (never the Vercel preview, which lags behind pushes and renders the fixture harness
+// inconsistently). Deterministic: a regen screenshots the exact committed code, so it never races a
+// deploy. Signed-in screens render fixture data via the `?__visual=1` harness (src/lib/
+// visual-fixtures.ts, proxy.ts), which is honoured off production. Linux-only; LOCAL_VISUAL=1 starts
+// the webServer (playwright.config.ts).
 
 const THEMES = [
   'workshop-light',
@@ -18,14 +19,12 @@ const MOBILE = { width: 390, height: 844 };
 const TABLET = { width: 834, height: 1112 };
 const DESKTOP = { width: 1440, height: 900 };
 const FIXTURE_LISTING = '20000000-0000-4000-8000-000000000001';
+const FIXTURE_ITEM = '10000000-0000-4000-8000-000000000001';
+const V = '?__visual=1'; // fixture harness (non-production only)
 
-type Screen = {
-  name: string;
-  path: string;
-  harness?: boolean; // needs the mv_visual fixture cookie (marketplace routes)
-  prepare?: (page: Page) => Promise<void>;
-};
+type Screen = { name: string; path: string; prepare?: (page: Page) => Promise<void> };
 
+// Public pages + signed-in fixture screens. Prototype-faithful set (D-027/D-044).
 const SCREENS: Screen[] = [
   { name: 'landing', path: '/' },
   { name: 'login-email', path: '/login' },
@@ -34,9 +33,38 @@ const SCREENS: Screen[] = [
     path: '/login',
     prepare: (page) => page.getByRole('button', { name: 'Use mobile number instead' }).click(),
   },
-  { name: 'market', path: '/market', harness: true },
-  { name: 'listing-detail', path: `/market/${FIXTURE_LISTING}`, harness: true },
+  { name: 'market', path: `/market${V}` },
+  { name: 'listing-detail', path: `/market/${FIXTURE_LISTING}${V}` },
+  { name: 'garage-grid', path: `/garage${V}` },
+  {
+    name: 'garage-list',
+    path: `/garage${V}`,
+    prepare: (page) => page.getByRole('button', { name: 'List' }).click(),
+  },
+  { name: 'car-detail', path: `/garage/${FIXTURE_ITEM}${V}` },
+  { name: 'add-car', path: `/garage/add${V}` },
+  {
+    name: 'add-car-more',
+    path: `/garage/add${V}`,
+    prepare: (page) => page.getByRole('button', { name: 'More details' }).click(),
+  },
+  { name: 'scan', path: `/garage/scan${V}` },
+  { name: 'profile', path: `/profile${V}` },
+  { name: 'offers', path: `/offers${V}` },
+  { name: 'onboarding', path: `/onboarding${V}` },
+  { name: 'public-profile', path: `/u/varun${V}` },
 ];
+
+// Screens checked at tablet + wide desktop too (responsive layouts: centered shell D-052, centered
+// auth column, >=1440px side-rail nav D-053).
+const RESPONSIVE = new Set([
+  'landing',
+  'login-email',
+  'login-phone',
+  'market',
+  'listing-detail',
+  'garage-grid',
+]);
 
 test.skip(process.platform !== 'linux', 'screenshot baselines are Linux-only (CI + cloud)');
 
@@ -51,14 +79,7 @@ async function settle(page: Page) {
     .catch(() => {});
 }
 
-async function seedHarness(page: Page) {
-  await page
-    .context()
-    .addCookies([{ name: 'mv_visual', value: '1', url: 'http://localhost:3000' }]);
-}
-
 async function shoot(page: Page, screen: Screen, name: string) {
-  if (screen.harness) await seedHarness(page);
   await page.goto(screen.path);
   await settle(page);
   if (screen.prepare) {
@@ -83,8 +104,7 @@ for (const theme of THEMES) {
   });
 }
 
-// Login OTP step — the segmented cells (D-054). Stub the OTP send so the screen advances to the
-// code step. Two themes: the Aurora Glass default + workshop-light.
+// Login OTP step — the segmented cells (D-054). Stub the OTP send so the screen advances.
 test.describe('login otp', () => {
   test.use({ viewport: MOBILE });
   for (const theme of ['aurora-glass', 'workshop-light'] as const) {
@@ -104,9 +124,7 @@ test.describe('login otp', () => {
   }
 });
 
-// Tablet + wide desktop — one theme, to lock the responsive layouts: the centered shell (D-052),
-// the centered auth column (D-052 fix), and the >=1440px left side-rail nav (D-053). Playwright's
-// chromium desktop context reports hover:hover + pointer:fine, so the rail's media query fires.
+// Tablet + wide desktop — workshop-light, the responsive-sensitive screens.
 for (const [label, vp] of [
   ['tablet', TABLET],
   ['desktop', DESKTOP],
@@ -116,7 +134,7 @@ for (const [label, vp] of [
     test.beforeEach(async ({ page }) => {
       await page.addInitScript(() => localStorage.setItem('mini-vault-theme', 'workshop-light'));
     });
-    for (const screen of SCREENS) {
+    for (const screen of SCREENS.filter((s) => RESPONSIVE.has(s.name))) {
       test(`${screen.name} @${label}`, async ({ page }) => {
         await shoot(page, screen, `${screen.name}-workshop-light-${label}.png`);
       });

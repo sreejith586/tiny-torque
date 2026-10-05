@@ -1,22 +1,18 @@
 name: Update visual baselines
-# Manual tool (D-041): regenerates e2e/__screenshots__ against a real preview/prod URL and
-# uploads them as an artifact to download and commit. D-041 requires baselines to be generated
-# on Linux; this exists because neither the solo builder nor Claude Code sessions have a local
-# Linux box, only this CI runner. Trigger from the Actions tab (or `gh workflow run
-# update-baselines.yml -f base_url=...`), download the "updated-baselines" artifact, and copy
-# its contents over e2e/__screenshots__ in the PR that explains which screen changed and why.
+# Manual tool (D-041): regenerates e2e/__screenshots__ against a LOCAL server built from the pushed
+# code, and uploads them as the "updated-baselines" artifact to download and commit. Deterministic —
+# it screenshots the exact checked-out commit, so it never races a Vercel deploy (the old preview
+# path lagged behind pushes and produced stale baselines). D-041 requires Linux-generated baselines;
+# this CI runner provides that. Trigger: `gh workflow run update-baselines.yml` (no inputs), then
+# download the artifact and copy it over e2e/__screenshots__ in the PR.
 on:
   workflow_dispatch:
-    inputs:
-      base_url:
-        description: 'URL to screenshot (a Vercel preview or the prod URL)'
-        required: true
 
 jobs:
   update:
-    name: pnpm test:e2e:update
+    name: regenerate baselines (local server)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -25,15 +21,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e:update
-        env:
-          BASE_URL: ${{ inputs.base_url }}
-          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
-          E2E_ENABLE_PHONE_SIGNIN: ${{ vars.E2E_ENABLE_PHONE_SIGNIN }}
-          E2E_TEST_PHONE: '+919999900001'
-          E2E_TEST_OTP: '246810'
-      # Anon fixture screens (/market) are baselined against a local server (deterministic), not the
-      # preview — see e2e/visual-local.spec.ts. LOCAL_VISUAL=1 starts the webServer.
-      - run: pnpm exec playwright test --project=visual-local --update-snapshots
         env:
           LOCAL_VISUAL: '1'
           NEXT_TELEMETRY_DISABLED: 1
