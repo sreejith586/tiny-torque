@@ -44,6 +44,12 @@ export default defineConfig({
       testMatch: /visual-local\.spec\.ts/,
     },
   ],
+  // `next start`'s HTTP listener can report ready slightly before the server has finished warming
+  // up, so the very first requests (many, in parallel, once workers start) can race a cold path
+  // and return a stale/incomplete response. globalSetup runs once, after Playwright's own
+  // webServer readiness check passes and before any test navigates — a plain warm-up request here
+  // absorbs that race without adding a new dependency.
+  globalSetup: process.env.BASE_URL && !process.env.LOCAL_VISUAL ? undefined : './e2e/warmup.ts',
   webServer:
     process.env.BASE_URL && !process.env.LOCAL_VISUAL
       ? undefined
