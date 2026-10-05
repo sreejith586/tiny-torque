@@ -44,8 +44,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${oswald.variable} ${workSans.variable}`}
-      data-theme="workshop-light"
+      className={`${oswald.variable} ${workSans.variable} theme-3d`}
+      data-theme="aurora-glass"
       suppressHydrationWarning
     >
       <head>
