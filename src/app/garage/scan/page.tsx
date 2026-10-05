@@ -61,7 +61,10 @@ export default function BatchScanPage() {
         }))
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Scan failed. Try again.');
+      // Never surface raw infrastructure errors (Edge Function / network) to users — log for
+      // diagnostics, show friendly copy. Photo scanning may also simply be unavailable yet.
+      console.error('Photo scan failed:', err);
+      setError("We couldn't scan this photo right now. Please try again in a little while.");
     } finally {
       setScanning(false);
     }
