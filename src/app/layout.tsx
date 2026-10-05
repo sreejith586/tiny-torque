@@ -8,6 +8,7 @@ import ThemeStyles, { THEME_BOOT_SCRIPT } from '@/components/ThemeStyles';
 import AnalyticsInit from '@/components/AnalyticsInit';
 import BottomNav from '@/components/BottomNav';
 import Providers from '@/components/Providers';
+import Splash from '@/components/Splash';
 
 // Self-hosted (same faces/weights as Varun's Google Fonts setup — D-027):
 // no third-party request at build or runtime, works behind proxies/offline.
@@ -33,11 +34,11 @@ const workSans = localFont({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Mini Vault — Diecast Collection Tracker',
-    template: '%s · Mini Vault',
+    default: 'Tiny Torque — Diecast Collection Tracker',
+    template: '%s · Tiny Torque',
   },
   description:
-    'Track your diecast car collection, avoid buying duplicates, and connect with other collectors — Mini Vault is the home for your garage.',
+    'Track your diecast car collection, avoid buying duplicates, and connect with other collectors — Tiny Torque is the home for your garage.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
       <body>
+        <Splash />
         <ThemeInit />
         <AnalyticsInit />
         <Providers>

@@ -4,11 +4,11 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = {
-  title: 'Mini Vault — Track, Organize and Trade Your Diecast Collection',
+  title: 'Tiny Torque — Track, Organize and Trade Your Diecast Collection',
   description:
-    'Mini Vault helps diecast car collectors catalog their garage, avoid duplicate buys, and buy, sell or trade with other collectors.',
+    'Tiny Torque helps diecast car collectors catalog their garage, avoid duplicate buys, and buy, sell or trade with other collectors.',
   openGraph: {
-    title: 'Mini Vault — Diecast Collection Tracker',
+    title: 'Tiny Torque — Diecast Collection Tracker',
     description:
       'Catalog your diecast garage, avoid duplicate buys, and connect with other collectors.',
     type: 'website',
@@ -17,20 +17,23 @@ export const metadata: Metadata = {
 
 export default async function LandingPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (user) {
     redirect('/garage');
   }
 
   return (
-    <main style={{ padding: '48px 20px', display: 'flex', flexDirection: 'column', gap: 24, flex: 1 }}>
+    <main
+      style={{ padding: '48px 20px', display: 'flex', flexDirection: 'column', gap: 24, flex: 1 }}
+    >
       <div>
-        <h1 style={{ fontSize: 32 }}>Mini Vault</h1>
+        <h1 style={{ fontSize: 32 }}>Tiny Torque</h1>
         <p className="muted" style={{ fontSize: 16, lineHeight: 1.5 }}>
-          The home for your diecast garage. Track every car you own, skip the
-          accidental duplicate buys, and — coming soon — buy, sell and trade
-          with other collectors.
+          The home for your diecast garage. Track every car you own, skip the accidental duplicate
+          buys, and — coming soon — buy, sell and trade with other collectors.
         </p>
       </div>
 
@@ -41,7 +44,7 @@ export default async function LandingPage() {
           <li>Add cars with brand, model, series, scale, rarity, condition and up to 3 photos.</li>
           <li>Get a heads-up if you might already own a matching car.</li>
           <li>Search, filter and sort your own garage.</li>
-          <li>Pick from 6 color themes to make Mini Vault feel like yours.</li>
+          <li>Pick from 6 color themes to make Tiny Torque feel like yours.</li>
         </ul>
       </div>
 

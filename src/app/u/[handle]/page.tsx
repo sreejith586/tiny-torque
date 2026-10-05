@@ -41,9 +41,9 @@ export async function generateMetadata({
   if (!profile) return { title: 'Collector not found' };
 
   const title = `${profile.display_name} (@${profile.handle})`;
-  const description = `${profile.display_name}'s diecast collection on Mini Vault.`;
+  const description = `${profile.display_name}'s diecast collection on Tiny Torque.`;
   // openGraph isn't covered by the root layout's title template, so it gets the full name here.
-  return { title, description, openGraph: { title: `${title} · Mini Vault`, description } };
+  return { title, description, openGraph: { title: `${title} · Tiny Torque`, description } };
 }
 
 export default async function PublicProfilePage({

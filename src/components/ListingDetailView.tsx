@@ -37,7 +37,7 @@ export default function ListingDetailView({
 
   async function handleShare() {
     const url = typeof window !== 'undefined' ? window.location.href : '';
-    const title = `${listing.brand}${listing.model ? ' ' + listing.model : ''} on Mini Vault`;
+    const title = `${listing.brand}${listing.model ? ' ' + listing.model : ''} on Tiny Torque`;
     try {
       if (navigator.share) {
         await navigator.share({ title, url });

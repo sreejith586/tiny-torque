@@ -29,6 +29,12 @@ test.skip(process.platform !== 'linux', 'screenshot baselines are Linux-only (CI
 async function settle(page: Page) {
   await page.evaluate(() => document.fonts.ready);
   await page.waitForLoadState('load');
+  // The brand splash (Splash.tsx) overlays the page for ~1.5s on load — wait for it to clear so
+  // screenshots (and interactions) see the real page, not the splash.
+  await page
+    .locator('[data-splash]')
+    .waitFor({ state: 'detached', timeout: 4000 })
+    .catch(() => {});
 }
 
 async function seedHarness(page: Page) {

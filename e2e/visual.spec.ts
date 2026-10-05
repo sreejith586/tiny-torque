@@ -64,6 +64,11 @@ async function settle(page: Page) {
   // (~80 screens x themes here) and blew the job's 20-minute timeout. toHaveScreenshot() below
   // already retries until consecutive frames stabilize, so this is still a reliable wait.
   await page.waitForLoadState('load');
+  // The brand splash (Splash.tsx) overlays the page for ~1.5s on load — wait for it to clear.
+  await page
+    .locator('[data-splash]')
+    .waitFor({ state: 'detached', timeout: 4000 })
+    .catch(() => {});
 }
 
 for (const theme of THEMES) {
