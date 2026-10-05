@@ -17,18 +17,9 @@ const MOBILE = { width: 390, height: 844 };
 const DESKTOP = { width: 1280, height: 800 };
 type Screen = { name: string; path: string; prepare?: (page: Page) => Promise<void> };
 
-// Public screens.
-const PUBLIC_SCREENS: Screen[] = [
-  { name: 'landing', path: '/' },
-  { name: 'login-email', path: '/login' },
-  {
-    name: 'login-phone',
-    path: '/login',
-    prepare: (page) => page.getByRole('button', { name: 'Use mobile number instead' }).click(),
-  },
-  // `market` (anon, needs fixture data) lives in visual-local.spec.ts — it runs against a local
-  // server because the Vercel preview renders this route's harness inconsistently (see that file).
-];
+// Public pages (landing, login) and the market fixture screens now live in visual-local.spec.ts —
+// they run against a local server because the Vercel preview lags behind pushes and renders the
+// fixture harness inconsistently, which made these anon screens flake.
 
 // Signed-in screens rendered with fixture data through the `?__visual=1` harness
 // (src/lib/visual-fixtures.ts, proxy.ts). Real URLs keep BottomNav's active tab.
@@ -53,7 +44,7 @@ const SIGNED_IN_SCREENS: Screen[] = [
   { name: 'public-profile', path: '/u/varun?__visual=1' },
 ];
 
-const SCREENS: Screen[] = [...PUBLIC_SCREENS, ...SIGNED_IN_SCREENS];
+const SCREENS: Screen[] = SIGNED_IN_SCREENS;
 
 test.skip(process.platform !== 'linux', 'screenshot baselines are Linux-only (CI + cloud)');
 
@@ -96,7 +87,7 @@ for (const theme of THEMES) {
 
 test.describe('desktop', () => {
   test.use({ viewport: DESKTOP });
-  for (const screen of [PUBLIC_SCREENS[0], SIGNED_IN_SCREENS[0]]) {
+  for (const screen of [SIGNED_IN_SCREENS[0]]) {
     test(`${screen.name} @1280 (workshop-light)`, async ({ page }) => {
       await page.addInitScript(() => localStorage.setItem('mini-vault-theme', 'workshop-light'));
       await page.goto(screen.path);
