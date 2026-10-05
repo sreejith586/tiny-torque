@@ -24,3 +24,6 @@ test-results/
 .vscode/*
 !.vscode/extensions.json
 .validate-db-url
+
+# local baseline-regen download (not committed)
+.baseline-dl/

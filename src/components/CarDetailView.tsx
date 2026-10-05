@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { deleteCollectionItem, updateCollectionItem } from '@/domain/garage';
-import type { CollectionItemRow } from '@/types/database';
+import type { CollectionItemRow, GarageItem } from '@/domain/garage';
+import type { TablesUpdate } from '@/lib/supabase/types';
+import MediaImage from './MediaImage';
 
 const FIELDS: Array<{ key: keyof CollectionItemRow; label: string }> = [
   { key: 'brand', label: 'Brand' },
@@ -18,7 +20,7 @@ const FIELDS: Array<{ key: keyof CollectionItemRow; label: string }> = [
   { key: 'source', label: 'Source' },
 ];
 
-export default function CarDetailView({ item, isOwner }: { item: CollectionItemRow; isOwner: boolean }) {
+export default function CarDetailView({ item, isOwner }: { item: GarageItem; isOwner: boolean }) {
   const supabase = createClient();
   const router = useRouter();
 
@@ -29,6 +31,7 @@ export default function CarDetailView({ item, isOwner }: { item: CollectionItemR
   const [qty, setQty] = useState(String(item.qty));
   const [pricePaid, setPricePaid] = useState(String(item.price_paid));
   const [isPublic, setIsPublic] = useState(item.is_public);
+  const [isFavorite, setIsFavorite] = useState(item.is_favorite);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +49,7 @@ export default function CarDetailView({ item, isOwner }: { item: CollectionItemR
         qty: Number(qty) || 1,
         price_paid: Number(pricePaid) || 0,
         is_public: isPublic,
-      } as Partial<CollectionItemRow>;
+      } as TablesUpdate<'collection_items'>;
       await updateCollectionItem(supabase, item.id, patch);
       setEditing(false);
       router.refresh();
@@ -68,8 +71,20 @@ export default function CarDetailView({ item, isOwner }: { item: CollectionItemR
     }
   }
 
+  async function handleToggleFavourite() {
+    const next = !isFavorite;
+    setIsFavorite(next);
+    try {
+      await updateCollectionItem(supabase, item.id, { is_favorite: next });
+      router.refresh();
+    } catch {
+      setIsFavorite(!next);
+    }
+  }
+
   async function handleDelete() {
-    if (!window.confirm(`Remove this ${item.brand} from your garage? This can't be undone.`)) return;
+    if (!window.confirm(`Remove this ${item.brand} from your garage? This can't be undone.`))
+      return;
     setDeleting(true);
     try {
       await deleteCollectionItem(supabase, item.id);
@@ -84,19 +99,20 @@ export default function CarDetailView({ item, isOwner }: { item: CollectionItemR
   return (
     <div>
       <div className="car-photo" style={{ borderRadius: 14, marginBottom: 16 }}>
-        {item.photo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.photo} alt={item.brand} />
-        ) : (
-          <span>No photo</span>
-        )}
+        <MediaImage src={item.media[0]?.url} mediaId={item.media[0]?.id} alt={item.brand} />
       </div>
 
-      {item.photos && item.photos.length > 1 && (
+      {item.media.length > 1 && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          {item.photos.map((url) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={url} src={url} alt="" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8 }} />
+          {item.media.map((m) => (
+            <div key={m.id} style={{ width: 56, height: 56, borderRadius: 8, overflow: 'hidden' }}>
+              <MediaImage
+                src={m.url}
+                mediaId={m.id}
+                alt=""
+                style={{ width: 56, height: 56, objectFit: 'cover' }}
+              />
+            </div>
           ))}
         </div>
       )}
@@ -125,11 +141,27 @@ export default function CarDetailView({ item, isOwner }: { item: CollectionItemR
             <>
               <label className="toggle-row">
                 <span>Show on my public profile</span>
-                <input type="checkbox" style={{ width: 'auto' }} checked={isPublic} onChange={handleTogglePublic} />
+                <input
+                  type="checkbox"
+                  style={{ width: 'auto' }}
+                  checked={isPublic}
+                  onChange={handleTogglePublic}
+                />
+              </label>
+              <label className="toggle-row">
+                <span>Favourite</span>
+                <input
+                  type="checkbox"
+                  style={{ width: 'auto' }}
+                  checked={isFavorite}
+                  onChange={handleToggleFavourite}
+                />
               </label>
 
               <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-                <button className="btn-secondary" onClick={() => setEditing(true)}>Edit</button>
+                <button className="btn-secondary" onClick={() => setEditing(true)}>
+                  Edit
+                </button>
                 <button className="btn-danger" onClick={handleDelete} disabled={deleting}>
                   {deleting ? 'Removing…' : 'Delete'}
                 </button>
@@ -151,10 +183,23 @@ export default function CarDetailView({ item, isOwner }: { item: CollectionItemR
           ))}
 
           <label htmlFor="qty">Quantity owned</label>
-          <input id="qty" type="number" min="1" value={qty} onChange={(e) => setQty(e.target.value)} />
+          <input
+            id="qty"
+            type="number"
+            min="1"
+            value={qty}
+            onChange={(e) => setQty(e.target.value)}
+          />
 
           <label htmlFor="pricePaid">Price paid</label>
-          <input id="pricePaid" type="number" min="0" step="0.01" value={pricePaid} onChange={(e) => setPricePaid(e.target.value)} />
+          <input
+            id="pricePaid"
+            type="number"
+            min="0"
+            step="0.01"
+            value={pricePaid}
+            onChange={(e) => setPricePaid(e.target.value)}
+          />
 
           {error && <p className="field-error">{error}</p>}
 

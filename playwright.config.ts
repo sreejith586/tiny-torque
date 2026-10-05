@@ -28,24 +28,34 @@ export default defineConfig({
   snapshotPathTemplate: '{testDir}/__screenshots__/{arg}{ext}',
   expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.01, animations: 'disabled', caret: 'hide' } },
   projects: [
-    { name: 'mobile', use: { ...devices['Pixel 7'] }, testIgnore: /visual\.spec\.ts/ },
+    { name: 'mobile', use: { ...devices['Pixel 7'] }, testIgnore: /visual(-local)?\.spec\.ts/ },
     {
       name: 'desktop',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } },
-      testIgnore: /visual\.spec\.ts/,
+      testIgnore: /visual(-local)?\.spec\.ts/,
     },
     {
       name: 'visual',
       use: { ...devices['Desktop Chrome'], deviceScaleFactor: 1 },
       testMatch: /visual\.spec\.ts/,
     },
+    {
+      // Anon fixture screens (e.g. /market) that must render deterministically — run against a
+      // local server, NOT the Vercel preview, whose edge serves this route's harness render
+      // inconsistently (cold prerendered shell vs warm function). Set LOCAL_VISUAL=1 so webServer
+      // starts even when BASE_URL points at a preview for the `visual` project.
+      name: 'visual-local',
+      use: { ...devices['Desktop Chrome'], deviceScaleFactor: 1, baseURL: 'http://localhost:3000' },
+      testMatch: /visual-local\.spec\.ts/,
+    },
   ],
-  webServer: process.env.BASE_URL
-    ? undefined
-    : {
-        command: 'pnpm build && pnpm start',
-        url: 'http://localhost:3000',
-        reuseExistingServer: !process.env.CI,
-        timeout: 180_000,
-      },
+  webServer:
+    process.env.BASE_URL && !process.env.LOCAL_VISUAL
+      ? undefined
+      : {
+          command: 'pnpm build && pnpm start',
+          url: 'http://localhost:3000',
+          reuseExistingServer: !process.env.CI,
+          timeout: 180_000,
+        },
 });

@@ -1,10 +1,13 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
+import './nav-rail.css';
+import shell from './layout.module.css';
 import ThemeInit from '@/components/ThemeInit';
 import ThemeStyles, { THEME_BOOT_SCRIPT } from '@/components/ThemeStyles';
 import AnalyticsInit from '@/components/AnalyticsInit';
 import BottomNav from '@/components/BottomNav';
+import Providers from '@/components/Providers';
 
 // Self-hosted (same faces/weights as Varun's Google Fonts setup — D-027):
 // no third-party request at build or runtime, works behind proxies/offline.
@@ -39,7 +42,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${oswald.variable} ${workSans.variable}`} data-theme="workshop-light" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${oswald.variable} ${workSans.variable} theme-3d`}
+      data-theme="aurora-glass"
+      suppressHydrationWarning
+    >
       <head>
         <ThemeStyles />
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
@@ -47,8 +55,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeInit />
         <AnalyticsInit />
-        <div className="page">{children}</div>
-        <BottomNav />
+        <Providers>
+          <div className={`page ${shell.shell}`}>{children}</div>
+          <BottomNav />
+        </Providers>
       </body>
     </html>
   );

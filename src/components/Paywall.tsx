@@ -1,0 +1,37 @@
+// Reusable paywall placeholder (MV-S3-06, F-11). Shown when a free-plan limit is hit. The
+// "buy" CTA is intentionally disabled until the token economy lands (S7, flag token_purchase).
+
+type PaywallContext = 'scan' | 'photos' | 'listings';
+
+const COPY: Record<PaywallContext, { title: string; body: string; cta: string }> = {
+  scan: {
+    title: 'Out of scans this month',
+    body: 'You’ve used your free AI scans for this 30-day period. Pro members get a much higher scan quota.',
+    cta: 'Buy a scan pack',
+  },
+  photos: {
+    title: 'More photos is a Pro feature',
+    body: 'The free plan includes 1 photo per car. Upgrade to Pro for up to 8 photos each.',
+    cta: 'Upgrade to Pro',
+  },
+  listings: {
+    title: 'Listing limit reached',
+    body: 'Free members can keep 2 active listings. Pro members get unlimited listings.',
+    cta: 'Upgrade to Pro',
+  },
+};
+
+export default function Paywall({ context }: { context: PaywallContext }) {
+  const c = COPY[context];
+  return (
+    <div className="panel" style={{ textAlign: 'center' }}>
+      <h3 style={{ fontSize: 16 }}>{c.title}</h3>
+      <p className="muted" style={{ fontSize: 13, marginTop: 6 }}>
+        {c.body}
+      </p>
+      <button className="btn-primary" style={{ marginTop: 14 }} disabled title="Coming soon">
+        {c.cta} (coming soon)
+      </button>
+    </div>
+  );
+}

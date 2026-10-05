@@ -1,4 +1,5 @@
-import type { CollectionItemRow, PublicProfileRow } from '@/types/database';
+import type { PublicProfileRow } from '@/types/database';
+import type { GarageItem } from '@/domain/garage';
 import CarCard from './CarCard';
 
 // F-14 v1: read-only, composed from existing prototype pieces only (panel/toggle-row,
@@ -9,7 +10,7 @@ export default function PublicProfileView({
   items,
 }: {
   profile: PublicProfileRow;
-  items: CollectionItemRow[];
+  items: GarageItem[];
 }) {
   const memberSince = profile.created_at
     ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })

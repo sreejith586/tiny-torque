@@ -1,0 +1,48 @@
+/* Segmented OTP cells — themed via the app's CSS variable tokens so they read correctly in all
+   six palettes (incl. the Aurora Glass default). */
+.row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cell {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  max-width: 56px;
+  height: 56px;
+  padding: 0;
+  text-align: center;
+  font-family: var(--font-heading, inherit);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--cream);
+  background: var(--panel);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  caret-color: var(--orange);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.cell:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--orange) 28%, transparent);
+}
+
+.cell:disabled {
+  opacity: 0.6;
+}
+
+@media (max-width: 360px) {
+  .row {
+    gap: 6px;
+  }
+  .cell {
+    height: 50px;
+    font-size: 20px;
+  }
+}

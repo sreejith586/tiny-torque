@@ -26,7 +26,8 @@ const PUBLIC_SCREENS: Screen[] = [
     path: '/login',
     prepare: (page) => page.getByRole('button', { name: 'Use mobile number instead' }).click(),
   },
-  { name: 'market', path: '/market' }, // static "coming soon" shell until S3; re-baseline then
+  // `market` (anon, needs fixture data) lives in visual-local.spec.ts — it runs against a local
+  // server because the Vercel preview renders this route's harness inconsistently (see that file).
 ];
 
 // Signed-in screens rendered with fixture data through the `?__visual=1` harness
