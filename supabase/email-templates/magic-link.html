@@ -1,0 +1,66 @@
+<!--
+  Tiny Torque — sign-in OTP email (Aurora Glass theme).
+  Paste into Supabase → Authentication → Email Templates → "Magic Link" (and "Confirm signup"),
+  on BOTH the prod and staging projects. Our app verifies the 6-digit {{ .Token }} typed into the
+  form, so the code is the hero; {{ .ConfirmationURL }} is a fallback link. Email-client-safe:
+  table layout, inline styles, web-safe fonts, dark Aurora Glass palette (theme.ts aurora-glass).
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+  style="margin:0; padding:32px 16px; background:#050608;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+        style="max-width:480px; background:#14172A; border:1px solid #232B4A; border-radius:16px;">
+        <!-- Header -->
+        <tr>
+          <td style="padding:24px 32px; background:#0A0C16; border-radius:16px 16px 0 0;">
+            <div style="font-size:22px; font-weight:800; letter-spacing:1px; color:#FFFFFF;">
+              TINY&nbsp;TORQUE
+            </div>
+            <div style="font-size:11px; font-weight:700; letter-spacing:2px; color:#FF9E1A; padding-top:3px;">
+              DIECAST COLLECTOR
+            </div>
+          </td>
+        </tr>
+        <!-- Body -->
+        <tr>
+          <td style="padding:32px;">
+            <h1 style="margin:0 0 8px; font-size:20px; color:#F0F3FB;">Your sign-in code</h1>
+            <p style="margin:0 0 24px; font-size:14px; line-height:1.5; color:#AEB6D4;">
+              Enter this code in Tiny Torque to sign in. It expires shortly and can only be used once.
+            </p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center"
+                  style="padding:18px; background:#1B2038; border:1px solid #232B4A; border-radius:12px;">
+                  <span style="font-size:34px; font-weight:800; letter-spacing:10px; color:#FF9E1A;
+                    font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;">{{ .Token }}</span>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:24px 0 0; font-size:13px; line-height:1.5; color:#AEB6D4;">
+              Prefer a link? <a href="{{ .ConfirmationURL }}" style="color:#FF9E1A; font-weight:600;">Sign in here</a>.
+            </p>
+            <p style="margin:16px 0 0; font-size:13px; line-height:1.5; color:#8B96B8;">
+              Didn't try to sign in? You can safely ignore this email — your account stays secure
+              without this code.
+            </p>
+          </td>
+        </tr>
+        <!-- Footer -->
+        <tr>
+          <td style="padding:20px 32px; border-top:1px solid #232B4A; border-radius:0 0 16px 16px;">
+            <p style="margin:0; font-size:12px; line-height:1.5; color:#8B96B8;">
+              Tiny Torque · Track your diecast collection, skip the duplicates, trade with collectors.<br>
+              This is an automated message — please don't reply.
+            </p>
+          </td>
+        </tr>
+      </table>
+      <p style="max-width:480px; margin:16px auto 0; font-size:11px; color:#6B749A; text-align:center;">
+        Sent to {{ .Email }} because a sign-in was requested for Tiny Torque.
+      </p>
+    </td>
+  </tr>
+</table>

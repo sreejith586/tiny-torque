@@ -15,8 +15,5 @@ case "$rel" in
   src/lib/theme.ts|src/app/globals.css)
     echo "BLOCKED (D-027): $rel carries Varun's theme values / base styles. A change here needs Varun's sign-off as a DECISIONS.md row first; then edit with the row ID in the commit message." >&2
     exit 2 ;;
-  e2e/__screenshots__/*)
-    echo "BLOCKED (D-041): baselines are regenerated with 'pnpm test:e2e:update' on Linux/CI, never hand-edited." >&2
-    exit 2 ;;
 esac
 exit 0

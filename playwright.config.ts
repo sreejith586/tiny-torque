@@ -12,6 +12,9 @@ const extraHTTPHeaders = bypass
   ? { 'x-vercel-protection-bypass': bypass, 'x-vercel-set-bypass-cookie': 'true' }
   : undefined;
 
+// Functional smoke tests (smoke.spec.ts, onboarding.spec.ts) only — no pixel-baseline suite (D-056:
+// Varun's design fidelity is enforced by direct visual review against the prototype, not an
+// automated screenshot-diff CI gate).
 export default defineConfig({
   testDir: './e2e',
   timeout: 30_000,
@@ -24,38 +27,19 @@ export default defineConfig({
     launchOptions,
     extraHTTPHeaders,
   },
-  // D-027 visual guard: baselines live in e2e/__screenshots__ (Linux only, deviceScaleFactor 1).
-  snapshotPathTemplate: '{testDir}/__screenshots__/{arg}{ext}',
-  expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.01, animations: 'disabled', caret: 'hide' } },
   projects: [
-    { name: 'mobile', use: { ...devices['Pixel 7'] }, testIgnore: /visual(-local)?\.spec\.ts/ },
+    { name: 'mobile', use: { ...devices['Pixel 7'] } },
     {
       name: 'desktop',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } },
-      testIgnore: /visual(-local)?\.spec\.ts/,
-    },
-    {
-      name: 'visual',
-      use: { ...devices['Desktop Chrome'], deviceScaleFactor: 1 },
-      testMatch: /visual\.spec\.ts/,
-    },
-    {
-      // Anon fixture screens (e.g. /market) that must render deterministically — run against a
-      // local server, NOT the Vercel preview, whose edge serves this route's harness render
-      // inconsistently (cold prerendered shell vs warm function). Set LOCAL_VISUAL=1 so webServer
-      // starts even when BASE_URL points at a preview for the `visual` project.
-      name: 'visual-local',
-      use: { ...devices['Desktop Chrome'], deviceScaleFactor: 1, baseURL: 'http://localhost:3000' },
-      testMatch: /visual-local\.spec\.ts/,
     },
   ],
-  webServer:
-    process.env.BASE_URL && !process.env.LOCAL_VISUAL
-      ? undefined
-      : {
-          command: 'pnpm build && pnpm start',
-          url: 'http://localhost:3000',
-          reuseExistingServer: !process.env.CI,
-          timeout: 180_000,
-        },
+  webServer: process.env.BASE_URL
+    ? undefined
+    : {
+        command: 'pnpm build && pnpm start',
+        url: 'http://localhost:3000',
+        reuseExistingServer: !process.env.CI,
+        timeout: 180_000,
+      },
 });
