@@ -5,10 +5,10 @@ import { test, expect } from '@playwright/test';
 
 test('landing renders and links to login', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Mini Vault' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Tiny Torque' })).toBeVisible();
   await page.getByRole('link', { name: 'Get started' }).click();
   await expect(page).toHaveURL(/\/login$/);
-  await expect(page.getByRole('heading', { name: 'Sign in to Mini Vault' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sign in to Tiny Torque' })).toBeVisible();
   await expect(page.getByLabel('Email address')).toBeVisible();
   await page.getByRole('button', { name: 'Use mobile number instead' }).click();
   await expect(page.getByLabel('Mobile number')).toBeVisible();
