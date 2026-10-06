@@ -58,6 +58,18 @@ export async function listMyListings(
   return attachMedia(supabase, await repo.listBySeller(supabase, sellerId, status));
 }
 
+/** The seller's active listing for a garage item, if any (F-06 publish entry point). */
+export async function findActiveListingForItem(
+  supabase: Client,
+  sellerId: string,
+  sourceItemId: string
+): Promise<Listing | null> {
+  const rows = await repo.listBySeller(supabase, sellerId, 'active');
+  const row = rows.find((r) => r.source_item_id === sourceItemId);
+  if (!row) return null;
+  return (await attachMedia(supabase, [row]))[0] ?? null;
+}
+
 /** Active-listing allowance check (UI asks first; the DB trigger is the backstop, D-021). */
 export async function canPublishListing(
   supabase: Client,
