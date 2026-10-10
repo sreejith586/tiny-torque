@@ -67,3 +67,9 @@ export const LISTING_TTL_DAYS = 60;
 export function listingExpiry(from: Date = new Date()): string {
   return new Date(from.getTime() + LISTING_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString();
 }
+
+/** Whole days until a listing's `expires_at` (F-06 "my listings" countdown); negative once past. */
+export function daysUntilExpiry(expiresAt: string | null, from: Date = new Date()): number | null {
+  if (!expiresAt) return null;
+  return Math.ceil((new Date(expiresAt).getTime() - from.getTime()) / (24 * 60 * 60 * 1000));
+}
