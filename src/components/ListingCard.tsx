@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { MouseEvent, KeyboardEvent } from 'react';
 import { type Listing, listingPriceLabel } from '@/domain/marketplace';
 import MediaImage from './MediaImage';
 import styles from './Market.module.css';
@@ -11,17 +12,52 @@ function isNew(listing: Listing): boolean {
   return Date.now() - new Date(listing.created_at).getTime() < 7 * DAY;
 }
 
-export default function ListingCard({ listing }: { listing: Listing; view?: 'grid' | 'list' }) {
+export default function ListingCard({
+  listing,
+  favorited = false,
+  onToggleFavorite,
+}: {
+  listing: Listing;
+  view?: 'grid' | 'list';
+  favorited?: boolean;
+  onToggleFavorite?: (id: string, next: boolean) => void;
+}) {
   const title = [listing.model || listing.brand, listing.variant].filter(Boolean).join(' · ');
   const subtitle = [listing.brand, listing.condition].filter(Boolean).join(' · ');
   const sellerName = listing.seller_name || 'Seller';
 
+  function handleHeartActivate(e: MouseEvent | KeyboardEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    onToggleFavorite?.(listing.id, !favorited);
+  }
+
   return (
     <Link href={`/market/${listing.id}`} className={styles.listing}>
-      <span className={`${styles.favHeart}`} aria-hidden>
+      <span
+        className={`${styles.favHeart} ${favorited ? styles.active : ''}`}
+        role={onToggleFavorite ? 'button' : undefined}
+        tabIndex={onToggleFavorite ? 0 : undefined}
+        aria-label={
+          onToggleFavorite
+            ? favorited
+              ? 'Remove from favourites'
+              : 'Add to favourites'
+            : undefined
+        }
+        aria-hidden={onToggleFavorite ? undefined : true}
+        onClick={onToggleFavorite ? handleHeartActivate : undefined}
+        onKeyDown={
+          onToggleFavorite
+            ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') handleHeartActivate(e);
+              }
+            : undefined
+        }
+      >
         <svg
           viewBox="0 0 24 24"
-          fill="none"
+          fill={favorited ? 'currentColor' : 'none'}
           stroke="currentColor"
           strokeWidth="1.8"
           strokeLinecap="round"

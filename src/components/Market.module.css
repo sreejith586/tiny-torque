@@ -303,6 +303,7 @@
 
 /* ---------- listing detail ---------- */
 .detailThumb {
+  position: relative;
   width: 100%;
   height: 300px;
   border-radius: 14px;

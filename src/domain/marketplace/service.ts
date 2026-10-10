@@ -229,6 +229,7 @@ export async function addWishlistItem(
     catalog_model_id: v.catalogModelId ?? null,
     max_price: v.maxPrice ?? null,
     currency: v.currency ?? null,
+    notes: v.notes ?? null,
     notify: v.notify,
   });
 }
@@ -244,6 +245,7 @@ export async function updateWishlistItem(
   if (v.catalogModelId !== undefined) patch.catalog_model_id = v.catalogModelId ?? null;
   if (v.maxPrice !== undefined) patch.max_price = v.maxPrice ?? null;
   if (v.currency !== undefined) patch.currency = v.currency ?? null;
+  if (v.notes !== undefined) patch.notes = v.notes ?? null;
   if (v.notify !== undefined) patch.notify = v.notify;
   await repo.updateWishlist(supabase, id, patch);
 }
