@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   defaultMinOffer,
   listingExpiry,
+  daysUntilExpiry,
   SORT_CONFIG,
   LISTING_TTL_DAYS,
   listingPriceLabel,
@@ -29,6 +30,19 @@ describe('listingExpiry', () => {
     const expiry = new Date(listingExpiry(from));
     const days = (expiry.getTime() - from.getTime()) / (24 * 60 * 60 * 1000);
     expect(days).toBe(LISTING_TTL_DAYS);
+  });
+});
+
+describe('daysUntilExpiry (MV-S4-07)', () => {
+  const from = new Date('2026-01-01T00:00:00.000Z');
+  it('counts whole days ahead', () => {
+    expect(daysUntilExpiry('2026-01-05T00:00:00.000Z', from)).toBe(4);
+  });
+  it('is negative once past', () => {
+    expect(daysUntilExpiry('2025-12-30T00:00:00.000Z', from)).toBe(-2);
+  });
+  it('is null when there is no expiry', () => {
+    expect(daysUntilExpiry(null, from)).toBeNull();
   });
 });
 
