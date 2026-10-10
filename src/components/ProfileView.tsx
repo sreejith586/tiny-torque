@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { patchProfile, signOut } from '@/domain/identity';
 import { deleteAccountAction } from '@/app/profile/actions';
@@ -157,6 +158,14 @@ export default function ProfileView({ profile }: { profile: ProfileRow }) {
           </>
         )}
       </div>
+
+      <Link
+        href="/profile/wishlist"
+        className="btn-secondary"
+        style={{ display: 'block', textAlign: 'center', marginBottom: 16 }}
+      >
+        My wishlist
+      </Link>
 
       <div className="panel" style={{ marginBottom: 16 }}>
         <h2 style={{ fontSize: 16 }}>Appearance</h2>

@@ -2,13 +2,22 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { incrementListingView, listingPriceLabel, LISTING_TYPE_LABEL } from '@/domain/marketplace';
+import {
+  incrementListingView,
+  favoriteListing,
+  unfavoriteListing,
+  listingPriceLabel,
+  LISTING_TYPE_LABEL,
+} from '@/domain/marketplace';
 import type { Listing } from '@/domain/marketplace';
 import type { PublicProfileRow } from '@/types/database';
 import MediaImage from './MediaImage';
 import styles from './Market.module.css';
 
 const COUNTRY: Record<string, string> = { AE: 'UAE', IN: 'India' };
+
+const HEART =
+  'M12,21.35l-1.45-1.32C5.4,15.36,2,12.28,2,8.5C2,5.42,4.42,3,7.5,3c1.74,0,3.41,0.81,4.5,2.09C13.09,3.81,14.76,3,16.5,3C19.58,3,22,5.42,22,8.5c0,3.78-3.4,6.86-8.55,11.54L12,21.35z';
 
 const FIELDS: Array<{ key: keyof Listing; label: string }> = [
   { key: 'model', label: 'Model' },
@@ -21,13 +30,29 @@ export default function ListingDetailView({
   listing,
   seller,
   harness = false,
+  userId,
+  initialFavorited = false,
 }: {
   listing: Listing;
   seller: PublicProfileRow | null;
   harness?: boolean;
+  userId?: string;
+  initialFavorited?: boolean;
 }) {
   const [shareMsg, setShareMsg] = useState<string | null>(null);
+  const [favorited, setFavorited] = useState(initialFavorited);
   const counted = useRef(false);
+
+  function handleToggleFavorite() {
+    if (!userId) return;
+    const next = !favorited;
+    setFavorited(next);
+    const supabase = createClient();
+    const op = next
+      ? favoriteListing(supabase, userId, listing.id)
+      : unfavoriteListing(supabase, userId, listing.id);
+    op.catch(() => setFavorited(!next));
+  }
 
   useEffect(() => {
     if (counted.current || harness) return;
@@ -56,6 +81,25 @@ export default function ListingDetailView({
   return (
     <div>
       <div className={styles.detailThumb}>
+        {userId && (
+          <button
+            type="button"
+            className={`${styles.favHeart} ${favorited ? styles.active : ''}`}
+            aria-label={favorited ? 'Remove from favourites' : 'Add to favourites'}
+            onClick={handleToggleFavorite}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill={favorited ? 'currentColor' : 'none'}
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d={HEART} />
+            </svg>
+          </button>
+        )}
         {listing.media.length > 1 ? (
           <div className={styles.carousel}>
             {listing.media.map((m) => (

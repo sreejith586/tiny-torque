@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { getListing, listingPriceLabel } from '@/domain/marketplace';
+import { getListing, listingPriceLabel, listFavoriteIds } from '@/domain/marketplace';
 import { getPublicProfileById } from '@/domain/identity';
 import ListingDetailView from '@/components/ListingDetailView';
 import { FIXTURE_LISTINGS, FIXTURE_PUBLIC_PROFILE } from '@/lib/visual-fixtures';
@@ -13,13 +13,21 @@ export const dynamic = 'force-dynamic';
 async function load(id: string, harness: boolean) {
   if (harness) {
     const listing = FIXTURE_LISTINGS.find((l) => l.id === id) ?? FIXTURE_LISTINGS[0];
-    return { listing, seller: FIXTURE_PUBLIC_PROFILE };
+    return { listing, seller: FIXTURE_PUBLIC_PROFILE, userId: undefined, favorited: false };
   }
   const supabase = await createClient();
   const listing = await getListing(supabase, id);
-  if (!listing) return { listing: null, seller: null };
+  if (!listing) return { listing: null, seller: null, userId: undefined, favorited: false };
   const seller = await getPublicProfileById(supabase, listing.seller_id);
-  return { listing, seller };
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  let favorited = false;
+  if (user) {
+    const favoriteIds = await listFavoriteIds(supabase, user.id);
+    favorited = favoriteIds.includes(listing.id);
+  }
+  return { listing, seller, userId: user?.id, favorited };
 }
 
 export async function generateMetadata({
@@ -45,12 +53,18 @@ export default async function ListingPage({
 }) {
   const { id } = await params;
   const harness = await isHarnessRequest(await searchParams);
-  const { listing, seller } = await load(id, harness);
+  const { listing, seller, userId, favorited } = await load(id, harness);
   if (!listing) notFound();
 
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
-      <ListingDetailView listing={listing} seller={seller} harness={harness} />
+      <ListingDetailView
+        listing={listing}
+        seller={seller}
+        harness={harness}
+        userId={userId}
+        initialFavorited={favorited}
+      />
     </main>
   );
 }

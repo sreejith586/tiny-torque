@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { browseListings } from '@/domain/marketplace';
+import { browseListings, listFavoriteIds } from '@/domain/marketplace';
 import { isFlagEnabled } from '@/domain/flags';
 import MarketView from '@/components/MarketView';
 import { FIXTURE_LISTINGS } from '@/lib/visual-fixtures';
@@ -24,6 +24,8 @@ async function loadFirstPage(harness: boolean) {
       signedIn: false,
       harness: true,
       canPublish: true,
+      userId: undefined,
+      favoriteIds: [] as string[],
     };
   }
   const supabase = await createClient();
@@ -32,16 +34,27 @@ async function loadFirstPage(harness: boolean) {
   } = await supabase.auth.getUser();
   let viewerCountry: string | undefined;
   let canPublish = false;
+  let favoriteIds: string[] = [];
   if (user) {
-    const [{ data: profile }, publishEnabled] = await Promise.all([
+    const [{ data: profile }, publishEnabled, favIds] = await Promise.all([
       supabase.from('profiles').select('country_code').eq('id', user.id).maybeSingle(),
       isFlagEnabled(supabase, 'marketplace_publish', { userId: user.id }),
+      listFavoriteIds(supabase, user.id),
     ]);
     viewerCountry = profile?.country_code ?? undefined;
     canPublish = publishEnabled;
+    favoriteIds = favIds;
   }
   const { items, nextCursor } = await browseListings(supabase, {}, viewerCountry);
-  return { items, cursor: nextCursor, signedIn: !!user, harness: false, canPublish };
+  return {
+    items,
+    cursor: nextCursor,
+    signedIn: !!user,
+    harness: false,
+    canPublish,
+    userId: user?.id,
+    favoriteIds,
+  };
 }
 
 export default async function MarketPage({
@@ -50,7 +63,7 @@ export default async function MarketPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const { items, cursor, signedIn, harness, canPublish } = await loadFirstPage(
+  const { items, cursor, signedIn, harness, canPublish, userId, favoriteIds } = await loadFirstPage(
     await isHarnessRequest(sp)
   );
 
@@ -74,6 +87,8 @@ export default async function MarketPage({
         initialCursor={cursor}
         signedIn={signedIn}
         harness={harness}
+        userId={userId}
+        initialFavoriteIds={favoriteIds}
       />
     </main>
   );
