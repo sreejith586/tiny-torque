@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { APP_SHELL_HIDDEN_ON } from '@/lib/shell-routes';
 import { AddIcon, GarageIcon, MarketIcon, OffersIcon, ProfileIcon } from './icons';
 
 // Mobile-first bottom tab bar, matching the prototype's tab structure and icon set
@@ -21,12 +22,10 @@ const TABS: ReadonlyArray<{
   { href: '/profile', label: 'Profile', Icon: ProfileIcon },
 ];
 
-const HIDDEN_ON = ['/', '/login', '/onboarding'];
-
 export default function BottomNav() {
   const pathname = usePathname();
 
-  if (pathname && HIDDEN_ON.includes(pathname)) return null;
+  if (pathname && APP_SHELL_HIDDEN_ON.includes(pathname)) return null;
 
   return (
     <nav className="bottom-nav">

@@ -71,10 +71,8 @@ export default async function MarketPage({
     <main style={{ padding: '20px 16px', flex: 1 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <h1 style={{ fontSize: 24, marginBottom: 4 }}>Marketplace</h1>
-          <p className="muted" style={{ marginBottom: 12 }}>
-            Buy, sell and trade with other collectors.
-          </p>
+          <h1 className="page-heading">Marketplace</h1>
+          <p className="page-sub">Buy, sell and trade with other collectors.</p>
         </div>
         {canPublish && (
           <Link href="/market/mine" className="btn-secondary" style={{ width: 'auto' }}>

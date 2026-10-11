@@ -100,7 +100,7 @@ export async function createProfile(supabase: Client, userId: string, input: Pro
     store_name: v.storeName ?? null,
     location: v.location ?? null,
     mobile: v.mobile ?? null,
-    photo_url: v.photoUrl ?? null,
+    photo_url: v.photoMediaId ?? null,
     handle,
     country_code: v.countryCode,
     city: v.city ?? null,
@@ -124,7 +124,7 @@ export async function patchProfile(supabase: Client, userId: string, patch: Prof
   if (v.storeName !== undefined) row.store_name = v.storeName;
   if (v.location !== undefined) row.location = v.location;
   if (v.mobile !== undefined) row.mobile = v.mobile;
-  if (v.photoUrl !== undefined) row.photo_url = v.photoUrl;
+  if (v.photoMediaId !== undefined) row.photo_url = v.photoMediaId;
 
   if (v.handle !== undefined) {
     const current = await repo.getProfile(supabase, userId);
