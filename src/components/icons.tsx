@@ -86,6 +86,15 @@ export function FilterIcon(props: IconProps) {
   );
 }
 
+export function SortIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M3 7h10M3 12h6M3 17h3" />
+      <path d="M17 4v16M17 4l4 4M17 4l-4 4" />
+    </Base>
+  );
+}
+
 export function CameraIcon(props: IconProps) {
   return (
     <Base {...props}>

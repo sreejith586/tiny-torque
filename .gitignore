@@ -26,4 +26,4 @@ test-results/
 .validate-db-url
 
 # local baseline-regen download (not committed)
-.baseline-dl/
+.baseline-dl*/

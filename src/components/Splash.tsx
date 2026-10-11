@@ -4,15 +4,16 @@ import { useEffect, useState } from 'react';
 import styles from './Splash.module.css';
 
 // Brand splash shown on a full page open/refresh: the Tiny Torque logo fades + scales in (the
-// prototype's splashFadeIn motion, D-045), holds ~1s so it reads clearly, then fades out and
-// unmounts. Client-side navigations don't remount the root layout, so it doesn't flash between
-// in-app pages — only on a real page load.
+// prototype's splashFadeIn motion, D-045), holds for the prototype's exact minimum duration
+// (`splashMinDuration = setTimeout(resolve, 3000)`), then fades out and unmounts. Client-side
+// navigations don't remount the root layout, so it doesn't flash between in-app pages — only on
+// a real page load.
 export default function Splash() {
   const [phase, setPhase] = useState<'show' | 'fading' | 'done'>('show');
 
   useEffect(() => {
-    const hold = setTimeout(() => setPhase('fading'), 1000); // keep the logo visible ~1s
-    const remove = setTimeout(() => setPhase('done'), 1500); // after the 0.5s fade, unmount
+    const hold = setTimeout(() => setPhase('fading'), 3000); // prototype's splashMinDuration
+    const remove = setTimeout(() => setPhase('done'), 3500); // after the 0.5s fade, unmount
     return () => {
       clearTimeout(hold);
       clearTimeout(remove);

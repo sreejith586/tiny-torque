@@ -1,5 +1,7 @@
-/* Brand splash overlay. Dark Aurora backdrop (var(--bg)); the circular Tiny Torque logo fades +
-   scales in with the prototype's splashFadeIn motion (garage-log-147.html, D-045). */
+/* Brand splash overlay — matches garage-log-147.html exactly (D-044/D-045): a fixed light
+   background (#EBE7DE, not a theme token — the prototype's splash isn't theme-aware), the Tiny
+   Torque logo (already a circular badge in the source art, so no CSS border-radius clip) fades +
+   scales in with the prototype's splashFadeIn motion. */
 .splash {
   position: fixed;
   inset: 0;
@@ -7,7 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg);
+  background: #ebe7de;
   opacity: 1;
   transition: opacity 0.5s ease;
 }
@@ -18,9 +20,8 @@
 
 .logo {
   width: 52.5%;
-  max-width: 220px;
+  max-width: 240px;
   height: auto;
-  border-radius: 50%;
   animation: splashFadeIn 0.7s ease-out both;
 }
 
