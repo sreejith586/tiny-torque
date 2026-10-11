@@ -30,7 +30,7 @@ export default async function ProfilePage({
 
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
-      <h1 style={{ fontSize: 24 }}>Profile</h1>
+      <h1 className="page-heading">Profile</h1>
       <ProfileView profile={profile} />
     </main>
   );

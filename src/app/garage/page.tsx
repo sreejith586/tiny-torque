@@ -32,11 +32,12 @@ export default async function GaragePage({
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <h1 style={{ fontSize: 24 }}>My Garage</h1>
+        <h1 className="page-heading">My Garage</h1>
         <Link href="/garage/trash" className="muted" style={{ fontSize: 13 }}>
           Trash
         </Link>
       </div>
+      <p className="page-sub">Everything you own, in one place.</p>
       <GarageView initialItems={items} initialCursor={cursor} />
     </main>
   );

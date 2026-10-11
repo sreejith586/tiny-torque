@@ -7,7 +7,8 @@ export interface ProfileCreateInput {
   storeName?: string | null;
   location?: string | null;
   mobile?: string | null;
-  photoUrl?: string | null;
+  /** A `media` row id (kind 'avatar'), not a URL — stored in the `photo_url` column, D-010. */
+  photoMediaId?: string | null;
   /** Editable, auto-suggested from displayName when omitted (F-01). */
   handle?: string | null;
   countryCode: string;

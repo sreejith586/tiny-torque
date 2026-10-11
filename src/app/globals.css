@@ -485,3 +485,270 @@ label {
   color: var(--orange);
   font-weight: 600;
 }
+
+/* ---------- App header (garage-log-147.html, D-044) ----------
+   Persistent brand/notification/avatar bar, missing from every sprint until now. The prototype's
+   online-counter (presence, D-017) and coin pill (tokens, not live) are intentionally not ported. */
+header {
+  padding: 15px 16px 11px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: block;
+  flex-shrink: 0;
+}
+
+.brand-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-name {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 19px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--cream);
+  white-space: nowrap;
+}
+
+.brand-tagline {
+  font-size: 10.5px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--orange);
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.icon-btn {
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  color: var(--cream);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow:
+    0 2px 0 color-mix(in srgb, var(--border) 60%, transparent),
+    0 2px 6px rgba(0, 0, 0, 0.1);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.icon-btn:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--border) 60%, transparent),
+    0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.header-avatar-btn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid var(--violet);
+  padding: 0;
+  background: var(--panel-alt);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.header-avatar-initial {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--orange);
+}
+
+/* One-line description under every page title (garage-log-147.html's .page-heading/.page-sub). */
+.page-heading {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--cream);
+  margin: 2px 0 16px;
+}
+
+.page-sub {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
+  margin: -10px 0 16px;
+}
+
+/* ---------- Onboarding (garage-log-147.html's 5-step wizard, D-042) ---------- */
+.type-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.type-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--panel);
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.type-card.selected {
+  border-color: var(--orange);
+  background: color-mix(in srgb, var(--orange) 6%, var(--panel));
+}
+
+.type-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--panel-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.type-card.selected .type-icon {
+  background: var(--orange);
+  color: var(--btn-text);
+}
+
+.type-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--cream);
+}
+
+.type-desc {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.type-check {
+  margin-left: auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  font-size: 12px;
+}
+
+.type-card.selected .type-check {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: var(--btn-text);
+}
+
+.ob-photo-circle {
+  width: 96px;
+  height: 96px;
+  margin: 4px auto 0;
+  border-radius: 50%;
+  border: 1.5px dashed var(--border);
+  background: var(--panel-alt);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+}
+
+.ob-photo-circle.filled {
+  border-style: solid;
+}
+
+.ob-photo-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ob-photo-circle span {
+  font-size: 11px;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.ob-photo-circle input[type='file'] {
+  display: none;
+}
+
+.ob-photo-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border: none;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.photo-skip {
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 16px;
+  cursor: pointer;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  width: 100%;
+}

@@ -5,20 +5,27 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import {
   createProfile,
+  patchProfile,
   redeemInvite,
   suggestAvailableHandle,
   isHandleAvailable,
   CITIES_BY_COUNTRY,
 } from '@/domain/identity';
+import { uploadProfileMedia } from '@/domain/media';
+import { compressImage } from '@/lib/image';
 import type { AccountType, CountryRow } from '@/types/database';
+import { ImageIcon, MarketIcon, ProfileIcon } from './icons';
 import { LoaderDots } from './Loaders';
 
-// D-042: garage-log-147.html's stepped onboarding (progress bar, back button) is the reference
-// for this screen, mapped onto what F-01 actually asks it to collect — the mockup's phone/OTP
-// step is dropped (already done at /login, MV-S1-03) and its photo step is dropped (F-01 still
-// says no avatar until S2's media pipeline exists).
+// D-042: garage-log-147.html's stepped onboarding (progress bar, back button, illustrated
+// account-type cards, optional photo step) is the reference for this screen, mapped onto what
+// F-01 actually asks it to collect — the mockup's phone/OTP step is dropped (already done at
+// /login, MV-S1-03). The photo step was dropped in an earlier pass citing F-01's "no avatar"
+// line, which D-042 (same date) already superseded by naming "photo (optional)" as one of the
+// five steps to build — restored here. Upload is best-effort: a failure doesn't block onboarding,
+// matching the prototype's own "totally optional" framing.
 
-type Step = 'invite' | 'account' | 'name' | 'location';
+type Step = 'invite' | 'account' | 'name' | 'location' | 'photo';
 type HandleStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
 const HANDLE_RE = /^[a-z0-9_]{3,24}$/;
@@ -44,6 +51,7 @@ export default function OnboardingWizard({
     'account',
     'name',
     'location',
+    'photo',
   ];
   const [stepIndex, setStepIndex] = useState(0);
   const step = steps[stepIndex];
@@ -61,6 +69,9 @@ export default function OnboardingWizard({
 
   const [countryCode, setCountryCode] = useState(defaultCountry);
   const [city, setCity] = useState('');
+
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -154,8 +165,7 @@ export default function OnboardingWizard({
     }
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function finishOnboarding(photo: File | null) {
     setError(null);
     setLoading(true);
     try {
@@ -168,6 +178,17 @@ export default function OnboardingWizard({
         countryCode,
         city: city.trim() || null,
       });
+      if (photo) {
+        // Best-effort (prototype's own copy: "totally optional") — a failed upload shouldn't
+        // block onboarding; the profile row already exists, so this can be retried from Settings.
+        try {
+          const blob = await compressImage(photo);
+          const media = await uploadProfileMedia(supabase, userId, blob, { bytes: blob.size });
+          await patchProfile(supabase, userId, { photoMediaId: media.id });
+        } catch {
+          // Swallowed intentionally — see comment above.
+        }
+      }
       router.push('/garage');
       router.refresh();
     } catch (err) {
@@ -175,6 +196,11 @@ export default function OnboardingWizard({
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    void finishOnboarding(photoFile);
   }
 
   return (
@@ -225,15 +251,48 @@ export default function OnboardingWizard({
 
       {step === 'account' && (
         <form onSubmit={goNext}>
-          <label htmlFor="accountType">Account type</label>
-          <select
-            id="accountType"
-            value={accountType}
-            onChange={(e) => setAccountType(e.target.value as AccountType)}
-          >
-            <option value="individual">Collector (personal use)</option>
-            <option value="shop">Shop / store</option>
-          </select>
+          <p style={{ fontWeight: 700, fontSize: 18, marginBottom: 2 }}>What brings you here?</p>
+          <p className="muted" style={{ marginBottom: 16, fontSize: 13 }}>
+            This just shapes what we show you first — you can change it later.
+          </p>
+          <div className="type-grid">
+            <button
+              type="button"
+              className={`type-card ${accountType === 'individual' ? 'selected' : ''}`}
+              onClick={() => setAccountType('individual')}
+            >
+              <span className="type-icon">
+                <ProfileIcon size={20} />
+              </span>
+              <span>
+                <span className="type-name" style={{ display: 'block' }}>
+                  I collect
+                </span>
+                <span className="type-desc" style={{ display: 'block' }}>
+                  Track and organize your own garage
+                </span>
+              </span>
+              <span className="type-check">✓</span>
+            </button>
+            <button
+              type="button"
+              className={`type-card ${accountType === 'shop' ? 'selected' : ''}`}
+              onClick={() => setAccountType('shop')}
+            >
+              <span className="type-icon">
+                <MarketIcon size={20} />
+              </span>
+              <span>
+                <span className="type-name" style={{ display: 'block' }}>
+                  I run a shop
+                </span>
+                <span className="type-desc" style={{ display: 'block' }}>
+                  List and sell to other collectors
+                </span>
+              </span>
+              <span className="type-check">✓</span>
+            </button>
+          </div>
 
           {accountType === 'shop' && (
             <>
@@ -305,7 +364,7 @@ export default function OnboardingWizard({
       )}
 
       {step === 'location' && (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={goNext}>
           <label htmlFor="countryCode">Country</label>
           <select
             id="countryCode"
@@ -335,6 +394,65 @@ export default function OnboardingWizard({
               <option key={c} value={c} />
             ))}
           </datalist>
+
+          {error && <p className="field-error">{error}</p>}
+          <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+            <button type="button" className="btn-secondary" onClick={goBack}>
+              Back
+            </button>
+            <button className="btn-primary">Continue</button>
+          </div>
+        </form>
+      )}
+
+      {step === 'photo' && (
+        <form onSubmit={handleSubmit}>
+          <p className="muted" style={{ marginBottom: 4 }}>
+            Add a profile photo
+          </p>
+          <p className="muted" style={{ marginBottom: 16, fontSize: 13 }}>
+            Totally optional — you can add or change this later.
+          </p>
+
+          {photoPreview ? (
+            <div className="ob-photo-circle filled">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photoPreview} alt="" />
+              <button
+                type="button"
+                className="ob-photo-remove"
+                aria-label="Remove photo"
+                onClick={() => {
+                  setPhotoFile(null);
+                  setPhotoPreview(null);
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <label className="ob-photo-circle">
+              <ImageIcon size={24} />
+              <span>Add photo</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  setPhotoFile(file);
+                  setPhotoPreview(file ? URL.createObjectURL(file) : null);
+                }}
+              />
+            </label>
+          )}
+          <button
+            type="button"
+            className="photo-skip"
+            disabled={loading}
+            onClick={() => void finishOnboarding(null)}
+          >
+            Skip for now
+          </button>
 
           {error && <p className="field-error">{error}</p>}
           <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function OffersPage() {
   return (
     <main style={{ padding: '48px 20px', flex: 1, textAlign: 'center' }}>
-      <h1 style={{ fontSize: 22 }}>Deals</h1>
+      <h1 className="page-heading">Deals</h1>
       <p className="muted">Coming soon — track cash offers and trade proposals here.</p>
     </main>
   );
