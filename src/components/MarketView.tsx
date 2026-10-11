@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { createClient } from '@/lib/supabase/client';
 import { favoriteListing, unfavoriteListing, type Listing } from '@/domain/marketplace';
+import { FilterIcon } from './icons';
 import ListingCard from './ListingCard';
 import styles from './Market.module.css';
 
@@ -45,6 +46,19 @@ export default function MarketView({
   const [brand, setBrand] = useState('all');
   const [condition, setCondition] = useState('all');
   const [allCountries, setAllCountries] = useState(false);
+  const [brandPanelOpen, setBrandPanelOpen] = useState(false);
+  const brandPanelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!brandPanelOpen) return;
+    function onOutsideClick(e: MouseEvent) {
+      if (brandPanelRef.current && !brandPanelRef.current.contains(e.target as Node)) {
+        setBrandPanelOpen(false);
+      }
+    }
+    document.addEventListener('click', onOutsideClick);
+    return () => document.removeEventListener('click', onOutsideClick);
+  }, [brandPanelOpen]);
   const [favoriteIds, setFavoriteIds] = useState(() => new Set(initialFavoriteIds));
 
   function handleToggleFavorite(listingId: string, next: boolean) {
@@ -158,14 +172,6 @@ export default function MarketView({
       </div>
 
       <div className={styles.selectRow}>
-        <select value={brand} onChange={(e) => setBrand(e.target.value)}>
-          <option value="all">All brands</option>
-          {brands.map((b) => (
-            <option key={b} value={b}>
-              {b}
-            </option>
-          ))}
-        </select>
         <select value={condition} onChange={(e) => setCondition(e.target.value)}>
           <option value="all">Any condition</option>
           {CONDITIONS.map((c) => (
@@ -174,6 +180,42 @@ export default function MarketView({
             </option>
           ))}
         </select>
+        <div className="filter-icon-wrap" ref={brandPanelRef}>
+          <button
+            type="button"
+            className={`filter-icon-btn ${brand !== 'all' ? 'has-filter' : ''}`}
+            onClick={() => setBrandPanelOpen((v) => !v)}
+            aria-label="Filter by brand"
+          >
+            <FilterIcon size={16} />
+            {brand !== 'all' && <span className="filter-dot" />}
+          </button>
+          {brandPanelOpen && (
+            <div className="filter-dropdown">
+              <div
+                className={`filter-dropdown-item ${brand === 'all' ? 'active' : ''}`}
+                onClick={() => {
+                  setBrand('all');
+                  setBrandPanelOpen(false);
+                }}
+              >
+                All
+              </div>
+              {brands.map((b) => (
+                <div
+                  key={b}
+                  className={`filter-dropdown-item ${brand === b ? 'active' : ''}`}
+                  onClick={() => {
+                    setBrand(b);
+                    setBrandPanelOpen(false);
+                  }}
+                >
+                  {b}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <label className="toggle-row" style={{ marginBottom: 12 }}>
