@@ -73,7 +73,7 @@ export const profileCreateSchema = z
     storeName: z.string().trim().max(60).nullish(),
     location: z.string().trim().max(80).nullish(),
     mobile: z.string().trim().max(20).nullish(),
-    photoUrl: z.string().url().nullish(),
+    photoMediaId: z.string().uuid().nullish(),
     handle: handleSchema.nullish(),
     countryCode: countryCodeSchema,
     city: z.string().trim().max(80).nullish(),
@@ -89,7 +89,7 @@ export const profilePatchSchema = z.object({
   storeName: z.string().trim().max(60).nullish(),
   location: z.string().trim().max(80).nullish(),
   mobile: z.string().trim().max(20).nullish(),
-  photoUrl: z.string().url().nullish(),
+  photoMediaId: z.string().uuid().nullish(),
   handle: handleSchema.optional(),
 });
 

@@ -95,6 +95,25 @@ export function SortIcon(props: IconProps) {
   );
 }
 
+export function BellIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M18 8a6 6 0 0 0-12 0c0 5-2 6-2 6h16s-2-1-2-6" />
+      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+    </Base>
+  );
+}
+
+export function ImageIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <circle cx="9" cy="9" r="1.8" />
+      <path d="M21 15l-5-5L5 21" />
+    </Base>
+  );
+}
+
 export function CameraIcon(props: IconProps) {
   return (
     <Base {...props}>
