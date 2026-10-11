@@ -98,7 +98,9 @@ button {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-bottom: 76px; /* room for bottom nav */
+  /* room for bottom nav — must grow with its own safe-area padding (.bottom-nav below), or the
+     nav gets taller on notched/home-indicator devices while this stays fixed, covering content. */
+  padding-bottom: calc(76px + env(safe-area-inset-bottom));
 }
 
 .panel,
