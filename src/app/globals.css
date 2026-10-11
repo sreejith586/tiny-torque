@@ -29,18 +29,18 @@
   /* Default theme (workshop-light) — overridden at runtime by
      applyThemeToDocument() in src/lib/theme.ts, and duplicated here so
      first paint (before JS runs) isn't unstyled. */
-  --bg: #F6F1E7;
-  --panel: #FFFFFF;
-  --panel-alt: #EFE7D6;
-  --cream: #1C1712;
-  --orange: #B84509;
+  --bg: #f6f1e7;
+  --panel: #ffffff;
+  --panel-alt: #efe7d6;
+  --cream: #1c1712;
+  --orange: #b84509;
   --teal: #146358;
-  --gold: #7A5F08;
-  --muted: #5C5445;
-  --border: #C9BC9E;
-  --danger: #9A2E1A;
-  --btn-text: #FFFFFF;
-  --violet: #5B3FA0;
+  --gold: #7a5f08;
+  --muted: #5c5445;
+  --border: #c9bc9e;
+  --danger: #9a2e1a;
+  --btn-text: #ffffff;
+  --violet: #5b3fa0;
 
   --font-heading: var(--font-oswald), 'Oswald', sans-serif;
   --font-body: var(--font-work-sans), 'Work Sans', sans-serif;
@@ -60,7 +60,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
   margin: 0 0 8px;
 }
@@ -122,6 +127,19 @@ button {
   font-size: 15px;
   cursor: pointer;
   width: 100%;
+  transition:
+    transform 0.12s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+/* Press micro-interactions (garage-log-147.html, D-045). */
+button:active,
+.btn-primary:active,
+.btn-secondary:active,
+.btn-danger:active {
+  transform: scale(0.96);
 }
 
 .btn-primary {
@@ -235,6 +253,11 @@ label {
   font-weight: 600;
   flex: 1;
   padding: 4px 0;
+  transition: transform 0.12s ease;
+}
+
+.nav-item:active {
+  transform: scale(0.96);
 }
 
 .nav-item.active {
@@ -273,6 +296,11 @@ label {
   background: var(--panel-alt);
   cursor: pointer;
   text-align: center;
+  transition: transform 0.12s ease;
+}
+
+.theme-swatch:active {
+  transform: scale(0.96);
 }
 
 .theme-swatch.selected {
@@ -327,6 +355,11 @@ label {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: transform 0.12s ease;
+}
+
+.car-card:active {
+  transform: scale(0.98);
 }
 
 .car-card .car-photo {
@@ -379,4 +412,76 @@ label {
 
 .toggle-row:last-child {
   border-bottom: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+/* Icon filter buttons + dropdown panels (garage-log-147.html, D-044) — used on /market's brand
+   filter in place of a plain native <select>, matching the prototype's actual control. */
+.filter-icon-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.filter-icon-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.filter-icon-btn.has-filter {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+.filter-dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--orange);
+  border: 1.5px solid var(--bg);
+}
+
+.filter-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+  min-width: 160px;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 30;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.filter-dropdown-item {
+  padding: 8px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--cream);
+}
+
+.filter-dropdown-item.active {
+  background: var(--panel-alt);
+  color: var(--orange);
+  font-weight: 600;
 }

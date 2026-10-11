@@ -5,7 +5,9 @@ import { usePathname } from 'next/navigation';
 import { AddIcon, GarageIcon, MarketIcon, OffersIcon, ProfileIcon } from './icons';
 
 // Mobile-first bottom tab bar, matching the prototype's tab structure and icon set
-// (garage-log-147.html, D-044): Garage, Market, Add, Offers, Profile.
+// (garage-log-147.html, D-044): Garage, Market, Add Car, Deals, Profile. The /offers route and
+// domain naming stay as-is (matches the prototype's own data-screen="offers" + F-08's spec
+// naming) — only the visible label text follows the prototype's "Deals"/"Add Car" copy.
 const TABS: ReadonlyArray<{
   href: string;
   label: string;
@@ -14,8 +16,8 @@ const TABS: ReadonlyArray<{
 }> = [
   { href: '/garage', label: 'Garage', Icon: GarageIcon },
   { href: '/market', label: 'Market', Icon: MarketIcon },
-  { href: '/garage/add', label: 'Add', Icon: AddIcon, isAdd: true },
-  { href: '/offers', label: 'Offers', Icon: OffersIcon },
+  { href: '/garage/add', label: 'Add Car', Icon: AddIcon, isAdd: true },
+  { href: '/offers', label: 'Deals', Icon: OffersIcon },
   { href: '/profile', label: 'Profile', Icon: ProfileIcon },
 ];
 

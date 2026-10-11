@@ -78,6 +78,14 @@ export function ProfileIcon(props: IconProps) {
   );
 }
 
+export function FilterIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <polygon points="3 4 21 4 14 12 14 19 10 21 10 12 3 4" />
+    </Base>
+  );
+}
+
 export function CameraIcon(props: IconProps) {
   return (
     <Base {...props}>

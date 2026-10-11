@@ -285,6 +285,10 @@
   border-radius: 16px;
   white-space: nowrap;
   cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.filterChip:active {
+  transform: scale(0.96);
 }
 .filterChip.active {
   border-color: var(--orange);
