@@ -164,6 +164,9 @@ jobs:
           E2E_ENABLE_PHONE_SIGNIN: ${{ vars.E2E_ENABLE_PHONE_SIGNIN }}
           E2E_TEST_PHONE: '+919999900001'
           E2E_TEST_OTP: '246810'
+          # MV-S4-08 (F-06): opt-in until marketplace_publish=true is confirmed on the target
+          # Supabase project. Set repo variable E2E_ENABLE_MARKETPLACE_PUBLISH=1 to turn it on.
+          E2E_ENABLE_MARKETPLACE_PUBLISH: ${{ vars.E2E_ENABLE_MARKETPLACE_PUBLISH }}
       - uses: actions/upload-artifact@v4
         if: failure()
         with: { name: playwright-report, path: playwright-report, retention-days: 7 }
