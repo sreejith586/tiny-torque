@@ -4,7 +4,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { GarageItem, GarageSort } from '@/domain/garage';
+import { SortIcon } from './icons';
 import CarCard from './CarCard';
+
+const SORT_OPTIONS: { value: GarageSort; label: string }[] = [
+  { value: 'newest', label: 'Newest first' },
+  { value: 'brand', label: 'Brand A–Z' },
+  { value: 'qty', label: 'Quantity (high to low)' },
+  { value: 'price', label: 'Price paid (high to low)' },
+];
 
 type Page = { items: GarageItem[]; nextCursor: string | null };
 
@@ -37,6 +45,19 @@ export default function GarageView({
   const [favouriteOnly, setFavouriteOnly] = useState(false);
   const [forSaleOnly, setForSaleOnly] = useState(false);
   const [sort, setSort] = useState<GarageSort>('newest');
+  const [sortPanelOpen, setSortPanelOpen] = useState(false);
+  const sortPanelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!sortPanelOpen) return;
+    function onOutsideClick(e: MouseEvent) {
+      if (sortPanelRef.current && !sortPanelRef.current.contains(e.target as Node)) {
+        setSortPanelOpen(false);
+      }
+    }
+    document.addEventListener('click', onOutsideClick);
+    return () => document.removeEventListener('click', onOutsideClick);
+  }, [sortPanelOpen]);
 
   // Restore the grid/list choice (per-device). Read in an effect, not a lazy initializer, so SSR
   // and the client's first paint agree ('grid') and only then swap to the stored value — the
@@ -165,12 +186,33 @@ export default function GarageView({
             </option>
           ))}
         </select>
-        <select value={sort} onChange={(e) => setSort(e.target.value as GarageSort)}>
-          <option value="newest">Newest first</option>
-          <option value="brand">Brand A–Z</option>
-          <option value="qty">Quantity (high to low)</option>
-          <option value="price">Price paid (high to low)</option>
-        </select>
+        <div className="filter-icon-wrap" ref={sortPanelRef}>
+          <button
+            type="button"
+            className={`filter-icon-btn ${sort !== 'newest' ? 'has-filter' : ''}`}
+            onClick={() => setSortPanelOpen((v) => !v)}
+            aria-label="Sort your garage"
+          >
+            <SortIcon size={16} />
+            {sort !== 'newest' && <span className="filter-dot" />}
+          </button>
+          {sortPanelOpen && (
+            <div className="filter-dropdown">
+              {SORT_OPTIONS.map((o) => (
+                <div
+                  key={o.value}
+                  className={`filter-dropdown-item ${sort === o.value ? 'active' : ''}`}
+                  onClick={() => {
+                    setSort(o.value);
+                    setSortPanelOpen(false);
+                  }}
+                >
+                  {o.label}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="garage-toolbar">
