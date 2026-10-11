@@ -46,6 +46,7 @@ export const wishlistSchema = z.object({
   catalogModelId: z.string().uuid().nullish(),
   maxPrice: z.number().min(0).max(9_999_999).nullish(),
   currency: z.string().trim().length(3).nullish(),
+  notes: optText(100),
   notify: z.boolean().default(true),
 });
 

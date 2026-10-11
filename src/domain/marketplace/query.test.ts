@@ -2,12 +2,13 @@ import { describe, it, expect } from 'vitest';
 import {
   defaultMinOffer,
   listingExpiry,
+  daysUntilExpiry,
   SORT_CONFIG,
   LISTING_TTL_DAYS,
   listingPriceLabel,
   LISTING_TYPE_LABEL,
 } from './query';
-import { listingPublishSchema } from './schema';
+import { listingPublishSchema, wishlistSchema } from './schema';
 
 describe('defaultMinOffer', () => {
   it('equals price when not open to offers', () => {
@@ -29,6 +30,19 @@ describe('listingExpiry', () => {
     const expiry = new Date(listingExpiry(from));
     const days = (expiry.getTime() - from.getTime()) / (24 * 60 * 60 * 1000);
     expect(days).toBe(LISTING_TTL_DAYS);
+  });
+});
+
+describe('daysUntilExpiry (MV-S4-07)', () => {
+  const from = new Date('2026-01-01T00:00:00.000Z');
+  it('counts whole days ahead', () => {
+    expect(daysUntilExpiry('2026-01-05T00:00:00.000Z', from)).toBe(4);
+  });
+  it('is negative once past', () => {
+    expect(daysUntilExpiry('2025-12-30T00:00:00.000Z', from)).toBe(-2);
+  });
+  it('is null when there is no expiry', () => {
+    expect(daysUntilExpiry(null, from)).toBeNull();
   });
 });
 
@@ -79,5 +93,23 @@ describe('listingPriceLabel', () => {
       trade: 'For trade',
       both: 'Sale or trade',
     });
+  });
+});
+
+describe('wishlistSchema (D-013, MV-S4-06)', () => {
+  it('requires at least nothing to be a valid parse with all fields optional', () => {
+    expect(wishlistSchema.safeParse({}).success).toBe(true);
+  });
+  it('accepts free-text brand/model and notes, defaulting notify to true', () => {
+    const r = wishlistSchema.safeParse({ brand: 'Hot Wheels', model: 'Charger', notes: 'red' });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.notify).toBe(true);
+  });
+  it('accepts a catalogue pick via catalogModelId', () => {
+    const r = wishlistSchema.safeParse({ catalogModelId: '11111111-1111-4111-8111-111111111111' });
+    expect(r.success).toBe(true);
+  });
+  it('rejects notes over 100 chars', () => {
+    expect(wishlistSchema.safeParse({ notes: 'x'.repeat(101) }).success).toBe(false);
   });
 });

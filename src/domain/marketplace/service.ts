@@ -58,6 +58,18 @@ export async function listMyListings(
   return attachMedia(supabase, await repo.listBySeller(supabase, sellerId, status));
 }
 
+/** The seller's active listing for a garage item, if any (F-06 publish entry point). */
+export async function findActiveListingForItem(
+  supabase: Client,
+  sellerId: string,
+  sourceItemId: string
+): Promise<Listing | null> {
+  const rows = await repo.listBySeller(supabase, sellerId, 'active');
+  const row = rows.find((r) => r.source_item_id === sourceItemId);
+  if (!row) return null;
+  return (await attachMedia(supabase, [row]))[0] ?? null;
+}
+
 /** Active-listing allowance check (UI asks first; the DB trigger is the backstop, D-021). */
 export async function canPublishListing(
   supabase: Client,
@@ -217,6 +229,7 @@ export async function addWishlistItem(
     catalog_model_id: v.catalogModelId ?? null,
     max_price: v.maxPrice ?? null,
     currency: v.currency ?? null,
+    notes: v.notes ?? null,
     notify: v.notify,
   });
 }
@@ -232,6 +245,7 @@ export async function updateWishlistItem(
   if (v.catalogModelId !== undefined) patch.catalog_model_id = v.catalogModelId ?? null;
   if (v.maxPrice !== undefined) patch.max_price = v.maxPrice ?? null;
   if (v.currency !== undefined) patch.currency = v.currency ?? null;
+  if (v.notes !== undefined) patch.notes = v.notes ?? null;
   if (v.notify !== undefined) patch.notify = v.notify;
   await repo.updateWishlist(supabase, id, patch);
 }

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import type { Listing } from '@/domain/marketplace';
+import { createClient } from '@/lib/supabase/client';
+import { favoriteListing, unfavoriteListing, type Listing } from '@/domain/marketplace';
 import ListingCard from './ListingCard';
 import styles from './Market.module.css';
 
@@ -26,12 +27,17 @@ export default function MarketView({
   initialCursor = null,
   signedIn = false,
   harness = false,
+  userId,
+  initialFavoriteIds = [],
 }: {
   initialListings: Listing[];
   initialCursor?: string | null;
   signedIn?: boolean;
   harness?: boolean;
+  userId?: string;
+  initialFavoriteIds?: string[];
 }) {
+  const supabase = createClient();
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
@@ -39,6 +45,29 @@ export default function MarketView({
   const [brand, setBrand] = useState('all');
   const [condition, setCondition] = useState('all');
   const [allCountries, setAllCountries] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState(() => new Set(initialFavoriteIds));
+
+  function handleToggleFavorite(listingId: string, next: boolean) {
+    if (!userId) return;
+    setFavoriteIds((prev) => {
+      const copy = new Set(prev);
+      if (next) copy.add(listingId);
+      else copy.delete(listingId);
+      return copy;
+    });
+    const op = next
+      ? favoriteListing(supabase, userId, listingId)
+      : unfavoriteListing(supabase, userId, listingId);
+    op.catch(() => {
+      // revert on failure
+      setFavoriteIds((prev) => {
+        const copy = new Set(prev);
+        if (next) copy.delete(listingId);
+        else copy.add(listingId);
+        return copy;
+      });
+    });
+  }
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQ(q.trim()), 300);
@@ -164,7 +193,13 @@ export default function MarketView({
       ) : (
         <div className={`${styles.grid} ${view === 'list' ? styles.listView : ''}`}>
           {items.map((listing) => (
-            <ListingCard key={listing.id} listing={listing} view={view} />
+            <ListingCard
+              key={listing.id}
+              listing={listing}
+              view={view}
+              favorited={favoriteIds.has(listing.id)}
+              onToggleFavorite={userId ? handleToggleFavorite : undefined}
+            />
           ))}
         </div>
       )}

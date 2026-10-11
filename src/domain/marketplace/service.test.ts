@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { browseListings, canPublishListing, publishListing, ListingLimitError } from './service';
+import {
+  browseListings,
+  canPublishListing,
+  publishListing,
+  findActiveListingForItem,
+  ListingLimitError,
+} from './service';
 import type { Client } from '@/lib/supabase/types';
 
 type Call = [table: string, method: string, ...args: unknown[]];
@@ -125,5 +131,23 @@ describe('publishListing', () => {
     await expect(
       publishListing(c, 'u1', { brand: 'Hot Wheels', price: 10 })
     ).rejects.toBeInstanceOf(ListingLimitError);
+  });
+});
+
+describe('findActiveListingForItem (MV-S4-03)', () => {
+  it('returns the matching active listing for the source item', async () => {
+    const c = mockClient({
+      listings: [
+        { id: 'l1', source_item_id: 'it1', brand: 'Hot Wheels' },
+        { id: 'l2', source_item_id: 'it2', brand: 'Matchbox' },
+      ],
+    });
+    const listing = await findActiveListingForItem(c, 'u1', 'it1');
+    expect(listing?.id).toBe('l1');
+  });
+
+  it('returns null when the item has no active listing', async () => {
+    const c = mockClient({ listings: [{ id: 'l2', source_item_id: 'it2', brand: 'Matchbox' }] });
+    expect(await findActiveListingForItem(c, 'u1', 'it1')).toBeNull();
   });
 });
