@@ -5,8 +5,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { patchProfile, signOut } from '@/domain/identity';
+import { uploadProfileMedia } from '@/domain/media';
+import { compressImage } from '@/lib/image';
+import { initials } from '@/lib/initials';
 import { deleteAccountAction } from '@/app/profile/actions';
 import type { AccountType, ProfileRow } from '@/types/database';
+import { CameraIcon } from './icons';
+import MediaImage from './MediaImage';
 import ThemeSwitcher from './ThemeSwitcher';
 
 export default function ProfileView({ profile }: { profile: ProfileRow }) {
@@ -22,6 +27,31 @@ export default function ProfileView({ profile }: { profile: ProfileRow }) {
   const [signingOut, setSigningOut] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [photoMediaId, setPhotoMediaId] = useState(profile.photo_url);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+
+  async function handlePhotoChange(file: File) {
+    setPhotoError(null);
+    setUploadingPhoto(true);
+    const localPreview = URL.createObjectURL(file);
+    setPhotoPreview(localPreview);
+    try {
+      const blob = await compressImage(file);
+      const media = await uploadProfileMedia(supabase, profile.id, blob, { bytes: blob.size });
+      await patchProfile(supabase, profile.id, { photoMediaId: media.id });
+      setPhotoMediaId(media.id);
+      router.refresh();
+    } catch {
+      setPhotoError('Could not update your photo. Try again.');
+    } finally {
+      setUploadingPhoto(false);
+      URL.revokeObjectURL(localPreview);
+      setPhotoPreview(null);
+    }
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -72,6 +102,48 @@ export default function ProfileView({ profile }: { profile: ProfileRow }) {
   return (
     <div>
       <div className="panel" style={{ marginBottom: 16 }}>
+        <label className="profile-avatar-btn" aria-label="Change your profile photo">
+          {photoPreview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={photoPreview}
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : photoMediaId ? (
+            <MediaImage
+              mediaId={photoMediaId}
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <span className="profile-avatar-initial">
+              {initials(
+                profile.account_type === 'shop' ? profile.store_name : profile.display_name
+              )}
+            </span>
+          )}
+          <span className="profile-avatar-camera">
+            <CameraIcon size={12} />
+          </span>
+          <input
+            type="file"
+            accept="image/*"
+            className="profile-avatar-input"
+            disabled={uploadingPhoto}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = '';
+              if (file) void handlePhotoChange(file);
+            }}
+          />
+        </label>
+        {photoError && (
+          <p className="field-error" style={{ textAlign: 'center', marginBottom: 10 }}>
+            {photoError}
+          </p>
+        )}
+
         {!editing ? (
           <>
             <div className="toggle-row">
