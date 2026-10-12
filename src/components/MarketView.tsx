@@ -4,13 +4,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { createClient } from '@/lib/supabase/client';
 import { favoriteListing, unfavoriteListing, type Listing } from '@/domain/marketplace';
-import { FilterIcon } from './icons';
+import { FilterIcon, MarketIcon } from './icons';
 import ListingCard from './ListingCard';
 import styles from './Market.module.css';
 
 type Page = { items: Listing[]; nextCursor: string | null };
+type SellerType = 'all' | 'shop' | 'individual';
 
 const CONDITIONS = ['mint', 'near-mint', 'good', 'played', 'damaged'];
+const SELLER_TYPE_OPTIONS: { value: SellerType; label: string }[] = [
+  { value: 'all', label: 'All sellers' },
+  { value: 'shop', label: 'Shops only' },
+  { value: 'individual', label: 'Collectors only' },
+];
 // Type-filter chips, matching garage-log-147.html's market screen.
 const CHIPS = ['All', 'For Sale', 'Exchange', 'New', 'Favorites', 'Trending'] as const;
 type Chip = (typeof CHIPS)[number];
@@ -45,20 +51,26 @@ export default function MarketView({
   const [chip, setChip] = useState<Chip>('All');
   const [brand, setBrand] = useState('all');
   const [condition, setCondition] = useState('all');
+  const [sellerType, setSellerType] = useState<SellerType>('all');
   const [allCountries, setAllCountries] = useState(false);
   const [brandPanelOpen, setBrandPanelOpen] = useState(false);
+  const [sellerTypePanelOpen, setSellerTypePanelOpen] = useState(false);
   const brandPanelRef = useRef<HTMLDivElement | null>(null);
+  const sellerTypePanelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!brandPanelOpen) return;
+    if (!brandPanelOpen && !sellerTypePanelOpen) return;
     function onOutsideClick(e: MouseEvent) {
-      if (brandPanelRef.current && !brandPanelRef.current.contains(e.target as Node)) {
+      if (brandPanelOpen && !brandPanelRef.current?.contains(e.target as Node)) {
         setBrandPanelOpen(false);
+      }
+      if (sellerTypePanelOpen && !sellerTypePanelRef.current?.contains(e.target as Node)) {
+        setSellerTypePanelOpen(false);
       }
     }
     document.addEventListener('click', onOutsideClick);
     return () => document.removeEventListener('click', onOutsideClick);
-  }, [brandPanelOpen]);
+  }, [brandPanelOpen, sellerTypePanelOpen]);
   const [favoriteIds, setFavoriteIds] = useState(() => new Set(initialFavoriteIds));
 
   function handleToggleFavorite(listingId: string, next: boolean) {
@@ -93,6 +105,7 @@ export default function MarketView({
     if (debouncedQ) sp.set('q', debouncedQ);
     if (brand !== 'all') sp.set('brand', brand);
     if (condition !== 'all') sp.set('condition', condition);
+    if (sellerType !== 'all') sp.set('sellerType', sellerType);
     if (allCountries) sp.set('country', 'all');
     // Chips map onto the API's type / sort / favourites filters.
     if (chip === 'For Sale') sp.set('type', 'sale');
@@ -100,7 +113,7 @@ export default function MarketView({
     else if (chip === 'Trending') sp.set('sort', 'offers');
     else if (chip === 'Favorites' && signedIn) sp.set('favourites', 'true');
     return sp;
-  }, [debouncedQ, brand, condition, allCountries, chip, signedIn]);
+  }, [debouncedQ, brand, condition, sellerType, allCountries, chip, signedIn]);
 
   const isDefault = params.toString() === '';
 
@@ -180,6 +193,33 @@ export default function MarketView({
             </option>
           ))}
         </select>
+        <div className="filter-icon-wrap" ref={sellerTypePanelRef}>
+          <button
+            type="button"
+            className={`filter-icon-btn ${sellerType !== 'all' ? 'has-filter' : ''}`}
+            onClick={() => setSellerTypePanelOpen((v) => !v)}
+            aria-label="Filter by seller type"
+          >
+            <MarketIcon size={16} />
+            {sellerType !== 'all' && <span className="filter-dot" />}
+          </button>
+          {sellerTypePanelOpen && (
+            <div className="filter-dropdown">
+              {SELLER_TYPE_OPTIONS.map((o) => (
+                <div
+                  key={o.value}
+                  className={`filter-dropdown-item ${sellerType === o.value ? 'active' : ''}`}
+                  onClick={() => {
+                    setSellerType(o.value);
+                    setSellerTypePanelOpen(false);
+                  }}
+                >
+                  {o.label}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="filter-icon-wrap" ref={brandPanelRef}>
           <button
             type="button"
