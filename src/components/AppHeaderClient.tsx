@@ -3,17 +3,9 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { APP_SHELL_HIDDEN_ON } from '@/lib/shell-routes';
+import { initials } from '@/lib/initials';
 import { BellIcon } from './icons';
 import MediaImage from './MediaImage';
-
-// Initials shown when there's no avatar photo (garage-log-147.html's getInitials, D-044): first
-// letters of the first two words, or the first two letters of a single word.
-function initials(name: string | null): string {
-  if (!name) return '?';
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0]!.charAt(0) + parts[1]!.charAt(0)).toUpperCase();
-  return (parts[0] ?? '?').slice(0, 2).toUpperCase();
-}
 
 export default function AppHeaderClient({
   signedIn,

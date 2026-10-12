@@ -629,6 +629,50 @@ header {
   color: var(--orange);
 }
 
+/* Profile-screen avatar (garage-log-147.html's profile-hero circle, D-044) — larger than the
+   header's own avatar button, with a camera badge marking it as tap-to-change. */
+.profile-avatar-btn {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid var(--panel);
+  background: var(--panel-alt);
+  padding: 0;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.profile-avatar-initial {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--orange);
+}
+
+.profile-avatar-camera {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-avatar-input {
+  display: none;
+}
+
 /* One-line description under every page title (garage-log-147.html's .page-heading/.page-sub). */
 .page-heading {
   font-family: var(--font-heading);
