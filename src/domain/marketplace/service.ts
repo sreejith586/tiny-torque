@@ -193,6 +193,23 @@ export async function renewListing(supabase: Client, sellerId: string, id: strin
   });
 }
 
+/** MV-S5-05, F-08: seller sold the item outside the app (no offer/review) — allowed. Deliberately
+ * doesn't touch any pending offers on the listing; "outside the app" means exactly that. */
+export async function markListingSoldOutsideApp(
+  supabase: Client,
+  sellerId: string,
+  id: string
+): Promise<void> {
+  await repo.update(supabase, id, { status: 'sold', sold_at: new Date().toISOString() });
+  await emitEvent(supabase, {
+    actorId: sellerId,
+    type: 'listing.sold',
+    entity: 'listing',
+    entityId: id,
+    payload: { outside_app: true },
+  });
+}
+
 export async function removeListing(supabase: Client, sellerId: string, id: string): Promise<void> {
   await repo.update(supabase, id, { status: 'removed', deleted_at: new Date().toISOString() });
   await emitEvent(supabase, {
