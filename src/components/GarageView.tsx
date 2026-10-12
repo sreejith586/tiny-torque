@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { GarageItem, GarageSort } from '@/domain/garage';
-import { SortIcon } from './icons';
+import { FilterIcon, SortIcon } from './icons';
 import CarCard from './CarCard';
 
 const SORT_OPTIONS: { value: GarageSort; label: string }[] = [
@@ -15,6 +15,7 @@ const SORT_OPTIONS: { value: GarageSort; label: string }[] = [
 ];
 
 type Page = { items: GarageItem[]; nextCursor: string | null };
+type ListingStatus = 'all' | 'for-sale' | 'not-listed';
 
 const VIEW_KEY = 'mini-vault-garage-view';
 const RARITIES = ['common', 'uncommon', 'rare', 'super-rare', 'treasure-hunt', 'chase'];
@@ -43,21 +44,43 @@ export default function GarageView({
   const [condition, setCondition] = useState('all');
   const [publicOnly, setPublicOnly] = useState(false);
   const [favouriteOnly, setFavouriteOnly] = useState(false);
-  const [forSaleOnly, setForSaleOnly] = useState(false);
+  const [listingStatus, setListingStatus] = useState<ListingStatus>('all');
   const [sort, setSort] = useState<GarageSort>('newest');
   const [sortPanelOpen, setSortPanelOpen] = useState(false);
+  const [filtersPanelOpen, setFiltersPanelOpen] = useState(false);
   const sortPanelRef = useRef<HTMLDivElement | null>(null);
+  const filtersPanelRef = useRef<HTMLDivElement | null>(null);
+
+  const hasActiveFilters =
+    brand !== 'all' ||
+    rarity !== 'all' ||
+    condition !== 'all' ||
+    listingStatus !== 'all' ||
+    publicOnly ||
+    favouriteOnly;
+
+  function clearFilters() {
+    setBrand('all');
+    setRarity('all');
+    setCondition('all');
+    setListingStatus('all');
+    setPublicOnly(false);
+    setFavouriteOnly(false);
+  }
 
   useEffect(() => {
-    if (!sortPanelOpen) return;
+    if (!sortPanelOpen && !filtersPanelOpen) return;
     function onOutsideClick(e: MouseEvent) {
-      if (sortPanelRef.current && !sortPanelRef.current.contains(e.target as Node)) {
+      if (sortPanelOpen && !sortPanelRef.current?.contains(e.target as Node)) {
         setSortPanelOpen(false);
+      }
+      if (filtersPanelOpen && !filtersPanelRef.current?.contains(e.target as Node)) {
+        setFiltersPanelOpen(false);
       }
     }
     document.addEventListener('click', onOutsideClick);
     return () => document.removeEventListener('click', onOutsideClick);
-  }, [sortPanelOpen]);
+  }, [sortPanelOpen, filtersPanelOpen]);
 
   // Restore the grid/list choice (per-device). Read in an effect, not a lazy initializer, so SSR
   // and the client's first paint agree ('grid') and only then swap to the stored value — the
@@ -97,10 +120,11 @@ export default function GarageView({
     if (condition !== 'all') sp.set('condition', condition);
     if (publicOnly) sp.set('isPublic', 'true');
     if (favouriteOnly) sp.set('isFavorite', 'true');
-    if (forSaleOnly) sp.set('forSale', 'true');
+    if (listingStatus === 'for-sale') sp.set('forSale', 'true');
+    if (listingStatus === 'not-listed') sp.set('forSale', 'false');
     if (sort !== 'newest') sp.set('sort', sort);
     return sp;
-  }, [debouncedQ, brand, rarity, condition, publicOnly, favouriteOnly, forSaleOnly, sort]);
+  }, [debouncedQ, brand, rarity, condition, publicOnly, favouriteOnly, listingStatus, sort]);
 
   const isDefault = params.toString() === '';
 
@@ -167,25 +191,80 @@ export default function GarageView({
           onChange={(e) => setQ(e.target.value)}
           style={{ flex: 1 }}
         />
-        <button
-          type="button"
-          className="btn-secondary"
-          style={{ width: 'auto', padding: '10px 12px' }}
-          onClick={toggleView}
-        >
-          {view === 'grid' ? 'List' : 'Grid'}
-        </button>
-      </div>
+        <div className="filter-icon-wrap" ref={filtersPanelRef}>
+          <button
+            type="button"
+            className={`filter-icon-btn ${hasActiveFilters ? 'has-filter' : ''}`}
+            onClick={() => setFiltersPanelOpen((v) => !v)}
+            aria-label="Filter your garage"
+          >
+            <FilterIcon size={16} />
+            {hasActiveFilters && <span className="filter-dot" />}
+          </button>
+          {filtersPanelOpen && (
+            <div className="filter-dropdown filter-dropdown-form">
+              <select value={brand} onChange={(e) => setBrand(e.target.value)}>
+                <option value="all">All brands</option>
+                {brands.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+              </select>
+              <select value={rarity} onChange={(e) => setRarity(e.target.value)}>
+                <option value="all">Any rarity</option>
+                {RARITIES.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+              <select value={condition} onChange={(e) => setCondition(e.target.value)}>
+                <option value="all">Any condition</option>
+                {CONDITIONS.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={listingStatus}
+                onChange={(e) => setListingStatus(e.target.value as ListingStatus)}
+              >
+                <option value="all">All cars</option>
+                <option value="for-sale">Listed for sale</option>
+                <option value="not-listed">Not listed</option>
+              </select>
 
-      <div className="garage-toolbar">
-        <select value={brand} onChange={(e) => setBrand(e.target.value)}>
-          <option value="all">All brands</option>
-          {brands.map((b) => (
-            <option key={b} value={b}>
-              {b}
-            </option>
-          ))}
-        </select>
+              <div className="filter-dropdown-divider" />
+
+              <label className="toggle-row">
+                <span>Public items only</span>
+                <input
+                  type="checkbox"
+                  style={{ width: 'auto' }}
+                  checked={publicOnly}
+                  onChange={(e) => setPublicOnly(e.target.checked)}
+                />
+              </label>
+              <label className="toggle-row">
+                <span>Favourites only</span>
+                <input
+                  type="checkbox"
+                  style={{ width: 'auto' }}
+                  checked={favouriteOnly}
+                  onChange={(e) => setFavouriteOnly(e.target.checked)}
+                />
+              </label>
+
+              {hasActiveFilters && (
+                <button type="button" className="filter-dropdown-clear" onClick={clearFilters}>
+                  Clear filters
+                </button>
+              )}
+            </div>
+          )}
+        </div>
         <div className="filter-icon-wrap" ref={sortPanelRef}>
           <button
             type="button"
@@ -213,54 +292,15 @@ export default function GarageView({
             </div>
           )}
         </div>
+        <button
+          type="button"
+          className="btn-secondary"
+          style={{ width: 'auto', padding: '10px 12px' }}
+          onClick={toggleView}
+        >
+          {view === 'grid' ? 'List' : 'Grid'}
+        </button>
       </div>
-
-      <div className="garage-toolbar">
-        <select value={rarity} onChange={(e) => setRarity(e.target.value)}>
-          <option value="all">Any rarity</option>
-          {RARITIES.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-        <select value={condition} onChange={(e) => setCondition(e.target.value)}>
-          <option value="all">Any condition</option>
-          {CONDITIONS.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <label className="toggle-row">
-        <span>Public items only</span>
-        <input
-          type="checkbox"
-          style={{ width: 'auto' }}
-          checked={publicOnly}
-          onChange={(e) => setPublicOnly(e.target.checked)}
-        />
-      </label>
-      <label className="toggle-row">
-        <span>Favourites only</span>
-        <input
-          type="checkbox"
-          style={{ width: 'auto' }}
-          checked={favouriteOnly}
-          onChange={(e) => setFavouriteOnly(e.target.checked)}
-        />
-      </label>
-      <label className="toggle-row" style={{ marginBottom: 12 }}>
-        <span>For sale only</span>
-        <input
-          type="checkbox"
-          style={{ width: 'auto' }}
-          checked={forSaleOnly}
-          onChange={(e) => setForSaleOnly(e.target.checked)}
-        />
-      </label>
 
       {items.length === 0 ? (
         <div className="empty-state">
