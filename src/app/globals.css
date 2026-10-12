@@ -488,6 +488,42 @@ label {
   font-weight: 600;
 }
 
+/* Multi-field filter panel (Garage) — same .filter-dropdown shell as the single-list dropdowns
+   above, holding a small form instead of a flat option list, so brand/rarity/condition/listing
+   status/public/favourite can collapse behind one icon instead of six stacked toolbar rows. */
+.filter-dropdown-form {
+  width: 240px;
+  max-width: calc(100vw - 48px);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: none;
+}
+
+.filter-dropdown-form select {
+  width: 100%;
+}
+
+.filter-dropdown-form .toggle-row {
+  padding: 8px 0;
+}
+
+.filter-dropdown-divider {
+  height: 1px;
+  background: var(--border);
+}
+
+.filter-dropdown-clear {
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--orange);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 2px 0 0;
+}
+
 /* ---------- App header (garage-log-147.html, D-044) ----------
    Persistent brand/notification/avatar bar, missing from every sprint until now. The prototype's
    online-counter (presence, D-017) and coin pill (tokens, not live) are intentionally not ported. */
