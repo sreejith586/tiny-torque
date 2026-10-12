@@ -47,6 +47,13 @@ export async function getListing(supabase: Client, id: string): Promise<Listing 
   return (await attachMedia(supabase, [row]))[0] ?? null;
 }
 
+/** Batch lookup for grouping something else by listing (e.g. the offers inbox). RLS decides what
+ * actually comes back — a listing the caller has an offer on but can no longer see is just absent. */
+export async function getListingsByIds(supabase: Client, ids: string[]): Promise<Listing[]> {
+  const rows = await repo.listByIds(supabase, ids);
+  return attachMedia(supabase, rows);
+}
+
 /** Bump a listing's view counter (F-06); callers debounce to once per view. */
 export const incrementListingView = repo.incrementView;
 

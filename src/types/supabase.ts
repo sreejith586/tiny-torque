@@ -543,13 +543,13 @@ isOneToOne: false
                   ]
                 },"offers": {
                   Row: {
-                    "amount": number | null,"buyer_id": string,"completed_at": string | null,"created_at": string,"currency": string | null,"expires_at": string,"id": string,"listing_id": string,"message": string | null,"responded_at": string | null,"seller_id": string,"status": Database["public"]['Enums']["offer_status"],"trade_item_ids": (string)[],"type": Database["public"]['Enums']["offer_type"]
+                    "amount": number | null,"buyer_id": string,"completed_at": string | null,"created_at": string,"currency": string | null,"decline_reason": string | null,"expires_at": string,"id": string,"listing_id": string,"message": string | null,"responded_at": string | null,"seller_id": string,"status": Database["public"]['Enums']["offer_status"],"trade_item_ids": (string)[],"type": Database["public"]['Enums']["offer_type"]
                   }
                   Insert: {
-                    "amount"?: number | null,"buyer_id": string,"completed_at"?: string | null,"created_at"?: string,"currency"?: string | null,"expires_at"?: string,"id"?: string,"listing_id": string,"message"?: string | null,"responded_at"?: string | null,"seller_id": string,"status"?: Database["public"]['Enums']["offer_status"],"trade_item_ids"?: (string)[],"type": Database["public"]['Enums']["offer_type"]
+                    "amount"?: number | null,"buyer_id": string,"completed_at"?: string | null,"created_at"?: string,"currency"?: string | null,"decline_reason"?: string | null,"expires_at"?: string,"id"?: string,"listing_id": string,"message"?: string | null,"responded_at"?: string | null,"seller_id": string,"status"?: Database["public"]['Enums']["offer_status"],"trade_item_ids"?: (string)[],"type": Database["public"]['Enums']["offer_type"]
                   }
                   Update: {
-                    "amount"?: number | null,"buyer_id"?: string,"completed_at"?: string | null,"created_at"?: string,"currency"?: string | null,"expires_at"?: string,"id"?: string,"listing_id"?: string,"message"?: string | null,"responded_at"?: string | null,"seller_id"?: string,"status"?: Database["public"]['Enums']["offer_status"],"trade_item_ids"?: (string)[],"type"?: Database["public"]['Enums']["offer_type"]
+                    "amount"?: number | null,"buyer_id"?: string,"completed_at"?: string | null,"created_at"?: string,"currency"?: string | null,"decline_reason"?: string | null,"expires_at"?: string,"id"?: string,"listing_id"?: string,"message"?: string | null,"responded_at"?: string | null,"seller_id"?: string,"status"?: Database["public"]['Enums']["offer_status"],"trade_item_ids"?: (string)[],"type"?: Database["public"]['Enums']["offer_type"]
                   }
                   Relationships: [
                     {
