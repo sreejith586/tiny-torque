@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { getProfile } from '@/domain/identity';
+import { countUnread } from '@/domain/notifications';
 import AppHeaderClient from './AppHeaderClient';
 
 // Persistent app-shell header (garage-log-147.html, D-044) — missing from every sprint until now.
@@ -11,14 +12,29 @@ export default async function AppHeader() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return <AppHeaderClient signedIn={false} displayName={null} photoMediaId={null} />;
+  if (!user) {
+    return (
+      <AppHeaderClient
+        signedIn={false}
+        displayName={null}
+        photoMediaId={null}
+        initialUnreadCount={0}
+        viewerId={null}
+      />
+    );
+  }
 
-  const profile = await getProfile(supabase, user.id);
+  const [profile, unreadCount] = await Promise.all([
+    getProfile(supabase, user.id),
+    countUnread(supabase, user.id),
+  ]);
   return (
     <AppHeaderClient
       signedIn
       displayName={profile?.display_name ?? null}
       photoMediaId={profile?.photo_url ?? null}
+      initialUnreadCount={unreadCount}
+      viewerId={user.id}
     />
   );
 }
