@@ -32,9 +32,13 @@ export async function refreshSession(request: NextRequest) {
   return { response, user };
 }
 
-/** Only called for /admin/* paths (MV-S1-06) — a second client so the common request path above
- *  doesn't pay for a profiles lookup nobody but /admin needs. */
-export async function getUserRole(request: NextRequest, userId: string): Promise<string | null> {
+/** Only called when a session exists (MV-S1-06 admin gate + MV-S5-08 suspension gate) — a second
+ *  client so the common anon/public request path above doesn't pay for a profiles lookup it never
+ *  needs. One query covers both checks since both only ever run together on an authed request. */
+export async function getUserGuardInfo(
+  request: NextRequest,
+  userId: string
+): Promise<{ role: string | null; suspendedUntil: string | null }> {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -50,6 +54,10 @@ export async function getUserRole(request: NextRequest, userId: string): Promise
     }
   );
 
-  const { data } = await supabase.from('profiles').select('role').eq('id', userId).maybeSingle();
-  return data?.role ?? null;
+  const { data } = await supabase
+    .from('profiles')
+    .select('role, suspended_until')
+    .eq('id', userId)
+    .maybeSingle();
+  return { role: data?.role ?? null, suspendedUntil: data?.suspended_until ?? null };
 }

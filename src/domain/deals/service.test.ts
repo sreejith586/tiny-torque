@@ -5,6 +5,8 @@ import {
   proposeTrade,
   acceptOffer,
   completeOffer,
+  getReceivedInbox,
+  getSentInbox,
   OfferError,
 } from './service';
 import type { Client } from '@/lib/supabase/types';
@@ -100,5 +102,130 @@ describe('transition wrappers', () => {
       .filter(([n]) => n === 'transition_offer')
       .map(([, a]) => a.p_action);
     expect(actions).toEqual(['accept', 'complete']);
+  });
+});
+
+// ---------- inbox grouping (MV-S5-04) ----------
+// A mock whose .from(table) returns a thenable, chainable query builder resolving to a canned
+// {data, error} per table — good enough for testing the service's grouping/enrichment, which is
+// the only logic that lives in TS; row-level filtering is the real repo + RLS's job (pgTAP).
+function mockTables(tables: Record<string, { data: unknown; error?: unknown }>) {
+  return {
+    from(table: string) {
+      const result = tables[table] ?? { data: [], error: null };
+      const chain: Record<string, unknown> = {
+        select: () => chain,
+        eq: () => chain,
+        in: () => chain,
+        is: () => chain,
+        order: () => chain,
+        then: (res: (v: unknown) => void) => res(result),
+      };
+      return chain;
+    },
+  } as unknown as Client;
+}
+
+const SELLER = 'aaaaaaaa-0000-4000-8000-000000000001';
+const BUYER1 = 'aaaaaaaa-0000-4000-8000-000000000002';
+const BUYER2 = 'aaaaaaaa-0000-4000-8000-000000000003';
+const LISTING1 = 'bbbbbbbb-0000-4000-8000-000000000001';
+const LISTING2 = 'bbbbbbbb-0000-4000-8000-000000000002';
+
+describe('getReceivedInbox (MV-S5-04)', () => {
+  it('groups offers by listing, newest group first, with the buyer name attached', async () => {
+    const c = mockTables({
+      offers: {
+        data: [
+          {
+            id: 'o1',
+            listing_id: LISTING2,
+            buyer_id: BUYER1,
+            seller_id: SELLER,
+            type: 'cash',
+            amount: 50,
+            status: 'pending',
+            trade_item_ids: [],
+            created_at: '2026-10-12T10:00:00Z',
+          },
+          {
+            id: 'o2',
+            listing_id: LISTING1,
+            buyer_id: BUYER1,
+            seller_id: SELLER,
+            type: 'cash',
+            amount: 80,
+            status: 'pending',
+            trade_item_ids: [],
+            created_at: '2026-10-11T10:00:00Z',
+          },
+          {
+            id: 'o3',
+            listing_id: LISTING1,
+            buyer_id: BUYER2,
+            seller_id: SELLER,
+            type: 'cash',
+            amount: 70,
+            status: 'declined',
+            decline_reason: 'auto_declined',
+            trade_item_ids: [],
+            created_at: '2026-10-10T10:00:00Z',
+          },
+        ],
+      },
+      marketplace_listings: {
+        data: [
+          { id: LISTING1, brand: 'Hot Wheels', seller_name: 'Seller One', source_item_id: null },
+          { id: LISTING2, brand: 'Matchbox', seller_name: 'Seller One', source_item_id: null },
+        ],
+      },
+      public_profiles: {
+        data: [
+          { id: BUYER1, display_name: 'Buyer One' },
+          { id: BUYER2, display_name: 'Buyer Two' },
+        ],
+      },
+    });
+
+    const groups = await getReceivedInbox(c, SELLER);
+    expect(groups).toHaveLength(2);
+    // LISTING2's only offer (10:00) is newer than LISTING1's newest offer (o2, also 10:00 the day
+    // before) — group order follows each group's first (newest) offer.
+    expect(groups[0]!.listing?.id).toBe(LISTING2);
+    expect(groups[1]!.listing?.id).toBe(LISTING1);
+    expect(groups[1]!.offers).toHaveLength(2);
+    expect(groups[1]!.offers.map((o) => o.counterpartyName)).toEqual(['Buyer One', 'Buyer Two']);
+  });
+});
+
+describe('getSentInbox (MV-S5-04)', () => {
+  it('does not attach a counterparty name (the viewer is already the buyer)', async () => {
+    const c = mockTables({
+      offers: {
+        data: [
+          {
+            id: 'o1',
+            listing_id: LISTING1,
+            buyer_id: BUYER1,
+            seller_id: SELLER,
+            type: 'cash',
+            amount: 80,
+            status: 'pending',
+            trade_item_ids: [],
+            created_at: '2026-10-11T10:00:00Z',
+          },
+        ],
+      },
+      marketplace_listings: {
+        data: [
+          { id: LISTING1, brand: 'Hot Wheels', seller_name: 'Seller One', source_item_id: null },
+        ],
+      },
+    });
+
+    const groups = await getSentInbox(c, BUYER1);
+    expect(groups).toHaveLength(1);
+    expect(groups[0]!.offers[0]!.counterpartyName).toBeNull();
+    expect(groups[0]!.listing?.seller_name).toBe('Seller One');
   });
 });

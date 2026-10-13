@@ -83,6 +83,20 @@ export async function getById(supabase: Client, id: string): Promise<Marketplace
   return (data as unknown as MarketplaceListingRow) ?? null;
 }
 
+/** Batch lookup for grouping something else by listing (e.g. the offers inbox) — includes
+ * non-active listings the caller already knows the id of (no status filter), since RLS is the
+ * actual gate on what comes back. */
+export async function listByIds(supabase: Client, ids: string[]): Promise<MarketplaceListingRow[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase
+    .from('marketplace_listings')
+    .select(LISTING_COLS)
+    .in('id', ids)
+    .is('deleted_at', null);
+  if (error) throw error;
+  return (data ?? []) as unknown as MarketplaceListingRow[];
+}
+
 export async function listBySeller(
   supabase: Client,
   sellerId: string,

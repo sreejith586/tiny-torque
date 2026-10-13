@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState, type FormEvent } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import {
   sendOtp,
@@ -33,8 +33,18 @@ const FALLBACK_COUNTRIES: CountryRow[] = [
 ];
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const supabase = createClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const suspended = searchParams.get('suspended') === '1';
 
   const [method, setMethod] = useState<Method>('email');
   const [step, setStep] = useState<'identify' | 'otp'>('identify');
@@ -143,6 +153,11 @@ export default function LoginPage() {
           ? 'No password needed — just your email.'
           : 'No password needed — just your mobile number.'}
       </p>
+      {suspended && (
+        <p className="field-error" style={{ marginTop: 10 }}>
+          Your account has been suspended. Contact support if you think this is a mistake.
+        </p>
+      )}
 
       {step === 'identify' && (
         <form onSubmit={handleSendOtp} style={{ marginTop: 12 }}>
