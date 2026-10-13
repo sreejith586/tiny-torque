@@ -19,7 +19,10 @@ export default async function OffersPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect('/login?next=/offers');
 
-  const enabled = await isFlagEnabled(supabase, 'offers', { userId: user.id });
+  const [enabled, dealChatEnabled] = await Promise.all([
+    isFlagEnabled(supabase, 'offers', { userId: user.id }),
+    isFlagEnabled(supabase, 'deal_chat', { userId: user.id }),
+  ]);
   if (!enabled) {
     return (
       <main style={{ padding: '48px 20px', flex: 1, textAlign: 'center' }}>
@@ -47,6 +50,7 @@ export default async function OffersPage() {
         initialReceived={received}
         initialSent={sent}
         initialReviewedOfferIds={reviewedOfferIds}
+        dealChatEnabled={dealChatEnabled}
       />
     </main>
   );
