@@ -883,7 +883,11 @@ header {
 }
 
 .status-pill.status-accepted,
-.status-pill.status-completed,
+.status-pill.status-completed {
+  background: color-mix(in srgb, var(--teal) 15%, transparent);
+  color: var(--teal);
+}
+
 .status-pill.status-reserved,
 .status-pill.status-sold {
   background: color-mix(in srgb, var(--teal) 15%, transparent);

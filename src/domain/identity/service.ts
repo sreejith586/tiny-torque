@@ -23,6 +23,7 @@ export const listEnabledCountries = repo.listEnabledCountries;
 export const isHandleAvailable = repo.isHandleAvailable;
 export const getPublicProfile = repo.getPublicProfile;
 export const getPublicProfileById = repo.getPublicProfileById;
+export const listPublicProfilesByIds = repo.listPublicProfilesByIds;
 export { CITIES_BY_COUNTRY } from './cities';
 
 /**
