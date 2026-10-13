@@ -8,6 +8,8 @@
 // enabled. The pure validateCashOffer/validateTradeOffer helpers mirror create_offer's checks for
 // client-side pre-submit UX; the RPC is authoritative.
 import type { Client } from '@/lib/supabase/types';
+import { getListingsByIds, type Listing } from '@/domain/marketplace';
+import { listPublicProfilesByIds } from '@/domain/identity';
 import * as repo from './repo';
 import { cashOfferSchema, tradeOfferSchema } from './schema';
 import type { OfferRow, OfferStatus } from './types';
@@ -79,3 +81,74 @@ export const listReceivedOffers = (s: Client, sellerId: string, status?: OfferSt
 export const listSentOffers = (s: Client, buyerId: string, status?: OfferStatus) =>
   repo.listSent(s, buyerId, status);
 export const getOffer = repo.getOffer;
+
+export interface InboxOffer extends OfferRow {
+  /** Only populated on the Received side — the Sent side's buyer is always the viewer. */
+  counterpartyName?: string | null;
+}
+export interface InboxGroup {
+  listing: Listing | null; // null only if the listing was hard-deleted out from under an old offer
+  offers: InboxOffer[];
+}
+
+/** Groups a flat offer list by listing (F-08: "/offers inbox ... grouped by listing"), newest
+ * listing activity first. `side` controls whose name gets attached to each offer: the Received
+ * tab needs the buyer's name (the viewer is the seller, already known), the Sent tab doesn't need
+ * any lookup since the viewer is the buyer and the listing already carries seller_name/seller_photo. */
+async function groupByListing(
+  supabase: Client,
+  offers: OfferRow[],
+  side: 'received' | 'sent'
+): Promise<InboxGroup[]> {
+  const listingIds = Array.from(new Set(offers.map((o) => o.listing_id)));
+  const listings = await getListingsByIds(supabase, listingIds);
+  const listingById = new Map(listings.map((l) => [l.id, l]));
+
+  let nameByBuyerId = new Map<string, string | null>();
+  if (side === 'received') {
+    const buyerIds = Array.from(new Set(offers.map((o) => o.buyer_id)));
+    const profiles = await listPublicProfilesByIds(supabase, buyerIds);
+    nameByBuyerId = new Map(
+      profiles
+        .filter((p): p is typeof p & { id: string } => !!p.id)
+        .map((p) => [p.id, p.display_name])
+    );
+  }
+
+  const groups = new Map<string, InboxGroup>();
+  for (const offer of offers) {
+    const group = groups.get(offer.listing_id) ?? {
+      listing: listingById.get(offer.listing_id) ?? null,
+      offers: [],
+    };
+    group.offers.push({
+      ...offer,
+      counterpartyName: side === 'received' ? (nameByBuyerId.get(offer.buyer_id) ?? null) : null,
+    });
+    groups.set(offer.listing_id, group);
+  }
+  // offers within a listing newest-first (repo already orders the flat list this way, preserved by
+  // the insertion order above); groups ordered by their most recent offer, newest first.
+  return Array.from(groups.values()).sort(
+    (a, b) =>
+      new Date(b.offers[0]!.created_at).getTime() - new Date(a.offers[0]!.created_at).getTime()
+  );
+}
+
+export async function getReceivedInbox(
+  supabase: Client,
+  sellerId: string,
+  status?: OfferStatus
+): Promise<InboxGroup[]> {
+  const offers = await repo.listReceived(supabase, sellerId, status);
+  return groupByListing(supabase, offers, 'received');
+}
+
+export async function getSentInbox(
+  supabase: Client,
+  buyerId: string,
+  status?: OfferStatus
+): Promise<InboxGroup[]> {
+  const offers = await repo.listSent(supabase, buyerId, status);
+  return groupByListing(supabase, offers, 'sent');
+}
