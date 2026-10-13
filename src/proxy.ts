@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getUserRole, refreshSession } from '@/lib/supabase/proxy';
+import { getUserGuardInfo, refreshSession } from '@/lib/supabase/proxy';
 import { isVisualHarness, harnessAllowed, VISUAL_COOKIE } from '@/lib/visual-fixtures';
 
 // Next.js 16 "proxy" (formerly middleware). Refreshes the Supabase session on
@@ -52,9 +52,18 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && pathname.startsWith('/admin')) {
-    const role = await getUserRole(request, user.id);
-    if (role !== 'admin') return NextResponse.redirect(new URL('/garage', request.url));
+  if (user && !isPublicPath(pathname)) {
+    const { role, suspendedUntil } = await getUserGuardInfo(request, user.id);
+    // MV-S5-08: a suspended user is blocked from every protected route, not just /admin — the
+    // field only exists since S6 (messaging_trust), so this was unreachable before now.
+    if (suspendedUntil && new Date(suspendedUntil) > new Date()) {
+      const redirectUrl = new URL('/login', request.url);
+      redirectUrl.searchParams.set('suspended', '1');
+      return NextResponse.redirect(redirectUrl);
+    }
+    if (pathname.startsWith('/admin') && role !== 'admin') {
+      return NextResponse.redirect(new URL('/garage', request.url));
+    }
   }
 
   return response;

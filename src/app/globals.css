@@ -835,6 +835,66 @@ header {
   width: 100%;
 }
 
+/* ---------- Tab chips (garage-log-147.html's .filter-row/.filter-chip) ----------
+   Global so screens outside Market (which has its own scoped copy in Market.module.css) can use
+   the same tab-row look, e.g. the /offers Received/Sent tabs. */
+.tab-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.tab-chip {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 16px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.tab-chip:active {
+  transform: scale(0.96);
+}
+
+.tab-chip.active {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+/* ---------- Offer status pills (garage-log-147.html's .status-pill) ---------- */
+.status-pill {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 10px;
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+
+.status-pill.status-pending {
+  background: color-mix(in srgb, var(--orange) 15%, transparent);
+  color: var(--orange);
+}
+
+.status-pill.status-accepted,
+.status-pill.status-completed {
+  background: color-mix(in srgb, var(--teal) 15%, transparent);
+  color: var(--teal);
+}
+
+.status-pill.status-declined,
+.status-pill.status-withdrawn,
+.status-pill.status-cancelled,
+.status-pill.status-expired {
+  background: color-mix(in srgb, var(--danger) 15%, transparent);
+  color: var(--danger);
+}
 /* Deal chat thread (MV-S6-02, F-09). */
 .thread {
   display: flex;
