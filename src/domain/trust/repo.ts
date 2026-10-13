@@ -2,7 +2,7 @@
 // create_report RPC (rate limit, D-021-style atomic check); blocks are a plain table — its own
 // RLS ("Users manage their own blocks", blocker_id = auth.uid()) is the backstop.
 import type { Client } from '@/lib/supabase/types';
-import type { ReportRow, ReportReason, ReportTargetType } from './types';
+import type { AdminReportAction, ReportRow, ReportReason, ReportTargetType } from './types';
 
 export async function createReport(
   supabase: Client,
@@ -32,4 +32,30 @@ export async function blockUser(
     .from('blocks')
     .insert({ blocker_id: blockerId, blocked_id: blockedId });
   if (error) throw error;
+}
+
+/** Admin-only (RLS: "Admins can read all reports"). */
+export async function listOpenReports(supabase: Client): Promise<ReportRow[]> {
+  const { data, error } = await supabase
+    .from('reports')
+    .select('*')
+    .eq('status', 'open')
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function resolveReport(
+  supabase: Client,
+  reportId: string,
+  action: AdminReportAction,
+  note: string | null
+): Promise<ReportRow> {
+  const { data, error } = await supabase.rpc('resolve_report', {
+    p_report_id: reportId,
+    p_action: action,
+    p_resolution_note: note ?? undefined,
+  });
+  if (error) throw error;
+  return data as unknown as ReportRow;
 }

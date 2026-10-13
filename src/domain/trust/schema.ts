@@ -10,3 +10,11 @@ export const createReportSchema = z.object({
 });
 
 export type CreateReportInput = z.infer<typeof createReportSchema>;
+
+export const resolveReportSchema = z.object({
+  reportId: z.string().uuid(),
+  action: z.enum(['dismiss', 'remove_listing', 'warn', 'suspend']),
+  note: z.string().trim().max(500).nullish(),
+});
+
+export type ResolveReportInput = z.infer<typeof resolveReportSchema>;

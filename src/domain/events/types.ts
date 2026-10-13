@@ -7,6 +7,7 @@ export const EVENT_TYPES = [
   'user.deleted',
   'user.blocked',
   'user.suspended',
+  'user.unsuspended',
   'item.created',
   'item.updated',
   'item.deleted',

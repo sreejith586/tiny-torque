@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { submitReport, blockUser, ReportError } from './service';
+import { submitReport, blockUser, resolveReport, ReportError } from './service';
 import type { Client } from '@/lib/supabase/types';
 
 const TARGET_ID = '11111111-1111-4111-8111-111111111111';
+const REPORT_ID = '44444444-4444-4444-8444-444444444444';
 const BLOCKER_ID = '22222222-2222-4222-8222-222222222222';
 const BLOCKED_ID = '33333333-3333-4333-8333-333333333333';
 
@@ -80,5 +81,34 @@ describe('blockUser (MV-S6-05)', () => {
     const c = mockClient({});
     await blockUser(c, BLOCKER_ID, BLOCKED_ID);
     expect(c._insertPayload()).toEqual({ blocker_id: BLOCKER_ID, blocked_id: BLOCKED_ID });
+  });
+});
+
+describe('resolveReport (MV-S6-07)', () => {
+  it('routes through resolve_report with the right args', async () => {
+    const c = mockClient({ data: { id: REPORT_ID, status: 'dismissed' }, error: null });
+    const report = await resolveReport(c, { reportId: REPORT_ID, action: 'dismiss', note: 'ok' });
+    expect(report).toMatchObject({ status: 'dismissed' });
+    const [name, args] = c._rpcCalls[0]!;
+    expect(name).toBe('resolve_report');
+    expect(args).toMatchObject({
+      p_report_id: REPORT_ID,
+      p_action: 'dismiss',
+      p_resolution_note: 'ok',
+    });
+  });
+
+  it('rejects an unknown action', async () => {
+    const c = mockClient({});
+    await expect(
+      resolveReport(c, { reportId: REPORT_ID, action: 'ban_forever' })
+    ).rejects.toThrow();
+  });
+
+  it('maps a server error to a coded ReportError', async () => {
+    const c = mockClient({ error: { message: 'not_authorized' } });
+    await expect(resolveReport(c, { reportId: REPORT_ID, action: 'warn' })).rejects.toMatchObject({
+      code: 'not_authorized',
+    });
   });
 });

@@ -5,6 +5,8 @@ export type BlockRow = Tables<'blocks'>;
 
 export type ReportTargetType = 'listing' | 'user' | 'message';
 
+export type AdminReportAction = 'dismiss' | 'remove_listing' | 'warn' | 'suspend';
+
 export const REPORT_REASONS = [
   'scam_or_fraud',
   'inappropriate_content',

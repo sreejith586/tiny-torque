@@ -1,7 +1,8 @@
-// Trust & safety service (MV-S6-05, F-15). Components/routes import from here, never from repo.
+// Trust & safety service (MV-S6-05/07, F-15/F-16). Components/routes import from here, never
+// from repo.
 import type { Client } from '@/lib/supabase/types';
 import * as repo from './repo';
-import { createReportSchema } from './schema';
+import { createReportSchema, resolveReportSchema } from './schema';
 
 export class ReportError extends Error {
   readonly code: string;
@@ -34,3 +35,13 @@ export async function submitReport(supabase: Client, input: unknown) {
 }
 
 export const blockUser = repo.blockUser;
+export const listOpenReports = repo.listOpenReports;
+
+export async function resolveReport(supabase: Client, input: unknown) {
+  const { reportId, action, note } = resolveReportSchema.parse(input);
+  try {
+    return await repo.resolveReport(supabase, reportId, action, note ?? null);
+  } catch (e) {
+    toReportError(e);
+  }
+}
