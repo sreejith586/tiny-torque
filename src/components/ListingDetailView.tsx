@@ -336,8 +336,7 @@ export default function ListingDetailView({
       </div>
       {listing.description && <p style={{ marginTop: 12 }}>{listing.description}</p>}
 
-      {/* Seller card (public_profiles; no PII — rule 15). Avatar/rating are placeholders until those
-          columns land (media + reviews-aggregate migrations). */}
+      {/* Seller card (public_profiles; no PII — rule 15). Avatar is still a placeholder (media, S2). */}
       <div className={styles.sellerCard}>
         <span className={styles.sellerAvatar}>{sellerName.slice(0, 1).toUpperCase()}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -352,7 +351,16 @@ export default function ListingDetailView({
               : ''}
             {memberSince ? ` · Since ${memberSince}` : ''}
           </div>
-          <div className={styles.ratingLine}>No ratings yet</div>
+          <div className={styles.ratingLine}>
+            {seller?.rating_count ? (
+              <>
+                ★ {seller.rating_avg} ({seller.rating_count} review
+                {seller.rating_count === 1 ? '' : 's'})
+              </>
+            ) : (
+              'No ratings yet'
+            )}
+          </div>
         </div>
       </div>
 

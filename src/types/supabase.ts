@@ -586,13 +586,13 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "account_type": Database["public"]['Enums']["account_type"],"bio": string | null,"city": string | null,"country_code": string,"created_at": string,"deleted_at": string | null,"display_name": string,"handle": string,"handle_changed_at": string | null,"id": string,"level": number,"location": string | null,"mobile": string | null,"onboarding_completed_at": string | null,"photo_url": string | null,"plan": Database["public"]['Enums']["plan_tier"],"pro_until": string | null,"role": Database["public"]['Enums']["user_role"],"scan_quota_bonus": number,"scan_quota_reset_at": string,"scan_quota_used": number,"store_name": string | null,"suspended_until": string | null,"tokens": number,"tutorial_dismissed_at": string | null,"updated_at": string,"xp": number
+                    "account_type": Database["public"]['Enums']["account_type"],"bio": string | null,"city": string | null,"country_code": string,"created_at": string,"deleted_at": string | null,"display_name": string,"handle": string,"handle_changed_at": string | null,"id": string,"level": number,"location": string | null,"mobile": string | null,"onboarding_completed_at": string | null,"photo_url": string | null,"plan": Database["public"]['Enums']["plan_tier"],"pro_until": string | null,"rating_avg": number | null,"rating_count": number,"role": Database["public"]['Enums']["user_role"],"scan_quota_bonus": number,"scan_quota_reset_at": string,"scan_quota_used": number,"store_name": string | null,"suspended_until": string | null,"tokens": number,"tutorial_dismissed_at": string | null,"updated_at": string,"xp": number
                   }
                   Insert: {
-                    "account_type": Database["public"]['Enums']["account_type"],"bio"?: string | null,"city"?: string | null,"country_code"?: string,"created_at"?: string,"deleted_at"?: string | null,"display_name": string,"handle": string,"handle_changed_at"?: string | null,"id": string,"level"?: number,"location"?: string | null,"mobile"?: string | null,"onboarding_completed_at"?: string | null,"photo_url"?: string | null,"plan"?: Database["public"]['Enums']["plan_tier"],"pro_until"?: string | null,"role"?: Database["public"]['Enums']["user_role"],"scan_quota_bonus"?: number,"scan_quota_reset_at"?: string,"scan_quota_used"?: number,"store_name"?: string | null,"suspended_until"?: string | null,"tokens"?: number,"tutorial_dismissed_at"?: string | null,"updated_at"?: string,"xp"?: number
+                    "account_type": Database["public"]['Enums']["account_type"],"bio"?: string | null,"city"?: string | null,"country_code"?: string,"created_at"?: string,"deleted_at"?: string | null,"display_name": string,"handle": string,"handle_changed_at"?: string | null,"id": string,"level"?: number,"location"?: string | null,"mobile"?: string | null,"onboarding_completed_at"?: string | null,"photo_url"?: string | null,"plan"?: Database["public"]['Enums']["plan_tier"],"pro_until"?: string | null,"rating_avg"?: number | null,"rating_count"?: number,"role"?: Database["public"]['Enums']["user_role"],"scan_quota_bonus"?: number,"scan_quota_reset_at"?: string,"scan_quota_used"?: number,"store_name"?: string | null,"suspended_until"?: string | null,"tokens"?: number,"tutorial_dismissed_at"?: string | null,"updated_at"?: string,"xp"?: number
                   }
                   Update: {
-                    "account_type"?: Database["public"]['Enums']["account_type"],"bio"?: string | null,"city"?: string | null,"country_code"?: string,"created_at"?: string,"deleted_at"?: string | null,"display_name"?: string,"handle"?: string,"handle_changed_at"?: string | null,"id"?: string,"level"?: number,"location"?: string | null,"mobile"?: string | null,"onboarding_completed_at"?: string | null,"photo_url"?: string | null,"plan"?: Database["public"]['Enums']["plan_tier"],"pro_until"?: string | null,"role"?: Database["public"]['Enums']["user_role"],"scan_quota_bonus"?: number,"scan_quota_reset_at"?: string,"scan_quota_used"?: number,"store_name"?: string | null,"suspended_until"?: string | null,"tokens"?: number,"tutorial_dismissed_at"?: string | null,"updated_at"?: string,"xp"?: number
+                    "account_type"?: Database["public"]['Enums']["account_type"],"bio"?: string | null,"city"?: string | null,"country_code"?: string,"created_at"?: string,"deleted_at"?: string | null,"display_name"?: string,"handle"?: string,"handle_changed_at"?: string | null,"id"?: string,"level"?: number,"location"?: string | null,"mobile"?: string | null,"onboarding_completed_at"?: string | null,"photo_url"?: string | null,"plan"?: Database["public"]['Enums']["plan_tier"],"pro_until"?: string | null,"rating_avg"?: number | null,"rating_count"?: number,"role"?: Database["public"]['Enums']["user_role"],"scan_quota_bonus"?: number,"scan_quota_reset_at"?: string,"scan_quota_used"?: number,"store_name"?: string | null,"suspended_until"?: string | null,"tokens"?: number,"tutorial_dismissed_at"?: string | null,"updated_at"?: string,"xp"?: number
                   }
                   Relationships: [
                     {
@@ -642,13 +642,13 @@ isOneToOne: false
                   ]
                 },"seller_reviews": {
                   Row: {
-                    "buyer_id": string | null,"buyer_name": string | null,"comment": string | null,"created_at": string,"deleted_at": string | null,"id": string,"offer_id": string | null,"rating": number,"seller_id": string,"updated_at": string
+                    "buyer_id": string | null,"comment": string | null,"created_at": string,"deleted_at": string | null,"id": string,"offer_id": string,"rating": number,"seller_id": string,"updated_at": string
                   }
                   Insert: {
-                    "buyer_id"?: string | null,"buyer_name"?: string | null,"comment"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"id"?: string,"offer_id"?: string | null,"rating": number,"seller_id": string,"updated_at"?: string
+                    "buyer_id"?: string | null,"comment"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"id"?: string,"offer_id": string,"rating": number,"seller_id": string,"updated_at"?: string
                   }
                   Update: {
-                    "buyer_id"?: string | null,"buyer_name"?: string | null,"comment"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"id"?: string,"offer_id"?: string | null,"rating"?: number,"seller_id"?: string,"updated_at"?: string
+                    "buyer_id"?: string | null,"comment"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"id"?: string,"offer_id"?: string,"rating"?: number,"seller_id"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -744,13 +744,13 @@ isOneToOne: false
                   ]
                 },"public_profiles": {
                   Row: {
-                    "account_type": Database["public"]['Enums']["account_type"] | null,"bio": string | null,"city": string | null,"country_code": string | null,"created_at": string | null,"display_name": string | null,"handle": string | null,"id": string | null,"is_pro": boolean | null,"level": number | null,"store_name": string | null,"xp": number | null
+                    "account_type": Database["public"]['Enums']["account_type"] | null,"bio": string | null,"city": string | null,"country_code": string | null,"created_at": string | null,"display_name": string | null,"handle": string | null,"id": string | null,"is_pro": boolean | null,"level": number | null,"rating_avg": number | null,"rating_count": number | null,"store_name": string | null,"xp": number | null
                   }
                   Insert: {
-                           "account_type"?: Database["public"]['Enums']["account_type"] | null,"bio"?: string | null,"city"?: string | null,"country_code"?: string | null,"created_at"?: string | null,"display_name"?: string | null,"handle"?: string | null,"id"?: string | null,"is_pro"?: never,"level"?: number | null,"store_name"?: string | null,"xp"?: number | null
+                           "account_type"?: Database["public"]['Enums']["account_type"] | null,"bio"?: string | null,"city"?: string | null,"country_code"?: string | null,"created_at"?: string | null,"display_name"?: string | null,"handle"?: string | null,"id"?: string | null,"is_pro"?: never,"level"?: number | null,"rating_avg"?: never,"rating_count"?: never,"store_name"?: string | null,"xp"?: number | null
                          }
                         Update: {
-                           "account_type"?: Database["public"]['Enums']["account_type"] | null,"bio"?: string | null,"city"?: string | null,"country_code"?: string | null,"created_at"?: string | null,"display_name"?: string | null,"handle"?: string | null,"id"?: string | null,"is_pro"?: never,"level"?: number | null,"store_name"?: string | null,"xp"?: number | null
+                           "account_type"?: Database["public"]['Enums']["account_type"] | null,"bio"?: string | null,"city"?: string | null,"country_code"?: string | null,"created_at"?: string | null,"display_name"?: string | null,"handle"?: string | null,"id"?: string | null,"is_pro"?: never,"level"?: number | null,"rating_avg"?: never,"rating_count"?: never,"store_name"?: string | null,"xp"?: number | null
                          }
                         Relationships: [
                     {

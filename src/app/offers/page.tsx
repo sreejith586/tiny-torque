@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getReceivedInbox, getSentInbox } from '@/domain/deals';
 import { isFlagEnabled } from '@/domain/flags';
+import { listReviewedOfferIds } from '@/domain/reviews';
 import OffersInboxView from '@/components/OffersInboxView';
 
 // MV-S5-04, F-08: Received / Sent tabs grouped by listing. Route itself already requires a
@@ -32,12 +33,21 @@ export default async function OffersPage() {
     getReceivedInbox(supabase, user.id),
     getSentInbox(supabase, user.id),
   ]);
+  const completedSentOfferIds = sent
+    .flatMap((g) => g.offers)
+    .filter((o) => o.status === 'completed')
+    .map((o) => o.id);
+  const reviewedOfferIds = Array.from(await listReviewedOfferIds(supabase, completedSentOfferIds));
 
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
       <h1 className="page-heading">Deals</h1>
       <p className="page-sub">Offers you&apos;ve received and sent.</p>
-      <OffersInboxView initialReceived={received} initialSent={sent} />
+      <OffersInboxView
+        initialReceived={received}
+        initialSent={sent}
+        initialReviewedOfferIds={reviewedOfferIds}
+      />
     </main>
   );
 }

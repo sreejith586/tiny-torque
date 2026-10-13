@@ -3,8 +3,8 @@ import type { GarageItem } from '@/domain/garage';
 import CarCard from './CarCard';
 
 // F-14 v1: read-only, composed from existing prototype pieces only (panel/toggle-row,
-// GarageView's CarCard grid) — no avatar/banner/rating/follow/tabs, those need media (S2),
-// reviews-aggregate, and follows-count decisions that haven't landed yet.
+// GarageView's CarCard grid) — no avatar/banner/follow/tabs, those need media (S2) and
+// follows-count decisions that haven't landed yet. Rating landed with MV-S6-03.
 export default function PublicProfileView({
   profile,
   items,
@@ -59,6 +59,14 @@ export default function PublicProfileView({
             <span>{memberSince}</span>
           </div>
         )}
+        <div className="toggle-row">
+          <span className="muted">Rating</span>
+          <span>
+            {profile.rating_count
+              ? `★ ${profile.rating_avg} (${profile.rating_count} review${profile.rating_count === 1 ? '' : 's'})`
+              : 'No ratings yet'}
+          </span>
+        </div>
       </div>
 
       <h2 style={{ fontSize: 16, marginBottom: 10 }}>Public collection</h2>
