@@ -110,3 +110,12 @@ export async function getPublicProfileById(supabase: Client, id: string) {
   if (error) throw error;
   return data;
 }
+
+/** Batch version of getPublicProfileById — one round trip for a list of counterparties (e.g. the
+ * distinct buyers/sellers across an offers inbox) instead of N. */
+export async function listPublicProfilesByIds(supabase: Client, ids: string[]) {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from('public_profiles').select('*').in('id', ids);
+  if (error) throw error;
+  return data;
+}

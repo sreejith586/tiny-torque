@@ -47,6 +47,13 @@ export async function getListing(supabase: Client, id: string): Promise<Listing 
   return (await attachMedia(supabase, [row]))[0] ?? null;
 }
 
+/** Batch lookup for grouping something else by listing (e.g. the offers inbox). RLS decides what
+ * actually comes back — a listing the caller has an offer on but can no longer see is just absent. */
+export async function getListingsByIds(supabase: Client, ids: string[]): Promise<Listing[]> {
+  const rows = await repo.listByIds(supabase, ids);
+  return attachMedia(supabase, rows);
+}
+
 /** Bump a listing's view counter (F-06); callers debounce to once per view. */
 export const incrementListingView = repo.incrementView;
 
@@ -190,6 +197,23 @@ export async function renewListing(supabase: Client, sellerId: string, id: strin
     type: 'listing.renewed',
     entity: 'listing',
     entityId: id,
+  });
+}
+
+/** MV-S5-05, F-08: seller sold the item outside the app (no offer/review) — allowed. Deliberately
+ * doesn't touch any pending offers on the listing; "outside the app" means exactly that. */
+export async function markListingSoldOutsideApp(
+  supabase: Client,
+  sellerId: string,
+  id: string
+): Promise<void> {
+  await repo.update(supabase, id, { status: 'sold', sold_at: new Date().toISOString() });
+  await emitEvent(supabase, {
+    actorId: sellerId,
+    type: 'listing.sold',
+    entity: 'listing',
+    entityId: id,
+    payload: { outside_app: true },
   });
 }
 

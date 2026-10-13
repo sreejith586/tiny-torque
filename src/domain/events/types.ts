@@ -32,6 +32,7 @@ export const EVENT_TYPES = [
   'offer.expired',
   'offer.completed',
   'offer.cancelled',
+  'message.sent',
   'tokens.purchased',
   'tokens.spent',
   'tokens.refunded',
