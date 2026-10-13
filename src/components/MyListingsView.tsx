@@ -7,6 +7,7 @@ import {
   renewListing,
   removeListing,
   updateListing,
+  markListingSoldOutsideApp,
   listingPriceLabel,
   LISTING_TYPE_LABEL,
   daysUntilExpiry,
@@ -80,6 +81,26 @@ export default function MyListingsView({
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not renew this listing.');
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleMarkSold(id: string) {
+    if (
+      !window.confirm(
+        'Mark this as sold outside the app? This skips the offers flow entirely and cannot be undone.'
+      )
+    )
+      return;
+    setBusyId(id);
+    setError(null);
+    try {
+      await markListingSoldOutsideApp(supabase, userId, id);
+      setListings((prev) => prev.map((l) => (l.id === id ? { ...l, status: 'sold' as const } : l)));
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not mark this listing sold.');
     } finally {
       setBusyId(null);
     }
@@ -189,6 +210,16 @@ export default function MyListingsView({
                   onClick={() => setEditingId(listing.id)}
                 >
                   Edit
+                </button>
+              )}
+              {(tab === 'active' || tab === 'reserved') && (
+                <button
+                  className="btn-secondary"
+                  style={{ width: 'auto', margin: 0 }}
+                  disabled={busyId === listing.id}
+                  onClick={() => handleMarkSold(listing.id)}
+                >
+                  Mark sold (outside app)
                 </button>
               )}
               {tab !== 'sold' && (

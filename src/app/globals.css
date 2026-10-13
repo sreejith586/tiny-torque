@@ -888,6 +888,12 @@ header {
   color: var(--teal);
 }
 
+.status-pill.status-reserved,
+.status-pill.status-sold {
+  background: color-mix(in srgb, var(--teal) 15%, transparent);
+  color: var(--teal);
+}
+
 .status-pill.status-declined,
 .status-pill.status-withdrawn,
 .status-pill.status-cancelled,

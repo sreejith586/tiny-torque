@@ -306,6 +306,9 @@ export default function ListingDetailView({
       </div>
 
       <div className={styles.chips} style={{ marginTop: 8 }}>
+        {(listing.status === 'reserved' || listing.status === 'sold') && (
+          <span className={`status-pill status-${listing.status}`}>{listing.status}</span>
+        )}
         {(listing.listing_type === 'trade' || listing.listing_type === 'both') && (
           <span className={`${styles.tagBadge} ${styles.tagExchange}`}>Exchange</span>
         )}
@@ -407,6 +410,12 @@ export default function ListingDetailView({
               >
                 {submitting ? 'Withdrawing…' : 'Withdraw offer'}
               </button>
+            </div>
+          ) : listing.status !== 'active' ? (
+            <div className="panel">
+              <p className="muted">
+                This listing is {listing.status} and no longer accepting offers.
+              </p>
             </div>
           ) : (
             <>
