@@ -666,7 +666,7 @@ isOneToOne: false
     },{
       foreignKeyName: "seller_reviews_offer_fk"
       columns: ["offer_id"]
-isOneToOne: false
+isOneToOne: true
       referencedRelation: "offers"
       referencedColumns: ["id"]
     },{
@@ -747,10 +747,10 @@ isOneToOne: false
                     "account_type": Database["public"]['Enums']["account_type"] | null,"bio": string | null,"city": string | null,"country_code": string | null,"created_at": string | null,"display_name": string | null,"handle": string | null,"id": string | null,"is_pro": boolean | null,"level": number | null,"rating_avg": number | null,"rating_count": number | null,"store_name": string | null,"xp": number | null
                   }
                   Insert: {
-                           "account_type"?: Database["public"]['Enums']["account_type"] | null,"bio"?: string | null,"city"?: string | null,"country_code"?: string | null,"created_at"?: string | null,"display_name"?: string | null,"handle"?: string | null,"id"?: string | null,"is_pro"?: never,"level"?: number | null,"rating_avg"?: never,"rating_count"?: never,"store_name"?: string | null,"xp"?: number | null
+                           "account_type"?: Database["public"]['Enums']["account_type"] | null,"bio"?: string | null,"city"?: string | null,"country_code"?: string | null,"created_at"?: string | null,"display_name"?: string | null,"handle"?: string | null,"id"?: string | null,"is_pro"?: never,"level"?: number | null,"rating_avg"?: number | null,"rating_count"?: number | null,"store_name"?: string | null,"xp"?: number | null
                          }
                         Update: {
-                           "account_type"?: Database["public"]['Enums']["account_type"] | null,"bio"?: string | null,"city"?: string | null,"country_code"?: string | null,"created_at"?: string | null,"display_name"?: string | null,"handle"?: string | null,"id"?: string | null,"is_pro"?: never,"level"?: number | null,"rating_avg"?: never,"rating_count"?: never,"store_name"?: string | null,"xp"?: number | null
+                           "account_type"?: Database["public"]['Enums']["account_type"] | null,"bio"?: string | null,"city"?: string | null,"country_code"?: string | null,"created_at"?: string | null,"display_name"?: string | null,"handle"?: string | null,"id"?: string | null,"is_pro"?: never,"level"?: number | null,"rating_avg"?: number | null,"rating_count"?: number | null,"store_name"?: string | null,"xp"?: number | null
                          }
                         Relationships: [
                     {
