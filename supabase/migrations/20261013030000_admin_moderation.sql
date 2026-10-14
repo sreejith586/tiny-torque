@@ -58,7 +58,7 @@ begin
   end if;
 
   update public.reports set
-    status = case when p_action = 'dismiss' then 'dismissed' else 'reviewed' end,
+    status = (case when p_action = 'dismiss' then 'dismissed' else 'reviewed' end)::public.report_status,
     resolved_by = v_uid,
     resolved_at = now(),
     resolution_note = p_resolution_note
