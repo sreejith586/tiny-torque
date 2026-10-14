@@ -812,6 +812,29 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"create_report":
+{ Args: { "p_notes"?: string,"p_reason"?: string,"p_target_id": string,"p_target_name"?: string,"p_target_type": string }; Returns: {
+              "created_at": string,
+"deleted_at": string | null,
+"id": string,
+"notes": string | null,
+"reason": string | null,
+"reporter_id": string,
+"resolution_note": string | null,
+"resolved_at": string | null,
+"resolved_by": string | null,
+"status": Database["public"]['Enums']["report_status"],
+"target_id": string | null,
+"target_name": string | null,
+"target_type": string,
+"updated_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "reports"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "dearmor":
 { Args: { "": string }; Returns: string
                            },

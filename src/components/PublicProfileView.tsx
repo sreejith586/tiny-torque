@@ -1,17 +1,23 @@
 import type { PublicProfileRow } from '@/types/database';
 import type { GarageItem } from '@/domain/garage';
 import CarCard from './CarCard';
+import ReportPrompt from './ReportPrompt';
+import BlockUserButton from './BlockUserButton';
 
 // F-14 v1: read-only, composed from existing prototype pieces only (panel/toggle-row,
 // GarageView's CarCard grid) — no avatar/banner/follow/tabs, those need media (S2) and
-// follows-count decisions that haven't landed yet. Rating landed with MV-S6-03.
+// follows-count decisions that haven't landed yet. Rating (MV-S6-03) and report/block
+// (MV-S6-05) have landed.
 export default function PublicProfileView({
   profile,
   items,
+  viewerId,
 }: {
   profile: PublicProfileRow;
   items: GarageItem[];
+  viewerId?: string;
 }) {
+  const isOwnProfile = !!viewerId && viewerId === profile.id;
   const memberSince = profile.created_at
     ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
     : null;
@@ -68,6 +74,22 @@ export default function PublicProfileView({
           </span>
         </div>
       </div>
+
+      {viewerId && !isOwnProfile && profile.id && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          <ReportPrompt
+            targetType="user"
+            targetId={profile.id}
+            targetName={profile.display_name}
+            label="Report user"
+          />
+          <BlockUserButton
+            viewerId={viewerId}
+            targetId={profile.id}
+            targetName={profile.display_name ?? 'this user'}
+          />
+        </div>
+      )}
 
       <h2 style={{ fontSize: 16, marginBottom: 10 }}>Public collection</h2>
       {items.length === 0 ? (
