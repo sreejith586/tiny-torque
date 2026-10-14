@@ -16,6 +16,7 @@ import {
   type InboxOffer,
   type OfferAction,
 } from '@/domain/deals';
+import { submitReview, ReviewError } from '@/domain/reviews';
 import MediaImage from './MediaImage';
 
 type Tab = 'received' | 'sent';
@@ -44,6 +45,11 @@ const TRANSITION_ERROR_LABEL: Record<string, string> = {
   listing_not_available: 'This listing is no longer available.',
 };
 
+const REVIEW_ERROR_LABEL: Record<string, string> = {
+  already_reviewed: "You've already reviewed this deal.",
+  not_allowed: 'This deal is not eligible for a review.',
+};
+
 function offerSummary(offer: InboxOffer): string {
   if (offer.type === 'cash')
     return `Cash offer of ${offer.currency ?? ''} ${offer.amount ?? ''}`.trim();
@@ -61,14 +67,120 @@ function statusLabel(offer: InboxOffer): string {
   return offer.status;
 }
 
+function ReviewPrompt({
+  offer,
+  sellerName,
+  onSubmitted,
+}: {
+  offer: InboxOffer;
+  sellerName: string;
+  onSubmitted: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        className="btn-secondary"
+        style={{ width: 'auto', padding: '8px 10px', fontSize: 12, marginTop: 10 }}
+        onClick={() => setOpen(true)}
+      >
+        Leave a review
+      </button>
+    );
+  }
+
+  async function handleSubmit() {
+    setBusy(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      await submitReview(supabase, offer.seller_id, offer.buyer_id, {
+        offerId: offer.id,
+        rating,
+        comment: comment.trim() || undefined,
+      });
+      onSubmitted();
+    } catch (err) {
+      setError(
+        err instanceof ReviewError
+          ? (REVIEW_ERROR_LABEL[err.code] ?? 'Could not submit that review.')
+          : 'Could not submit that review.'
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="panel" style={{ marginTop: 10, background: 'var(--panel-alt)' }}>
+      <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Review {sellerName}</p>
+      <label htmlFor={`rating-${offer.id}`}>Rating</label>
+      <select
+        id={`rating-${offer.id}`}
+        value={rating}
+        onChange={(e) => setRating(Number(e.target.value))}
+        disabled={busy}
+      >
+        {[5, 4, 3, 2, 1].map((n) => (
+          <option key={n} value={n}>
+            {n} star{n === 1 ? '' : 's'}
+          </option>
+        ))}
+      </select>
+      <label htmlFor={`comment-${offer.id}`}>Comment (optional)</label>
+      <textarea
+        id={`comment-${offer.id}`}
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        maxLength={500}
+        disabled={busy}
+        style={{ minHeight: 60, resize: 'none' }}
+      />
+      {error && <p className="field-error">{error}</p>}
+      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+        <button
+          type="button"
+          className="btn-secondary"
+          style={{ width: 'auto', padding: '8px 10px', fontSize: 12 }}
+          onClick={() => setOpen(false)}
+          disabled={busy}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          className="btn-primary"
+          style={{ width: 'auto', padding: '8px 10px', fontSize: 12 }}
+          onClick={handleSubmit}
+          disabled={busy}
+        >
+          {busy ? '…' : 'Submit review'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function OfferRowCard({
   offer,
   viewer,
   counterpartyLabel,
+  sellerName,
+  reviewed,
+  onReviewSubmitted,
 }: {
   offer: InboxOffer;
   viewer: 'buyer' | 'seller';
   counterpartyLabel: string;
+  sellerName?: string;
+  reviewed?: boolean;
+  onReviewSubmitted?: (offerId: string) => void;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -148,11 +260,33 @@ function OfferRowCard({
           ))}
         </div>
       )}
+      {viewer === 'buyer' && offer.status === 'completed' && !reviewed && onReviewSubmitted && (
+        <ReviewPrompt
+          offer={offer}
+          sellerName={sellerName ?? 'the seller'}
+          onSubmitted={() => onReviewSubmitted(offer.id)}
+        />
+      )}
+      {viewer === 'buyer' && offer.status === 'completed' && reviewed && (
+        <p className="muted" style={{ fontSize: 12, marginTop: 8, marginBottom: 0 }}>
+          You reviewed this deal.
+        </p>
+      )}
     </div>
   );
 }
 
-function ListingGroup({ group, viewer }: { group: InboxGroup; viewer: 'buyer' | 'seller' }) {
+function ListingGroup({
+  group,
+  viewer,
+  reviewedOfferIds,
+  onReviewSubmitted,
+}: {
+  group: InboxGroup;
+  viewer: 'buyer' | 'seller';
+  reviewedOfferIds?: Set<string>;
+  onReviewSubmitted?: (offerId: string) => void;
+}) {
   const { listing, offers } = group;
   return (
     <div style={{ marginBottom: 18 }}>
@@ -205,6 +339,9 @@ function ListingGroup({ group, viewer }: { group: InboxGroup; viewer: 'buyer' | 
               ? `From ${offer.counterpartyName ?? 'a collector'}`
               : `To ${listing?.seller_name ?? 'the seller'}`
           }
+          sellerName={listing?.seller_name ?? 'the seller'}
+          reviewed={reviewedOfferIds?.has(offer.id)}
+          onReviewSubmitted={onReviewSubmitted}
         />
       ))}
     </div>
@@ -214,13 +351,22 @@ function ListingGroup({ group, viewer }: { group: InboxGroup; viewer: 'buyer' | 
 export default function OffersInboxView({
   initialReceived,
   initialSent,
+  initialReviewedOfferIds,
 }: {
   initialReceived: InboxGroup[];
   initialSent: InboxGroup[];
+  initialReviewedOfferIds?: string[];
 }) {
   const [tab, setTab] = useState<Tab>('received');
+  const [reviewedOfferIds, setReviewedOfferIds] = useState(
+    () => new Set(initialReviewedOfferIds ?? [])
+  );
   const receivedCount = initialReceived.reduce((n, g) => n + g.offers.length, 0);
   const sentCount = initialSent.reduce((n, g) => n + g.offers.length, 0);
+
+  function markReviewed(offerId: string) {
+    setReviewedOfferIds((prev) => new Set(prev).add(offerId));
+  }
 
   return (
     <div>
@@ -273,6 +419,8 @@ export default function OffersInboxView({
               key={group.listing?.id ?? group.offers[0]!.listing_id}
               group={group}
               viewer="buyer"
+              reviewedOfferIds={reviewedOfferIds}
+              onReviewSubmitted={markReviewed}
             />
           ))
         ))}

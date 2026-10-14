@@ -1,12 +1,18 @@
 -- 0017_notifications_v2 — MV-S6-06, F-12.
 --
 -- Extends the existing offer-events consumer (20261003030000_notify_offers.sql) to also turn a
--- deal_messages.sent event into a `message` notification for the OTHER party, and retrofits a
--- `review.created` domain_events row (missing from 20261013000000's seller_reviews trigger — rule
--- 9 says every mutation emits one, this one slipped through since reviews go via a plain insert,
--- not a service-layer emitEvent call) into a `review_received` notification for the seller.
--- `report.created` is deliberately a no-op here — reports feed the admin queue (MV-S6-07) directly,
--- there's no end-user notification_type for "someone reported something" and shouldn't be one.
+-- message.sent event into a `message` notification for the OTHER party, and a review.created
+-- event into a `review_received` notification for the seller. `report.created` is deliberately a
+-- no-op here — reports feed the admin queue (MV-S6-07) directly, there's no end-user
+-- notification_type for "someone reported something" and shouldn't be one.
+--
+-- Both message.sent and review.created were previously only emitted by the app (service.ts
+-- calling emitEvent as a second, separate round trip after the row insert) — rule 9 says every
+-- mutation emits one, and a second network call isn't atomic with the first, so this moves both
+-- to real AFTER INSERT triggers: deal_messages gets a new one here, and seller_reviews' existing
+-- `recompute_seller_rating` (20261013000000_seller_reviews_v2.sql) is redefined to also emit.
+-- domain/messaging's service.ts drops its now-redundant emitEvent call in this same PR, to avoid
+-- double-emitting (and double-notifying) on every real send.
 
 create or replace function public.notify_on_offer_event()
 returns trigger
@@ -55,6 +61,19 @@ begin
 
   return new;
 end; $$;
+
+-- message.sent: a real trigger instead of relying on the app's second round trip (see header).
+create or replace function public.emit_message_sent_event() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.domain_events (actor_id, type, entity, entity_id, payload)
+    values (new.sender_id, 'message.sent', 'offer', new.offer_id, jsonb_build_object('message_id', new.id));
+  return new;
+end; $$;
+
+create trigger deal_messages_emit_sent_event
+  after insert on public.deal_messages
+  for each row execute function public.emit_message_sent_event();
 
 -- review.created: emitted alongside the existing rating recompute, same transaction as the write.
 create or replace function public.recompute_seller_rating() returns trigger
