@@ -158,6 +158,8 @@ export const FIXTURE_PROFILE: ProfileRow = {
   onboarding_completed_at: '2026-09-01T08:00:00.000Z',
   tutorial_dismissed_at: null,
   suspended_until: null,
+  rating_avg: null,
+  rating_count: 0,
 };
 
 // F-14: /u/{handle} reads public_profiles, not profiles — a distinct (narrower) shape.
@@ -174,6 +176,8 @@ export const FIXTURE_PUBLIC_PROFILE: PublicProfileRow = {
   xp: FIXTURE_PROFILE.xp,
   created_at: FIXTURE_PROFILE.created_at,
   is_pro: FIXTURE_PROFILE.plan === 'pro',
+  rating_avg: null,
+  rating_count: 0,
 };
 
 // F-06: /market browse renders these through the `?__visual=1` harness (anon-friendly, no session).
