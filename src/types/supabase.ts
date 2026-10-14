@@ -766,12 +766,73 @@ isOneToOne: false
           Functions: {
             "admin_search_users":
 { Args: { "p_limit"?: number,"p_query": string }; Returns: {
-              "account_type": Database["public"]['Enums']["account_type"],"bio": string | null,"city": string | null,"country_code": string,"created_at": string,"deleted_at": string | null,"display_name": string,"handle": string,"handle_changed_at": string | null,"id": string,"level": number,"location": string | null,"mobile": string | null,"onboarding_completed_at": string | null,"photo_url": string | null,"plan": Database["public"]['Enums']["plan_tier"],"pro_until": string | null,"rating_avg": number | null,"rating_count": number,"role": Database["public"]['Enums']["user_role"],"scan_quota_bonus": number,"scan_quota_reset_at": string,"scan_quota_used": number,"store_name": string | null,"suspended_until": string | null,"tokens": number,"tutorial_dismissed_at": string | null,"updated_at": string,"xp": number
+              "account_type": Database["public"]['Enums']["account_type"],
+"bio": string | null,
+"city": string | null,
+"country_code": string,
+"created_at": string,
+"deleted_at": string | null,
+"display_name": string,
+"handle": string,
+"handle_changed_at": string | null,
+"id": string,
+"level": number,
+"location": string | null,
+"mobile": string | null,
+"onboarding_completed_at": string | null,
+"photo_url": string | null,
+"plan": Database["public"]['Enums']["plan_tier"],
+"pro_until": string | null,
+"rating_avg": number | null,
+"rating_count": number,
+"role": Database["public"]['Enums']["user_role"],
+"scan_quota_bonus": number,
+"scan_quota_reset_at": string,
+"scan_quota_used": number,
+"store_name": string | null,
+"suspended_until": string | null,
+"tokens": number,
+"tutorial_dismissed_at": string | null,
+"updated_at": string,
+"xp": number
             }[]
-                           },
+                          SetofOptions: {
+        from: "*"
+        to: "profiles"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "admin_set_suspension":
 { Args: { "p_days"?: number,"p_user_id": string }; Returns: {
-              "account_type": Database["public"]['Enums']["account_type"],"bio": string | null,"city": string | null,"country_code": string,"created_at": string,"deleted_at": string | null,"display_name": string,"handle": string,"handle_changed_at": string | null,"id": string,"level": number,"location": string | null,"mobile": string | null,"onboarding_completed_at": string | null,"photo_url": string | null,"plan": Database["public"]['Enums']["plan_tier"],"pro_until": string | null,"rating_avg": number | null,"rating_count": number,"role": Database["public"]['Enums']["user_role"],"scan_quota_bonus": number,"scan_quota_reset_at": string,"scan_quota_used": number,"store_name": string | null,"suspended_until": string | null,"tokens": number,"tutorial_dismissed_at": string | null,"updated_at": string,"xp": number
+              "account_type": Database["public"]['Enums']["account_type"],
+"bio": string | null,
+"city": string | null,
+"country_code": string,
+"created_at": string,
+"deleted_at": string | null,
+"display_name": string,
+"handle": string,
+"handle_changed_at": string | null,
+"id": string,
+"level": number,
+"location": string | null,
+"mobile": string | null,
+"onboarding_completed_at": string | null,
+"photo_url": string | null,
+"plan": Database["public"]['Enums']["plan_tier"],
+"pro_until": string | null,
+"rating_avg": number | null,
+"rating_count": number,
+"role": Database["public"]['Enums']["user_role"],
+"scan_quota_bonus": number,
+"scan_quota_reset_at": string,
+"scan_quota_used": number,
+"store_name": string | null,
+"suspended_until": string | null,
+"tokens": number,
+"tutorial_dismissed_at": string | null,
+"updated_at": string,
+"xp": number
             }
                           SetofOptions: {
         from: "*"

@@ -14,8 +14,8 @@ insert into public.profiles (id, display_name, account_type, handle, plan, role)
 insert into public.marketplace_listings (id, seller_id, brand, status, price, currency, listing_type, open_to_offers)
   values ('94000000-0000-0000-0000-0000000000f0', '94000000-0000-0000-0000-00000000000a', 'HW', 'active', 50, 'AED', 'sale', false);
 insert into public.reports (id, target_type, target_id, target_name, reason, reporter_id) values
-  ('94000000-0000-0000-0000-0000000000r1', 'listing', '94000000-0000-0000-0000-0000000000f0', 'HW', 'spam', '94000000-0000-0000-0000-00000000000b'),
-  ('94000000-0000-0000-0000-0000000000r2', 'user', '94000000-0000-0000-0000-00000000000a', 'Seller', 'harassment', '94000000-0000-0000-0000-00000000000b');
+  ('94000000-0000-0000-0000-0000000000a1', 'listing', '94000000-0000-0000-0000-0000000000f0', 'HW', 'spam', '94000000-0000-0000-0000-00000000000b'),
+  ('94000000-0000-0000-0000-0000000000a2', 'user', '94000000-0000-0000-0000-00000000000a', 'Seller', 'harassment', '94000000-0000-0000-0000-00000000000b');
 
 create schema if not exists tests;
 create or replace function tests.authenticate_as(p_user_id uuid) returns void language plpgsql as $$
@@ -32,24 +32,24 @@ grant execute on all functions in schema tests to anon, authenticated;
 -- a non-admin cannot resolve a report
 select tests.authenticate_as('94000000-0000-0000-0000-00000000000b');
 select throws_ok(
-  $$select public.resolve_report('94000000-0000-0000-0000-0000000000r1', 'dismiss', null)$$,
+  $$select public.resolve_report('94000000-0000-0000-0000-0000000000a1', 'dismiss', null)$$,
   '42501', null, 'a non-admin cannot resolve a report');
 
 -- admin dismisses the user report
 select tests.clear_authentication();
 select tests.authenticate_as('94000000-0000-0000-0000-00000000000c');
 select lives_ok(
-  $$select public.resolve_report('94000000-0000-0000-0000-0000000000r2', 'dismiss', 'not credible')$$,
+  $$select public.resolve_report('94000000-0000-0000-0000-0000000000a2', 'dismiss', 'not credible')$$,
   'admin can dismiss a report');
 select tests.clear_authentication();
 select is(
-  (select status::text from public.reports where id = '94000000-0000-0000-0000-0000000000r2'),
+  (select status::text from public.reports where id = '94000000-0000-0000-0000-0000000000a2'),
   'dismissed', 'dismissed report has the right status');
 
 -- admin removes the listing on the other report
 select tests.authenticate_as('94000000-0000-0000-0000-00000000000c');
 select lives_ok(
-  $$select public.resolve_report('94000000-0000-0000-0000-0000000000r1', 'remove_listing', 'confirmed counterfeit')$$,
+  $$select public.resolve_report('94000000-0000-0000-0000-0000000000a1', 'remove_listing', 'confirmed counterfeit')$$,
   'admin can remove a listing via a report');
 select tests.clear_authentication();
 select is(
