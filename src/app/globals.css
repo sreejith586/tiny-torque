@@ -720,6 +720,96 @@ label {
   color: var(--border);
 }
 
+/* Own-profile Top Brands + buyer reviews (D-063, garage-log-147.html renderTopBrands /
+   renderProfile's "Buyer reviews" section). */
+.section-title {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 18px 0 8px;
+  font-weight: 600;
+}
+
+.rank-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.brand-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand-rank-row:last-child {
+  border-bottom: none;
+}
+
+.brand-rank-num {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.brand-rank-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--cream);
+}
+
+.brand-rank-count {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.brand-rank-bar-track {
+  height: 5px;
+  background: var(--panel-alt);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.brand-rank-bar-fill {
+  height: 100%;
+  background: var(--teal);
+  border-radius: 3px;
+}
+
+.review-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+
+.review-card .top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.review-card .rc-name {
+  font-size: 12px;
+  color: var(--cream);
+  font-weight: 600;
+}
+
+.review-card .rc-text {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 5px;
+  line-height: 1.4;
+}
+
 .thumb-carousel-count {
   position: absolute;
   bottom: 8px;
