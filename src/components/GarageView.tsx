@@ -309,7 +309,7 @@ export default function GarageView({
       ) : (
         <div className={view === 'grid' ? 'garage-grid' : 'garage-list'}>
           {items.map((item) => (
-            <CarCard key={item.id} item={item} view={view} />
+            <CarCard key={item.id} item={item} view={view} interactive />
           ))}
         </div>
       )}
