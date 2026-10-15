@@ -8,8 +8,9 @@ import { isVisualHarness, harnessAllowed, VISUAL_COOKIE } from '@/lib/visual-fix
 //
 // Public (no auth required): /, /login, /onboarding, /market (+ listing
 // detail, F-06), /u/{handle} public profiles, static assets. Everything else —
-// /garage, /profile, /offers, /deals, /settings, /tokens, /admin — requires a
-// session. /admin additionally requires profiles.role = 'admin' (MV-S1-06) —
+// /garage, /profile, /offers, /deals, /notifications, /settings, /tokens,
+// /admin — requires a session. /admin additionally requires profiles.role =
+// 'admin' (MV-S1-06) —
 // the middleware redirect is the first gate, RLS on admin-only tables/RPCs
 // (identity_v2's is_admin() policies) is the backstop either way.
 

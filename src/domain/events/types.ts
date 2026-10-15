@@ -7,6 +7,7 @@ export const EVENT_TYPES = [
   'user.deleted',
   'user.blocked',
   'user.suspended',
+  'user.unsuspended',
   'item.created',
   'item.updated',
   'item.deleted',
@@ -43,6 +44,7 @@ export const EVENT_TYPES = [
   'badge.unlocked',
   'report.created',
   'report.resolved',
+  'review.created',
   'invite.redeemed',
 ] as const;
 
@@ -58,6 +60,7 @@ export type EventEntity =
   | 'token'
   | 'badge'
   | 'report'
+  | 'review'
   | 'invite';
 
 export interface EmitEventInput {
