@@ -44,6 +44,7 @@ test('publish → visible to anon browse (country-filtered), mobile absent (F-06
 
   // 2. Add a car with a photo — publishing requires >=1 photo (F-06).
   await page.goto('/garage/add');
+  await page.getByRole('button', { name: 'Add manually' }).click();
   await page.getByLabel('Brand *').fill(brand);
   await page.setInputFiles('input[type="file"]', 'public/car-placeholder.png');
   await page.getByRole('button', { name: 'Add to garage' }).click();

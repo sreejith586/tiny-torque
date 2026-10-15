@@ -3,6 +3,7 @@ import type { GarageItem } from '@/domain/garage';
 import CarCard from './CarCard';
 import ReportPrompt from './ReportPrompt';
 import BlockUserButton from './BlockUserButton';
+import StarRating from './StarRating';
 
 // F-14 v1: read-only, composed from existing prototype pieces only (panel/toggle-row,
 // GarageView's CarCard grid) — no avatar/banner/follow/tabs, those need media (S2) and
@@ -67,10 +68,16 @@ export default function PublicProfileView({
         )}
         <div className="toggle-row">
           <span className="muted">Rating</span>
-          <span>
-            {profile.rating_count
-              ? `★ ${profile.rating_avg} (${profile.rating_count} review${profile.rating_count === 1 ? '' : 's'})`
-              : 'No ratings yet'}
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            {profile.rating_count ? (
+              <>
+                <StarRating avg={profile.rating_avg} />
+                {profile.rating_avg} ({profile.rating_count} review
+                {profile.rating_count === 1 ? '' : 's'})
+              </>
+            ) : (
+              'No ratings yet'
+            )}
           </span>
         </div>
       </div>

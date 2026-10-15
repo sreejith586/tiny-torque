@@ -2,10 +2,8 @@ import Link from 'next/link';
 import type { MouseEvent, KeyboardEvent } from 'react';
 import { type Listing, listingPriceLabel } from '@/domain/marketplace';
 import MediaImage from './MediaImage';
+import { HeartIcon } from './icons';
 import styles from './Market.module.css';
-
-const HEART =
-  'M12,21.35l-1.45-1.32C5.4,15.36,2,12.28,2,8.5C2,5.42,4.42,3,7.5,3c1.74,0,3.41,0.81,4.5,2.09C13.09,3.81,14.76,3,16.5,3C19.58,3,22,5.42,22,8.5c0,3.78-3.4,6.86-8.55,11.54L12,21.35z';
 
 const DAY = 24 * 60 * 60 * 1000;
 function isNew(listing: Listing): boolean {
@@ -55,16 +53,7 @@ export default function ListingCard({
             : undefined
         }
       >
-        <svg
-          viewBox="0 0 24 24"
-          fill={favorited ? 'currentColor' : 'none'}
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d={HEART} />
-        </svg>
+        <HeartIcon size={15} filled={favorited} />
       </span>
 
       <div className={styles.thumb}>

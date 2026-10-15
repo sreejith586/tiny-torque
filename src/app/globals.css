@@ -123,30 +123,139 @@ button {
   justify-content: center;
   gap: 8px;
   border: none;
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 13px 18px;
   font-weight: 600;
   font-size: 15px;
   cursor: pointer;
   width: 100%;
+  position: relative;
+  overflow: hidden;
   transition:
     transform 0.12s ease,
+    box-shadow 0.12s ease,
     background-color 0.15s ease,
     border-color 0.15s ease,
     color 0.15s ease;
 }
 
-/* Press micro-interactions (garage-log-147.html, D-045). */
+/* Press micro-interactions (garage-log-147.html, D-045). .btn-primary gets its own
+   translateY+shadow-retract rule below instead of this scale, matching the mockup's
+   3D-bevel press feel. */
 button:active,
-.btn-primary:active,
 .btn-secondary:active,
 .btn-danger:active {
   transform: scale(0.96);
 }
 
 .btn-primary {
-  background: var(--orange);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, white 30%, var(--orange)) 0%,
+    var(--orange) 50%,
+    color-mix(in srgb, black 16%, var(--orange)) 100%
+  );
   color: var(--btn-text);
+  box-shadow:
+    0 3px 0 color-mix(in srgb, black 22%, var(--orange)),
+    0 5px 12px rgba(0, 0, 0, 0.22),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.12);
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: -70%;
+  left: -70%;
+  width: 32%;
+  height: 240%;
+  background: linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  transform: rotate(18deg);
+  animation: proBadgeShine 3.2s ease-in-out infinite;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+.btn-primary:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, black 22%, var(--orange)),
+    0 2px 5px rgba(0, 0, 0, 0.18),
+    inset 0 1px 1px rgba(255, 255, 255, 0.25),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:disabled::before {
+  display: none;
+}
+
+@keyframes proBadgeShine {
+  0% {
+    left: -70%;
+  }
+  45% {
+    left: 135%;
+  }
+  100% {
+    left: 135%;
+  }
+}
+
+@keyframes visualSearchSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.notif-dot {
+  animation: notifPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes notifPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger) 50%, transparent);
+  }
+  50% {
+    transform: scale(1.18);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--danger) 0%, transparent);
+  }
+}
+
+/* Async-submit spinner — works on any existing button, not a visual-search feature
+   (the mockup reuses this same keyframe generically on any pending button tap). */
+.btn-primary.btn-tap-pending,
+.btn-secondary.btn-tap-pending {
+  color: transparent !important;
+}
+
+.btn-primary.btn-tap-pending::before {
+  display: none;
+}
+
+.btn-primary.btn-tap-pending::after,
+.btn-secondary.btn-tap-pending::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  animation: visualSearchSpin 0.7s linear infinite;
+}
+
+.btn-primary.btn-tap-pending::after {
+  border: 2px solid color-mix(in srgb, var(--btn-text) 35%, transparent);
+  border-top-color: var(--btn-text);
+}
+
+.btn-secondary.btn-tap-pending::after {
+  border: 2px solid color-mix(in srgb, var(--cream) 30%, transparent);
+  border-top-color: var(--cream);
 }
 
 .btn-secondary {
@@ -172,11 +281,25 @@ textarea {
   width: 100%;
   background: var(--panel-alt);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 12px;
   color: var(--cream);
   font-family: var(--font-body);
   font-size: 15px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.08),
+    0 0 0 3px color-mix(in srgb, var(--orange) 20%, transparent);
 }
 
 input::placeholder,
@@ -271,16 +394,46 @@ label {
   line-height: 1;
 }
 
-.nav-item.nav-add .nav-icon {
-  background: var(--orange);
-  color: var(--btn-text);
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
+/* Center Add Car button — raised FAB, pops above the bar (garage-log-147.html). */
+.nav-item.nav-add {
+  flex: 0 0 68px;
+  width: 68px;
+  height: 68px;
+  margin-top: -32px;
+  padding: 0;
+  gap: 0;
   justify-content: center;
-  font-size: 20px;
+  border-radius: 50%;
+  border: 3px solid var(--panel);
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 32% 22%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 42%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white 20%, var(--orange)) 0%,
+      var(--orange) 55%,
+      color-mix(in srgb, black 18%, var(--orange)) 100%
+    );
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 2px 2px rgba(255, 255, 255, 0.5),
+    inset 0 -3px 4px rgba(0, 0, 0, 0.18),
+    0 0 10px color-mix(in srgb, var(--orange) 30%, transparent);
+}
+
+.nav-item.nav-add .nav-label {
+  display: none;
+}
+
+.nav-item.nav-add .nav-icon {
+  background: none;
+  color: var(--btn-text);
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  font-size: 24px;
 }
 
 /* ---------- Theme swatches ---------- */
@@ -351,13 +504,23 @@ label {
 }
 
 .car-card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  background-image:
+    linear-gradient(160deg, var(--panel) 0%, color-mix(in srgb, var(--panel) 85%, var(--bg)) 100%),
+    linear-gradient(180deg, #c9c9c9 0%, var(--orange) 100%);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform 0.12s ease;
+  box-shadow:
+    0 0 14px color-mix(in srgb, var(--orange) 20%, transparent),
+    0 4px 12px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .car-card:active {
@@ -398,6 +561,344 @@ label {
   margin-top: 2px;
 }
 
+/* Grid-card layout (garage-log-147.html carCardHtml) — scoped to .garage-grid so the
+   list-view row layout above is unaffected. */
+.garage-grid .car-card {
+  position: relative;
+  padding: 10px;
+  gap: 6px;
+}
+
+.car-card .thumb {
+  width: 100%;
+  height: 150px;
+  background: var(--panel-alt);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 11px;
+  overflow: hidden;
+  position: relative;
+}
+
+.car-card .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.car-card .brand-tag {
+  font-size: 10px;
+  color: var(--teal);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.car-card h3 {
+  font-size: 13px;
+  color: var(--cream);
+  line-height: 1.25;
+}
+
+.qty-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background:
+    radial-gradient(
+      ellipse 60% 35% at 50% -10%,
+      rgba(255, 255, 255, 0.55),
+      rgba(255, 255, 255, 0) 70%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white 10%, var(--orange)) 0%,
+      var(--orange) 60%,
+      color-mix(in srgb, black 15%, var(--orange)) 100%
+    );
+  color: var(--btn-text);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.25);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 11px;
+  padding: 2px 9px;
+  border-radius: 4px;
+  z-index: 2;
+  box-shadow:
+    0 0 10px color-mix(in srgb, var(--violet) 60%, transparent),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.fav-heart {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(20, 18, 15, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.fav-heart svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+.fav-heart.active {
+  color: #ff5c5c;
+  background: rgba(20, 18, 15, 0.7);
+}
+
+.rarity-badge {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.3;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.rarity-badge.rarity-common {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, white 8%, var(--panel-alt)) 0%,
+    var(--panel-alt) 100%
+  );
+  color: var(--muted);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border);
+}
+
+.rarity-badge.rarity-rare {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, white 20%, var(--gold)) 0%,
+    var(--gold) 100%
+  );
+  color: var(--btn-text);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.2);
+  border: 1px solid color-mix(in srgb, black 15%, var(--gold));
+}
+
+.rarity-badge.rarity-elite {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, white 20%, var(--teal)) 0%,
+    var(--teal) 100%
+  );
+  color: var(--btn-text);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.2);
+  border: 1px solid color-mix(in srgb, black 15%, var(--teal));
+}
+
+.stars {
+  color: var(--gold);
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.stars .empty {
+  color: var(--border);
+}
+
+/* Own-profile Top Brands + buyer reviews (D-063, garage-log-147.html renderTopBrands /
+   renderProfile's "Buyer reviews" section). */
+.section-title {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 18px 0 8px;
+  font-weight: 600;
+}
+
+.rank-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.brand-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand-rank-row:last-child {
+  border-bottom: none;
+}
+
+.brand-rank-num {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.brand-rank-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--cream);
+}
+
+.brand-rank-count {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.brand-rank-bar-track {
+  height: 5px;
+  background: var(--panel-alt);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.brand-rank-bar-fill {
+  height: 100%;
+  background: var(--teal);
+  border-radius: 3px;
+}
+
+.review-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+
+.review-card .top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.review-card .rc-name {
+  font-size: 12px;
+  color: var(--cream);
+  font-weight: 600;
+}
+
+.review-card .rc-text {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 5px;
+  line-height: 1.4;
+}
+
+.thumb-carousel-count {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/* Add Car chooser (garage-log-147.html addChooserView, D-062) — illustration images are not
+   ported, only the icon-badge/title/sub/chevron row. */
+.add-choice-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.add-choice-card {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 22px;
+  padding: 20px;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.add-choice-card:active {
+  transform: scale(0.98);
+}
+
+.add-choice-card.tint-orange {
+  background: color-mix(in srgb, var(--orange) 16%, var(--panel));
+}
+
+.add-choice-card.tint-blue {
+  background: color-mix(in srgb, var(--teal) 16%, var(--panel));
+}
+
+.add-choice-card.tint-green {
+  background: color-mix(in srgb, var(--violet) 16%, var(--panel));
+}
+
+.add-choice-left-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+}
+
+.add-choice-icon-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.add-choice-title {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--cream);
+}
+
+.add-choice-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.add-choice-chevron {
+  flex-shrink: 0;
+  color: var(--cream);
+}
+
 .empty-state {
   text-align: center;
   padding: 48px 16px;
@@ -408,12 +909,12 @@ label {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.toggle-row:last-child {
-  border-bottom: none;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  font-size: 13px;
 }
 
 :focus-visible {
@@ -506,7 +1007,8 @@ label {
 }
 
 .filter-dropdown-form .toggle-row {
-  padding: 8px 0;
+  padding: 8px 10px;
+  margin-top: 6px;
 }
 
 .filter-dropdown-divider {

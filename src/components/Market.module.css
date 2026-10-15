@@ -15,8 +15,12 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  background: var(--panel);
-  border: 1px solid var(--border);
+  background-image:
+    linear-gradient(160deg, var(--panel) 0%, color-mix(in srgb, var(--panel) 85%, var(--bg)) 100%),
+    linear-gradient(180deg, #c9c9c9 0%, var(--orange) 100%);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1.5px solid transparent;
   border-radius: 10px;
   overflow: hidden;
   text-decoration: none;
@@ -24,7 +28,10 @@
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  box-shadow:
+    0 0 14px color-mix(in srgb, var(--orange) 20%, transparent),
+    0 4px 12px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 .listing:active {
   transform: scale(0.985);

@@ -122,3 +122,70 @@ export function CameraIcon(props: IconProps) {
     </Base>
   );
 }
+
+// Add-car chooser "manual" entry (garage-log-147.html add-choice-card, fill-based bolt glyph
+// rather than stroke, matching the mockup exactly).
+export function BoltIcon({ size = 24, ...rest }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="currentColor"
+      stroke="currentColor"
+      strokeWidth={0.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...rest}
+    >
+      <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
+    </svg>
+  );
+}
+
+export function FileIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6" />
+    </Base>
+  );
+}
+
+export function ChevronRightIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <polyline points="9 18 15 12 9 6" />
+    </Base>
+  );
+}
+
+// Favourite heart (fav-heart, garage-log-147.html) — needs a fill toggle Base doesn't expose,
+// so it builds its own <svg> rather than wrapping Base.
+export function HeartIcon({
+  size = 24,
+  filled = false,
+  ...rest
+}: Omit<
+  SVGProps<SVGSVGElement>,
+  'viewBox' | 'fill' | 'stroke' | 'strokeWidth' | 'strokeLinecap' | 'strokeLinejoin'
+> & {
+  size?: number;
+  filled?: boolean;
+}) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...rest}
+    >
+      <path d="M12,21.35l-1.45-1.32C5.4,15.36,2,12.28,2,8.5C2,5.42,4.42,3,7.5,3c1.74,0,3.41,0.81,4.5,2.09C13.09,3.81,14.76,3,16.5,3C19.58,3,22,5.42,22,8.5c0,3.78-3.4,6.86-8.55,11.54L12,21.35z" />
+    </svg>
+  );
+}

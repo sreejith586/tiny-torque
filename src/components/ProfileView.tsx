@@ -10,11 +10,28 @@ import { compressImage } from '@/lib/image';
 import { initials } from '@/lib/initials';
 import { deleteAccountAction } from '@/app/profile/actions';
 import type { AccountType, ProfileRow } from '@/types/database';
+import type { GarageStats } from '@/domain/garage';
 import { CameraIcon } from './icons';
 import MediaImage from './MediaImage';
+import StarRating from './StarRating';
 import ThemeSwitcher from './ThemeSwitcher';
 
-export default function ProfileView({ profile }: { profile: ProfileRow }) {
+export type ProfileReview = {
+  id: string;
+  rating: number;
+  comment: string | null;
+  buyerName: string;
+};
+
+export default function ProfileView({
+  profile,
+  topBrands = [],
+  reviews = [],
+}: {
+  profile: ProfileRow;
+  topBrands?: GarageStats['topBrands'];
+  reviews?: ProfileReview[];
+}) {
   const supabase = createClient();
   const router = useRouter();
 
@@ -99,6 +116,8 @@ export default function ProfileView({ profile }: { profile: ProfileRow }) {
     }
   }
 
+  const maxBrandCount = topBrands[0]?.count ?? 1;
+
   return (
     <div>
       <div className="panel" style={{ marginBottom: 16 }}>
@@ -176,6 +195,20 @@ export default function ProfileView({ profile }: { profile: ProfileRow }) {
               <span className="muted">Plan</span>
               <span>{profile.plan === 'pro' ? 'Pro' : 'Free'}</span>
             </div>
+            <div className="toggle-row">
+              <span className="muted">Rating</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                {profile.rating_count ? (
+                  <>
+                    <StarRating avg={profile.rating_avg} />
+                    {profile.rating_avg} ({profile.rating_count} review
+                    {profile.rating_count === 1 ? '' : 's'})
+                  </>
+                ) : (
+                  'No ratings yet'
+                )}
+              </span>
+            </div>
             <button
               className="btn-secondary"
               style={{ marginTop: 14 }}
@@ -231,6 +264,33 @@ export default function ProfileView({ profile }: { profile: ProfileRow }) {
         )}
       </div>
 
+      {topBrands.length > 0 && (
+        <>
+          <div className="section-title">Top brands in your garage</div>
+          <div className="rank-card">
+            {topBrands.map((b, i) => (
+              <div className="brand-rank-row" key={b.brand}>
+                <div className="brand-rank-num">#{i + 1}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span className="brand-rank-name">{b.brand}</span>
+                    <span className="brand-rank-count">
+                      {b.count} item{b.count === 1 ? '' : 's'}
+                    </span>
+                  </div>
+                  <div className="brand-rank-bar-track">
+                    <div
+                      className="brand-rank-bar-fill"
+                      style={{ width: `${Math.round((b.count / maxBrandCount) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
       <Link
         href="/profile/wishlist"
         className="btn-secondary"
@@ -239,7 +299,24 @@ export default function ProfileView({ profile }: { profile: ProfileRow }) {
         My wishlist
       </Link>
 
-      <div className="panel" style={{ marginBottom: 16 }}>
+      <div className="section-title">Buyer reviews — trust score</div>
+      {reviews.length === 0 ? (
+        <div className="empty-state" style={{ padding: 20 }}>
+          <p>No reviews yet.</p>
+        </div>
+      ) : (
+        reviews.map((r) => (
+          <div className="review-card" key={r.id}>
+            <div className="top">
+              <span className="rc-name">{r.buyerName}</span>
+              <StarRating avg={r.rating} />
+            </div>
+            {r.comment && <div className="rc-text">{r.comment}</div>}
+          </div>
+        ))
+      )}
+
+      <div className="panel" style={{ marginBottom: 16, marginTop: 16 }}>
         <h2 style={{ fontSize: 16 }}>Appearance</h2>
         <p className="muted" style={{ fontSize: 13, marginTop: 4 }}>
           Theme choice is saved on this device only.
