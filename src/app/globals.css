@@ -58,6 +58,10 @@ body {
   color: var(--cream);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  /* Belt-and-braces: no single element should be able to widen the page past the viewport
+     and open up horizontal panning. The real fixes are the 16px input rule above (stops
+     iOS's focus auto-zoom) and the .bubble-wrap fix below (stops oversized flex children). */
+  overflow-x: hidden;
 }
 
 h1,
@@ -285,7 +289,9 @@ textarea {
   padding: 12px;
   color: var(--cream);
   font-family: var(--font-body);
-  font-size: 15px;
+  /* iOS Safari auto-zooms the viewport on focus for any field under 16px — this isn't a
+     style choice, it's the exact threshold that turns the zoom off. */
+  font-size: 16px;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
   transition:
     border-color 0.15s ease,
@@ -1419,8 +1425,18 @@ header {
   justify-content: flex-end;
 }
 
-.bubble {
+/* The 78% cap lives on the wrapper, not .bubble itself: .bubble's parent is a shrink-to-fit
+   flex item, so a percentage max-width on .bubble directly resolves against an auto (not
+   definite) containing-block width, creating a circular sizing loop that collapsed short
+   messages to a near-zero width. .bubble-row has a real, definite width, so the percentage
+   resolves correctly one level up instead. */
+.bubble-wrap {
   max-width: 78%;
+  min-width: 0;
+}
+
+.bubble {
+  max-width: 100%;
   padding: 10px 14px;
   border-radius: 16px;
   font-size: 15px;
