@@ -123,30 +123,139 @@ button {
   justify-content: center;
   gap: 8px;
   border: none;
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 13px 18px;
   font-weight: 600;
   font-size: 15px;
   cursor: pointer;
   width: 100%;
+  position: relative;
+  overflow: hidden;
   transition:
     transform 0.12s ease,
+    box-shadow 0.12s ease,
     background-color 0.15s ease,
     border-color 0.15s ease,
     color 0.15s ease;
 }
 
-/* Press micro-interactions (garage-log-147.html, D-045). */
+/* Press micro-interactions (garage-log-147.html, D-045). .btn-primary gets its own
+   translateY+shadow-retract rule below instead of this scale, matching the mockup's
+   3D-bevel press feel. */
 button:active,
-.btn-primary:active,
 .btn-secondary:active,
 .btn-danger:active {
   transform: scale(0.96);
 }
 
 .btn-primary {
-  background: var(--orange);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, white 30%, var(--orange)) 0%,
+    var(--orange) 50%,
+    color-mix(in srgb, black 16%, var(--orange)) 100%
+  );
   color: var(--btn-text);
+  box-shadow:
+    0 3px 0 color-mix(in srgb, black 22%, var(--orange)),
+    0 5px 12px rgba(0, 0, 0, 0.22),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.12);
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: -70%;
+  left: -70%;
+  width: 32%;
+  height: 240%;
+  background: linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  transform: rotate(18deg);
+  animation: proBadgeShine 3.2s ease-in-out infinite;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+.btn-primary:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, black 22%, var(--orange)),
+    0 2px 5px rgba(0, 0, 0, 0.18),
+    inset 0 1px 1px rgba(255, 255, 255, 0.25),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:disabled::before {
+  display: none;
+}
+
+@keyframes proBadgeShine {
+  0% {
+    left: -70%;
+  }
+  45% {
+    left: 135%;
+  }
+  100% {
+    left: 135%;
+  }
+}
+
+@keyframes visualSearchSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.notif-dot {
+  animation: notifPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes notifPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger) 50%, transparent);
+  }
+  50% {
+    transform: scale(1.18);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--danger) 0%, transparent);
+  }
+}
+
+/* Async-submit spinner — works on any existing button, not a visual-search feature
+   (the mockup reuses this same keyframe generically on any pending button tap). */
+.btn-primary.btn-tap-pending,
+.btn-secondary.btn-tap-pending {
+  color: transparent !important;
+}
+
+.btn-primary.btn-tap-pending::before {
+  display: none;
+}
+
+.btn-primary.btn-tap-pending::after,
+.btn-secondary.btn-tap-pending::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  animation: visualSearchSpin 0.7s linear infinite;
+}
+
+.btn-primary.btn-tap-pending::after {
+  border: 2px solid color-mix(in srgb, var(--btn-text) 35%, transparent);
+  border-top-color: var(--btn-text);
+}
+
+.btn-secondary.btn-tap-pending::after {
+  border: 2px solid color-mix(in srgb, var(--cream) 30%, transparent);
+  border-top-color: var(--cream);
 }
 
 .btn-secondary {
@@ -172,11 +281,25 @@ textarea {
   width: 100%;
   background: var(--panel-alt);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 12px;
   color: var(--cream);
   font-family: var(--font-body);
   font-size: 15px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.08),
+    0 0 0 3px color-mix(in srgb, var(--orange) 20%, transparent);
 }
 
 input::placeholder,
@@ -271,16 +394,46 @@ label {
   line-height: 1;
 }
 
-.nav-item.nav-add .nav-icon {
-  background: var(--orange);
-  color: var(--btn-text);
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
+/* Center Add Car button — raised FAB, pops above the bar (garage-log-147.html). */
+.nav-item.nav-add {
+  flex: 0 0 68px;
+  width: 68px;
+  height: 68px;
+  margin-top: -32px;
+  padding: 0;
+  gap: 0;
   justify-content: center;
-  font-size: 20px;
+  border-radius: 50%;
+  border: 3px solid var(--panel);
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 32% 22%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 42%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white 20%, var(--orange)) 0%,
+      var(--orange) 55%,
+      color-mix(in srgb, black 18%, var(--orange)) 100%
+    );
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 2px 2px rgba(255, 255, 255, 0.5),
+    inset 0 -3px 4px rgba(0, 0, 0, 0.18),
+    0 0 10px color-mix(in srgb, var(--orange) 30%, transparent);
+}
+
+.nav-item.nav-add .nav-label {
+  display: none;
+}
+
+.nav-item.nav-add .nav-icon {
+  background: none;
+  color: var(--btn-text);
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  font-size: 24px;
 }
 
 /* ---------- Theme swatches ---------- */
@@ -351,13 +504,23 @@ label {
 }
 
 .car-card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  background-image:
+    linear-gradient(160deg, var(--panel) 0%, color-mix(in srgb, var(--panel) 85%, var(--bg)) 100%),
+    linear-gradient(180deg, #c9c9c9 0%, var(--orange) 100%);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform 0.12s ease;
+  box-shadow:
+    0 0 14px color-mix(in srgb, var(--orange) 20%, transparent),
+    0 4px 12px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .car-card:active {
@@ -408,12 +571,12 @@ label {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.toggle-row:last-child {
-  border-bottom: none;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  font-size: 13px;
 }
 
 :focus-visible {
@@ -506,7 +669,8 @@ label {
 }
 
 .filter-dropdown-form .toggle-row {
-  padding: 8px 0;
+  padding: 8px 10px;
+  margin-top: 6px;
 }
 
 .filter-dropdown-divider {

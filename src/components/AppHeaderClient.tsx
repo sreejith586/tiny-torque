@@ -70,6 +70,7 @@ export default function AppHeaderClient({
             <BellIcon size={17} />
             {unreadCount > 0 && (
               <span
+                className="notif-dot"
                 style={{
                   position: 'absolute',
                   top: 2,
