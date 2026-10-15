@@ -377,7 +377,11 @@ export default function AddCarPage() {
 
         {error && <p className="field-error">{error}</p>}
 
-        <button className="btn-primary" style={{ marginTop: 24 }} disabled={saving || !userId}>
+        <button
+          className={`btn-primary ${saving ? 'btn-tap-pending' : ''}`}
+          style={{ marginTop: 24 }}
+          disabled={saving || !userId}
+        >
           {saving ? 'Saving…' : 'Add to garage'}
         </button>
       </form>

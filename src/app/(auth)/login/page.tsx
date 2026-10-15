@@ -206,7 +206,11 @@ function LoginForm() {
             </>
           )}
           {error && <p className="field-error">{error}</p>}
-          <button className="btn-primary" style={{ marginTop: 20 }} disabled={loading}>
+          <button
+            className={`btn-primary ${loading ? 'btn-tap-pending' : ''}`}
+            style={{ marginTop: 20 }}
+            disabled={loading}
+          >
             {loading ? 'Sending code…' : 'Send code'}
           </button>
           <button
@@ -239,7 +243,11 @@ function LoginForm() {
             </StatusRow>
           )}
           {error && <p className="field-error">{error}</p>}
-          <button className="btn-primary" style={{ marginTop: 20 }} disabled={loading}>
+          <button
+            className={`btn-primary ${loading ? 'btn-tap-pending' : ''}`}
+            style={{ marginTop: 20 }}
+            disabled={loading}
+          >
             {loading ? 'Verifying…' : 'Verify & continue'}
           </button>
           <button
