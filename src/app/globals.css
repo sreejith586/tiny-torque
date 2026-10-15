@@ -58,9 +58,17 @@ body {
   color: var(--cream);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
-  /* Belt-and-braces: no single element should be able to widen the page past the viewport
-     and open up horizontal panning. The real fixes are the 16px input rule above (stops
-     iOS's focus auto-zoom) and the .bubble-wrap fix below (stops oversized flex children). */
+}
+
+/* Belt-and-braces: no single element should be able to widen the page past the viewport and
+   open up horizontal panning. The real fixes are the 16px input rule above (stops iOS's focus
+   auto-zoom) and the .bubble-wrap fix below (stops oversized flex children).
+   This goes on html only, not body: setting overflow-x without overflow-y makes the browser
+   compute overflow-y as auto (CSS Overflow spec), and doing that on BOTH html and body turns
+   body into its own independent scroll container — which broke the app header's
+   `position: sticky` (it stuck relative to body's unmoving scrollport while html, the element
+   actually scrolling, carried the whole page including the header out from under it). */
+html {
   overflow-x: hidden;
 }
 
