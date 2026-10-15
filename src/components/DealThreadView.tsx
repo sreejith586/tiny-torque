@@ -125,7 +125,7 @@ export default function DealThreadView({
         {messages.length === 0 && <p className="empty-state">No messages yet.</p>}
         {messages.map((m) => (
           <div key={m.id} className={`bubble-row ${m.sender_id === viewerId ? 'mine' : ''}`}>
-            <div>
+            <div className="bubble-wrap">
               <div className={`bubble ${m.pending ? 'bubble-pending' : ''}`}>{m.body}</div>
               {m.sender_id === viewerId && (
                 <div className="bubble-meta">
