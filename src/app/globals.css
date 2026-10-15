@@ -734,6 +734,81 @@ label {
   pointer-events: none;
 }
 
+/* Add Car chooser (garage-log-147.html addChooserView, D-062) — illustration images are not
+   ported, only the icon-badge/title/sub/chevron row. */
+.add-choice-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.add-choice-card {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 22px;
+  padding: 20px;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.add-choice-card:active {
+  transform: scale(0.98);
+}
+
+.add-choice-card.tint-orange {
+  background: color-mix(in srgb, var(--orange) 16%, var(--panel));
+}
+
+.add-choice-card.tint-blue {
+  background: color-mix(in srgb, var(--teal) 16%, var(--panel));
+}
+
+.add-choice-card.tint-green {
+  background: color-mix(in srgb, var(--violet) 16%, var(--panel));
+}
+
+.add-choice-left-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+}
+
+.add-choice-icon-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.add-choice-title {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--cream);
+}
+
+.add-choice-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.add-choice-chevron {
+  flex-shrink: 0;
+  color: var(--cream);
+}
+
 .empty-state {
   text-align: center;
   padding: 48px 16px;

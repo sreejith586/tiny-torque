@@ -59,6 +59,7 @@ test('two parties exchange messages on an accepted offer (F-09)', async ({ brows
       'the fixed seller test user has not completed onboarding yet — run onboarding.spec.ts first'
     );
     await seller.goto('/garage/add');
+    await seller.getByRole('button', { name: 'Add manually' }).click();
     await seller.getByLabel('Brand *').fill(brand);
     await seller.setInputFiles('input[type="file"]', 'public/car-placeholder.png');
     await seller.getByRole('button', { name: 'Add to garage' }).click();

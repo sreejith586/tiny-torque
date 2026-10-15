@@ -11,7 +11,7 @@ import { getProfile } from '@/domain/identity';
 import { photoLimit } from '@/domain/entitlements';
 import { uploadItemMedia } from '@/domain/media';
 import { compressImage } from '@/lib/image';
-import { CameraIcon } from '@/components/icons';
+import { BoltIcon, CameraIcon, ChevronRightIcon, FileIcon } from '@/components/icons';
 import type { Plan } from '@/types/database';
 
 const CONDITIONS = ['mint', 'near-mint', 'good', 'played', 'damaged'];
@@ -24,6 +24,10 @@ export default function AddCarPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [plan, setPlan] = useState<Plan>('free');
   const maxPhotos = photoLimit(plan);
+
+  // Chooser screen (D-062, garage-log-147.html addChooserView) — Scan/Import link straight to
+  // their own pages same as before; Manual reveals the form below instead of navigating.
+  const [mode, setMode] = useState<'chooser' | 'manual'>('chooser');
 
   // Required
   const [brand, setBrand] = useState('');
@@ -154,23 +158,73 @@ export default function AddCarPage() {
     }
   }
 
+  if (mode === 'chooser') {
+    return (
+      <main style={{ padding: '20px 16px', flex: 1 }}>
+        <h1 style={{ fontSize: 24 }}>Add Car</h1>
+        <div className="add-choice-grid" style={{ marginTop: 16 }}>
+          <Link href="/garage/scan" className="add-choice-card tint-orange">
+            <div className="add-choice-left-col">
+              <div
+                className="add-choice-icon-badge"
+                style={{ background: 'color-mix(in srgb, var(--orange) 35%, var(--panel))' }}
+              >
+                <CameraIcon size={22} />
+              </div>
+              <div className="add-choice-title">Scan my cars</div>
+              <div className="add-choice-sub">Take photos of multiple cars</div>
+            </div>
+            <ChevronRightIcon className="add-choice-chevron" />
+          </Link>
+
+          <button
+            type="button"
+            className="add-choice-card tint-green"
+            onClick={() => setMode('manual')}
+            style={{ border: 'none', width: '100%', textAlign: 'left', font: 'inherit' }}
+          >
+            <div className="add-choice-left-col">
+              <div
+                className="add-choice-icon-badge"
+                style={{ background: 'color-mix(in srgb, var(--violet) 35%, var(--panel))' }}
+              >
+                <BoltIcon size={22} style={{ color: 'var(--violet)' }} />
+              </div>
+              <div className="add-choice-title">Add manually</div>
+              <div className="add-choice-sub">For individual cars</div>
+            </div>
+            <ChevronRightIcon className="add-choice-chevron" />
+          </button>
+
+          <Link href="/garage/import" className="add-choice-card tint-blue">
+            <div className="add-choice-left-col">
+              <div
+                className="add-choice-icon-badge"
+                style={{ background: 'color-mix(in srgb, var(--teal) 35%, var(--panel))' }}
+              >
+                <FileIcon size={22} style={{ color: 'var(--teal)' }} />
+              </div>
+              <div className="add-choice-title">Import a file</div>
+              <div className="add-choice-sub">Excel / CSV / spreadsheet</div>
+            </div>
+            <ChevronRightIcon className="add-choice-chevron" />
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
+      <button
+        type="button"
+        className="btn-secondary"
+        onClick={() => setMode('chooser')}
+        style={{ width: 'auto', padding: '8px 14px', fontSize: 13, marginBottom: 16 }}
+      >
+        ← Back
+      </button>
       <h1 style={{ fontSize: 24 }}>Add a car</h1>
-
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
-        <Link
-          href="/garage/scan"
-          className="btn-secondary"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
-        >
-          <CameraIcon size={16} />
-          Batch scan a photo
-        </Link>
-        <Link href="/garage/import" className="btn-secondary" style={{ display: 'inline-flex' }}>
-          Import CSV / spreadsheet
-        </Link>
-      </div>
 
       <form onSubmit={handleSubmit}>
         <label htmlFor="brand">Brand *</label>

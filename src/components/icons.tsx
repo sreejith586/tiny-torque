@@ -123,6 +123,43 @@ export function CameraIcon(props: IconProps) {
   );
 }
 
+// Add-car chooser "manual" entry (garage-log-147.html add-choice-card, fill-based bolt glyph
+// rather than stroke, matching the mockup exactly).
+export function BoltIcon({ size = 24, ...rest }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="currentColor"
+      stroke="currentColor"
+      strokeWidth={0.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...rest}
+    >
+      <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
+    </svg>
+  );
+}
+
+export function FileIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6" />
+    </Base>
+  );
+}
+
+export function ChevronRightIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <polyline points="9 18 15 12 9 6" />
+    </Base>
+  );
+}
+
 // Favourite heart (fav-heart, garage-log-147.html) — needs a fill toggle Base doesn't expose,
 // so it builds its own <svg> rather than wrapping Base.
 export function HeartIcon({
