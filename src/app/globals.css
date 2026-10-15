@@ -1036,7 +1036,12 @@ label {
    Persistent brand/notification/avatar bar, missing from every sprint until now. The prototype's
    online-counter (presence, D-017) and coin pill (tokens, not live) are intentionally not ported. */
 header {
-  padding: 15px 16px 11px;
+  /* black-translucent (layout.tsx's appleWebApp.statusBarStyle) makes the status bar an overlay
+     in standalone/home-screen mode — our content runs full-bleed behind it, so the header needs
+     its own safe-area padding or it sits under the clock/signal icons. env() is 0 in a normal
+     browser tab (Safari's own chrome already occupies that space there), so this is a no-op
+     outside standalone mode. */
+  padding: calc(15px + env(safe-area-inset-top)) 16px 11px;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
