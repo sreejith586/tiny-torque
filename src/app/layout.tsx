@@ -1,4 +1,6 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
+import { THEMES } from '@/lib/theme';
+import { APP_DEFAULT_THEME } from '@/lib/theme-default';
 import localFont from 'next/font/local';
 import './globals.css';
 import './nav-rail.css';
@@ -40,6 +42,33 @@ export const metadata: Metadata = {
   },
   description:
     'Track your diecast car collection, avoid buying duplicates, and connect with other collectors — Tiny Torque is the home for your garage.',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    // iOS doesn't read the web manifest's `display: standalone` — these are the tags that
+    // actually drop Safari's chrome when launched from the home screen there.
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Tiny Torque',
+  },
+  icons: {
+    icon: [
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  // Covers the notch/home-indicator safe areas (env(safe-area-inset-*), already used
+  // throughout globals.css) instead of letterboxing behind them.
+  viewportFit: 'cover',
+  // Browser-chrome colour can't read a CSS variable (it's painted before any stylesheet
+  // runs), so this pulls the literal value from the same source of truth as the theme itself
+  // instead of a second hardcoded hex — the default theme's orange (D-054).
+  themeColor: THEMES[APP_DEFAULT_THEME].vars['--orange'],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -51,6 +80,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <head>
+        {/* Next's `appleWebApp.capable` metadata only emits the newer unprefixed
+            mobile-web-app-capable tag; older iOS versions still need this exact
+            apple-prefixed one to drop Safari's chrome when launched from the home screen. */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
         <ThemeStyles />
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
