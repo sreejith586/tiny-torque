@@ -5,12 +5,12 @@ import type { Client } from '@/lib/supabase/types';
 const OFFER_ID = '11111111-1111-4111-8111-111111111111';
 const SENDER_ID = '22222222-2222-4222-8222-222222222222';
 
-/** Mock client: records the deal_messages insert payload + the emit_event RPC call. */
+/** Mock client: records the deal_messages insert payload. message.sent is emitted by a real DB
+ * trigger now (20261013020000_notifications_v2.sql), not a second app-level call — nothing to
+ * mock or assert here, that side effect is covered at the SQL level (supabase/tests/0017). */
 function mockClient(insertResult: { data?: unknown; error?: unknown }) {
-  const rpcCalls: [string, Record<string, unknown>][] = [];
   let insertPayload: Record<string, unknown> | undefined;
   const client = {
-    _rpcCalls: rpcCalls,
     _insertPayload: () => insertPayload,
     from(table: string) {
       if (table !== 'deal_messages') throw new Error(`unexpected table ${table}`);
@@ -25,19 +25,14 @@ function mockClient(insertResult: { data?: unknown; error?: unknown }) {
         },
       };
     },
-    rpc(name: string, args: Record<string, unknown>) {
-      rpcCalls.push([name, args]);
-      return Promise.resolve({ data: undefined, error: null });
-    },
   };
   return client as unknown as Client & {
-    _rpcCalls: [string, Record<string, unknown>][];
     _insertPayload: () => Record<string, unknown> | undefined;
   };
 }
 
 describe('sendMessage (MV-S6-02)', () => {
-  it('inserts the trimmed body and emits message.sent on the offer', async () => {
+  it('inserts the trimmed body', async () => {
     const c = mockClient({ data: { id: 'm1', offer_id: OFFER_ID, body: 'hi' }, error: null });
     const message = await sendMessage(c, SENDER_ID, { offerId: OFFER_ID, body: '  hi  ' });
     expect(message).toMatchObject({ id: 'm1' });
@@ -46,15 +41,6 @@ describe('sendMessage (MV-S6-02)', () => {
       sender_id: SENDER_ID,
       body: 'hi',
     });
-    expect(c._rpcCalls).toContainEqual([
-      'emit_event',
-      expect.objectContaining({
-        p_actor_id: SENDER_ID,
-        p_type: 'message.sent',
-        p_entity: 'offer',
-        p_entity_id: OFFER_ID,
-      }),
-    ]);
   });
 
   it('rejects an empty body at the zod boundary', async () => {

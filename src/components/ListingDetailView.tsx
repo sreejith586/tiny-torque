@@ -25,6 +25,7 @@ import { listPublicCollectionItems } from '@/domain/garage';
 import type { GarageItem } from '@/domain/garage';
 import type { PublicProfileRow } from '@/types/database';
 import MediaImage from './MediaImage';
+import ReportPrompt from './ReportPrompt';
 import styles from './Market.module.css';
 
 const COUNTRY: Record<string, string> = { AE: 'UAE', IN: 'India' };
@@ -363,6 +364,15 @@ export default function ListingDetailView({
           </div>
         </div>
       </div>
+
+      {userId && !isOwner && (
+        <ReportPrompt
+          targetType="listing"
+          targetId={listing.id}
+          targetName={[listing.brand, listing.model].filter(Boolean).join(' ')}
+          label="Report listing"
+        />
+      )}
 
       {!isOwner && !offersEnabled && (
         <>

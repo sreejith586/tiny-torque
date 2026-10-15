@@ -764,7 +764,83 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "buy_now":
+            "admin_search_users":
+{ Args: { "p_limit"?: number,"p_query": string }; Returns: {
+              "account_type": Database["public"]['Enums']["account_type"],
+"bio": string | null,
+"city": string | null,
+"country_code": string,
+"created_at": string,
+"deleted_at": string | null,
+"display_name": string,
+"handle": string,
+"handle_changed_at": string | null,
+"id": string,
+"level": number,
+"location": string | null,
+"mobile": string | null,
+"onboarding_completed_at": string | null,
+"photo_url": string | null,
+"plan": Database["public"]['Enums']["plan_tier"],
+"pro_until": string | null,
+"rating_avg": number | null,
+"rating_count": number,
+"role": Database["public"]['Enums']["user_role"],
+"scan_quota_bonus": number,
+"scan_quota_reset_at": string,
+"scan_quota_used": number,
+"store_name": string | null,
+"suspended_until": string | null,
+"tokens": number,
+"tutorial_dismissed_at": string | null,
+"updated_at": string,
+"xp": number
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "profiles"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
+"admin_set_suspension":
+{ Args: { "p_days"?: number,"p_user_id": string }; Returns: {
+              "account_type": Database["public"]['Enums']["account_type"],
+"bio": string | null,
+"city": string | null,
+"country_code": string,
+"created_at": string,
+"deleted_at": string | null,
+"display_name": string,
+"handle": string,
+"handle_changed_at": string | null,
+"id": string,
+"level": number,
+"location": string | null,
+"mobile": string | null,
+"onboarding_completed_at": string | null,
+"photo_url": string | null,
+"plan": Database["public"]['Enums']["plan_tier"],
+"pro_until": string | null,
+"rating_avg": number | null,
+"rating_count": number,
+"role": Database["public"]['Enums']["user_role"],
+"scan_quota_bonus": number,
+"scan_quota_reset_at": string,
+"scan_quota_used": number,
+"store_name": string | null,
+"suspended_until": string | null,
+"tokens": number,
+"tutorial_dismissed_at": string | null,
+"updated_at": string,
+"xp": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "profiles"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"buy_now":
 { Args: { "p_listing_id": string }; Returns: {
               "amount": number | null,
 "buyer_id": string,
@@ -812,6 +888,29 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"create_report":
+{ Args: { "p_notes"?: string,"p_reason"?: string,"p_target_id": string,"p_target_name"?: string,"p_target_type": string }; Returns: {
+              "created_at": string,
+"deleted_at": string | null,
+"id": string,
+"notes": string | null,
+"reason": string | null,
+"reporter_id": string,
+"resolution_note": string | null,
+"resolved_at": string | null,
+"resolved_by": string | null,
+"status": Database["public"]['Enums']["report_status"],
+"target_id": string | null,
+"target_name": string | null,
+"target_type": string,
+"updated_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "reports"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "dearmor":
 { Args: { "": string }; Returns: string
                            },
@@ -856,6 +955,29 @@ isOneToOne: false
 "redeem_invite":
 { Args: { "p_code": string }; Returns: undefined
                            },
+"resolve_report":
+{ Args: { "p_action": string,"p_report_id": string,"p_resolution_note"?: string }; Returns: {
+              "created_at": string,
+"deleted_at": string | null,
+"id": string,
+"notes": string | null,
+"reason": string | null,
+"reporter_id": string,
+"resolution_note": string | null,
+"resolved_at": string | null,
+"resolved_by": string | null,
+"status": Database["public"]['Enums']["report_status"],
+"target_id": string | null,
+"target_name": string | null,
+"target_type": string,
+"updated_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "reports"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "show_limit":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
