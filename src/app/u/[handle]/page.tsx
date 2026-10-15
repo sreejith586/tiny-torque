@@ -54,12 +54,22 @@ export default async function PublicProfilePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { handle } = await params;
-  const result = await loadProfile(handle, await searchParams);
+  const sp = await searchParams;
+  const result = await loadProfile(handle, sp);
   if (!result) notFound();
+
+  let viewerId: string | undefined;
+  if (!isVisualHarness(sp)) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    viewerId = user?.id;
+  }
 
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
-      <PublicProfileView profile={result.profile} items={result.items} />
+      <PublicProfileView profile={result.profile} items={result.items} viewerId={viewerId} />
     </main>
   );
 }
