@@ -174,6 +174,7 @@ function OfferRowCard({
   sellerName,
   reviewed,
   onReviewSubmitted,
+  dealChatEnabled,
 }: {
   offer: InboxOffer;
   viewer: 'buyer' | 'seller';
@@ -181,6 +182,7 @@ function OfferRowCard({
   sellerName?: string;
   reviewed?: boolean;
   onReviewSubmitted?: (offerId: string) => void;
+  dealChatEnabled?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -260,6 +262,21 @@ function OfferRowCard({
           ))}
         </div>
       )}
+      {dealChatEnabled && (offer.status === 'accepted' || offer.status === 'completed') && (
+        <Link
+          href={`/deals/${offer.id}`}
+          className="btn-secondary"
+          style={{
+            width: 'auto',
+            display: 'inline-flex',
+            padding: '8px 10px',
+            fontSize: 12,
+            marginTop: 10,
+          }}
+        >
+          Open thread
+        </Link>
+      )}
       {viewer === 'buyer' && offer.status === 'completed' && !reviewed && onReviewSubmitted && (
         <ReviewPrompt
           offer={offer}
@@ -281,11 +298,13 @@ function ListingGroup({
   viewer,
   reviewedOfferIds,
   onReviewSubmitted,
+  dealChatEnabled,
 }: {
   group: InboxGroup;
   viewer: 'buyer' | 'seller';
   reviewedOfferIds?: Set<string>;
   onReviewSubmitted?: (offerId: string) => void;
+  dealChatEnabled?: boolean;
 }) {
   const { listing, offers } = group;
   return (
@@ -342,6 +361,7 @@ function ListingGroup({
           sellerName={listing?.seller_name ?? 'the seller'}
           reviewed={reviewedOfferIds?.has(offer.id)}
           onReviewSubmitted={onReviewSubmitted}
+          dealChatEnabled={dealChatEnabled}
         />
       ))}
     </div>
@@ -352,10 +372,12 @@ export default function OffersInboxView({
   initialReceived,
   initialSent,
   initialReviewedOfferIds,
+  dealChatEnabled,
 }: {
   initialReceived: InboxGroup[];
   initialSent: InboxGroup[];
   initialReviewedOfferIds?: string[];
+  dealChatEnabled?: boolean;
 }) {
   const [tab, setTab] = useState<Tab>('received');
   const [reviewedOfferIds, setReviewedOfferIds] = useState(
@@ -401,6 +423,7 @@ export default function OffersInboxView({
               key={group.listing?.id ?? group.offers[0]!.listing_id}
               group={group}
               viewer="seller"
+              dealChatEnabled={dealChatEnabled}
             />
           ))
         ))}
@@ -421,6 +444,7 @@ export default function OffersInboxView({
               viewer="buyer"
               reviewedOfferIds={reviewedOfferIds}
               onReviewSubmitted={markReviewed}
+              dealChatEnabled={dealChatEnabled}
             />
           ))
         ))}
