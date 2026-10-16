@@ -8,11 +8,10 @@ import { createClient } from '@/lib/supabase/client';
 import { addCollectionItem, findPossibleDuplicates } from '@/domain/garage';
 import type { CollectionItemRow } from '@/domain/garage';
 import { getProfile } from '@/domain/identity';
-import { photoLimit } from '@/domain/entitlements';
+import { photoLimit, isProActive } from '@/domain/entitlements';
 import { uploadItemMedia } from '@/domain/media';
 import { compressImage } from '@/lib/image';
 import { BoltIcon, CameraIcon, ChevronRightIcon, FileIcon } from '@/components/icons';
-import type { Plan } from '@/types/database';
 
 const CONDITIONS = ['mint', 'near-mint', 'good', 'played', 'damaged'];
 const RARITIES = ['common', 'uncommon', 'rare', 'super-rare', 'treasure-hunt', 'chase'];
@@ -22,8 +21,8 @@ export default function AddCarPage() {
   const router = useRouter();
 
   const [userId, setUserId] = useState<string | null>(null);
-  const [plan, setPlan] = useState<Plan>('free');
-  const maxPhotos = photoLimit(plan);
+  const [isPro, setIsPro] = useState(false);
+  const maxPhotos = photoLimit(isPro);
 
   // Chooser screen (D-062, garage-log-147.html addChooserView) — Scan/Import link straight to
   // their own pages same as before; Manual reveals the form below instead of navigating.
@@ -62,7 +61,7 @@ export default function AddCarPage() {
       setUserId(uid);
       if (uid) {
         const profile = await getProfile(supabase, uid).catch(() => null);
-        if (profile) setPlan(profile.plan);
+        if (profile) setIsPro(isProActive(profile));
       }
     });
   }, [supabase]);
@@ -293,7 +292,7 @@ export default function AddCarPage() {
             >
               + Photo
             </button>
-          ) : plan === 'free' ? (
+          ) : !isPro ? (
             // Entitlement gate (F-02): free = 1 photo; more is a Pro feature (paywall placeholder).
             <div
               className="panel"
@@ -305,7 +304,9 @@ export default function AddCarPage() {
                 fontSize: 12,
               }}
             >
-              <span className="muted">1 photo on Free — upgrade to Pro for up to 8.</span>
+              <span className="muted">
+                1 photo on Free — <Link href="/tokens">upgrade to Pro</Link> for up to 8.
+              </span>
             </div>
           ) : null}
         </div>
