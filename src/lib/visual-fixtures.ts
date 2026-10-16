@@ -1,6 +1,7 @@
 import type { ProfileRow, CountryRow, PublicProfileRow } from '@/types/database';
 import type { GarageItem } from '@/domain/garage';
 import type { Listing } from '@/domain/marketplace';
+import type { TokenPackRow, TokenLedgerRow } from '@/domain/tokens';
 
 // D-027 / D-041 visual-baseline harness. `?__visual=1` makes the signed-in pages (garage, car
 // detail, profile; add/scan/offers need no data) render this deterministic fixture data with no
@@ -252,5 +253,54 @@ export const FIXTURE_LISTINGS: Listing[] = [
     open_to_offers: false,
     open_to_trade: true,
     media: [{ id: 'fix-l3', url: PHOTO }],
+  },
+];
+
+// S7 tokens store / history (MV-S7-05).
+export const FIXTURE_PACKS: TokenPackRow[] = [
+  {
+    id: '30000000-0000-4000-8000-000000000001',
+    sku: 'pack_small',
+    tokens: 50,
+    price_amount: 19,
+    price_currency: 'AED',
+    stripe_price_id: null,
+    active: true,
+    sort_order: 1,
+  },
+  {
+    id: '30000000-0000-4000-8000-000000000002',
+    sku: 'pack_large',
+    tokens: 150,
+    price_amount: 49,
+    price_currency: 'AED',
+    stripe_price_id: null,
+    active: true,
+    sort_order: 2,
+  },
+];
+
+export const FIXTURE_LEDGER: TokenLedgerRow[] = [
+  {
+    id: '40000000-0000-4000-8000-000000000001',
+    user_id: OWNER,
+    delta: 50,
+    balance_after: 50,
+    reason: 'purchase',
+    ref_type: 'token_purchase',
+    ref_id: null,
+    idempotency_key: 'fix-evt-1',
+    created_at: '2026-09-05T08:00:00.000Z',
+  },
+  {
+    id: '40000000-0000-4000-8000-000000000002',
+    user_id: OWNER,
+    delta: -20,
+    balance_after: 30,
+    reason: 'spend_listing_slot',
+    ref_type: null,
+    ref_id: null,
+    idempotency_key: null,
+    created_at: '2026-09-10T08:00:00.000Z',
   },
 ];
