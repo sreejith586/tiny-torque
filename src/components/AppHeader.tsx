@@ -19,6 +19,7 @@ export default async function AppHeader() {
         displayName={null}
         photoMediaId={null}
         initialUnreadCount={0}
+        initialTokens={0}
         viewerId={null}
       />
     );
@@ -34,6 +35,7 @@ export default async function AppHeader() {
       displayName={profile?.display_name ?? null}
       photoMediaId={profile?.photo_url ?? null}
       initialUnreadCount={unreadCount}
+      initialTokens={profile?.tokens ?? 0}
       viewerId={user.id}
     />
   );

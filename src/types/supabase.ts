@@ -318,6 +318,37 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"entitlement_grants": {
+                  Row: {
+                    "created_at": string,"expires_at": string | null,"id": string,"kind": Database["public"]['Enums']["entitlement_grant_kind"],"ledger_id": string | null,"quantity": number,"user_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"expires_at"?: string | null,"id"?: string,"kind": Database["public"]['Enums']["entitlement_grant_kind"],"ledger_id"?: string | null,"quantity"?: number,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"expires_at"?: string | null,"id"?: string,"kind"?: Database["public"]['Enums']["entitlement_grant_kind"],"ledger_id"?: string | null,"quantity"?: number,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "entitlement_grants_ledger_id_fkey"
+      columns: ["ledger_id"]
+isOneToOne: false
+      referencedRelation: "token_ledger"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "entitlement_grants_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "entitlement_grants_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"feature_flags": {
                   Row: {
                     "audience": NonNullable<Json>,"description": string | null,"enabled": boolean,"key": string,"updated_at": string,"updated_by": string | null
@@ -683,6 +714,81 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"token_ledger": {
+                  Row: {
+                    "balance_after": number,"created_at": string,"delta": number,"id": string,"idempotency_key": string | null,"reason": Database["public"]['Enums']["token_ledger_reason"],"ref_id": string | null,"ref_type": string | null,"user_id": string
+                  }
+                  Insert: {
+                    "balance_after": number,"created_at"?: string,"delta": number,"id"?: string,"idempotency_key"?: string | null,"reason": Database["public"]['Enums']["token_ledger_reason"],"ref_id"?: string | null,"ref_type"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "balance_after"?: number,"created_at"?: string,"delta"?: number,"id"?: string,"idempotency_key"?: string | null,"reason"?: Database["public"]['Enums']["token_ledger_reason"],"ref_id"?: string | null,"ref_type"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "token_ledger_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "token_ledger_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"token_packs": {
+                  Row: {
+                    "active": boolean,"id": string,"price_amount": number,"price_currency": string,"sku": string,"sort_order": number,"stripe_price_id": string | null,"tokens": number
+                  }
+                  Insert: {
+                    "active"?: boolean,"id"?: string,"price_amount": number,"price_currency"?: string,"sku": string,"sort_order"?: number,"stripe_price_id"?: string | null,"tokens": number
+                  }
+                  Update: {
+                    "active"?: boolean,"id"?: string,"price_amount"?: number,"price_currency"?: string,"sku"?: string,"sort_order"?: number,"stripe_price_id"?: string | null,"tokens"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"token_purchases": {
+                  Row: {
+                    "amount": number,"created_at": string,"currency": string,"id": string,"ledger_id": string | null,"pack_id": string,"paid_at": string | null,"provider": Database["public"]['Enums']["token_purchase_provider"],"provider_event_id": string | null,"provider_session_id": string | null,"status": Database["public"]['Enums']["token_purchase_status"],"user_id": string
+                  }
+                  Insert: {
+                    "amount": number,"created_at"?: string,"currency": string,"id"?: string,"ledger_id"?: string | null,"pack_id": string,"paid_at"?: string | null,"provider"?: Database["public"]['Enums']["token_purchase_provider"],"provider_event_id"?: string | null,"provider_session_id"?: string | null,"status"?: Database["public"]['Enums']["token_purchase_status"],"user_id": string
+                  }
+                  Update: {
+                    "amount"?: number,"created_at"?: string,"currency"?: string,"id"?: string,"ledger_id"?: string | null,"pack_id"?: string,"paid_at"?: string | null,"provider"?: Database["public"]['Enums']["token_purchase_provider"],"provider_event_id"?: string | null,"provider_session_id"?: string | null,"status"?: Database["public"]['Enums']["token_purchase_status"],"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "token_purchases_ledger_id_fkey"
+      columns: ["ledger_id"]
+isOneToOne: false
+      referencedRelation: "token_ledger"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "token_purchases_pack_id_fkey"
+      columns: ["pack_id"]
+isOneToOne: false
+      referencedRelation: "token_packs"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "token_purchases_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "token_purchases_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"wishlist_items": {
                   Row: {
                     "brand": string | null,"catalog_model_id": string | null,"created_at": string,"currency": string | null,"deleted_at": string | null,"id": string,"max_price": number | null,"model": string | null,"notes": string | null,"notify": boolean,"owner_id": string,"updated_at": string
@@ -764,7 +870,25 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "admin_search_users":
+            "admin_adjust_tokens":
+{ Args: { "p_delta": number,"p_note"?: string,"p_user": string }; Returns: {
+              "balance_after": number,
+"created_at": string,
+"delta": number,
+"id": string,
+"idempotency_key": string | null,
+"reason": Database["public"]['Enums']["token_ledger_reason"],
+"ref_id": string | null,
+"ref_type": string | null,
+"user_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "token_ledger"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"admin_search_users":
 { Args: { "p_limit"?: number,"p_query": string }; Returns: {
               "account_type": Database["public"]['Enums']["account_type"],
 "bio": string | null,
@@ -911,6 +1035,24 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"credit_tokens":
+{ Args: { "p_delta": number,"p_key"?: string,"p_reason": Database["public"]['Enums']["token_ledger_reason"],"p_ref_id"?: string,"p_ref_type"?: string,"p_user": string }; Returns: {
+              "balance_after": number,
+"created_at": string,
+"delta": number,
+"id": string,
+"idempotency_key": string | null,
+"reason": Database["public"]['Enums']["token_ledger_reason"],
+"ref_id": string | null,
+"ref_type": string | null,
+"user_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "token_ledger"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "dearmor":
 { Args: { "": string }; Returns: string
                            },
@@ -984,6 +1126,22 @@ isOneToOne: false
 "show_trgm":
 { Args: { "": string }; Returns: (string)[]
                            },
+"spend_tokens":
+{ Args: { "p_cost": number,"p_expires_at"?: string,"p_grant_kind": Database["public"]['Enums']["entitlement_grant_kind"],"p_key"?: string,"p_quantity"?: number,"p_reason": Database["public"]['Enums']["token_ledger_reason"],"p_ref_id"?: string,"p_ref_type"?: string }; Returns: {
+              "created_at": string,
+"expires_at": string | null,
+"id": string,
+"kind": Database["public"]['Enums']["entitlement_grant_kind"],
+"ledger_id": string | null,
+"quantity": number,
+"user_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "entitlement_grants"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "transition_offer":
 { Args: { "p_action": string,"p_offer_id": string }; Returns: {
               "amount": number | null,
@@ -1010,7 +1168,7 @@ isOneToOne: false
       } }
           }
           Enums: {
-            "account_type": "individual"|"shop","catalog_status": "proposed"|"verified","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed"|"reserved","listing_type": "sale"|"trade"|"both","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","model_status": "proposed"|"verified"|"merged","notification_type": "offer_received"|"offer_accepted"|"offer_declined"|"message"|"listing_sold"|"review_received"|"badge_unlocked"|"wishlist_match"|"system","offer_status": "pending"|"accepted"|"declined"|"withdrawn"|"expired"|"completed"|"cancelled","offer_type": "cash"|"buy_now"|"trade","plan_tier": "free"|"pro","report_status": "open"|"reviewed"|"dismissed","scan_kind": "single"|"group"|"visual_search","scan_status": "queued"|"running"|"done"|"failed","user_role": "user"|"admin"
+            "account_type": "individual"|"shop","catalog_status": "proposed"|"verified","entitlement_grant_kind": "listing_slot"|"scan_pack"|"pro_30d","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed"|"reserved","listing_type": "sale"|"trade"|"both","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","model_status": "proposed"|"verified"|"merged","notification_type": "offer_received"|"offer_accepted"|"offer_declined"|"message"|"listing_sold"|"review_received"|"badge_unlocked"|"wishlist_match"|"system","offer_status": "pending"|"accepted"|"declined"|"withdrawn"|"expired"|"completed"|"cancelled","offer_type": "cash"|"buy_now"|"trade","plan_tier": "free"|"pro","report_status": "open"|"reviewed"|"dismissed","scan_kind": "single"|"group"|"visual_search","scan_status": "queued"|"running"|"done"|"failed","token_ledger_reason": "purchase"|"spend_listing_slot"|"spend_scan_pack"|"spend_pro_30d"|"refund"|"admin_adjust"|"promo","token_purchase_provider": "stripe"|"razorpay","token_purchase_status": "created"|"paid"|"failed"|"refunded","user_role": "user"|"admin"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -1126,7 +1284,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "account_type": ["individual", "shop"],"catalog_status": ["proposed", "verified"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed", "reserved"],"listing_type": ["sale", "trade", "both"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"model_status": ["proposed", "verified", "merged"],"notification_type": ["offer_received", "offer_accepted", "offer_declined", "message", "listing_sold", "review_received", "badge_unlocked", "wishlist_match", "system"],"offer_status": ["pending", "accepted", "declined", "withdrawn", "expired", "completed", "cancelled"],"offer_type": ["cash", "buy_now", "trade"],"plan_tier": ["free", "pro"],"report_status": ["open", "reviewed", "dismissed"],"scan_kind": ["single", "group", "visual_search"],"scan_status": ["queued", "running", "done", "failed"],"user_role": ["user", "admin"]
+            "account_type": ["individual", "shop"],"catalog_status": ["proposed", "verified"],"entitlement_grant_kind": ["listing_slot", "scan_pack", "pro_30d"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed", "reserved"],"listing_type": ["sale", "trade", "both"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"model_status": ["proposed", "verified", "merged"],"notification_type": ["offer_received", "offer_accepted", "offer_declined", "message", "listing_sold", "review_received", "badge_unlocked", "wishlist_match", "system"],"offer_status": ["pending", "accepted", "declined", "withdrawn", "expired", "completed", "cancelled"],"offer_type": ["cash", "buy_now", "trade"],"plan_tier": ["free", "pro"],"report_status": ["open", "reviewed", "dismissed"],"scan_kind": ["single", "group", "visual_search"],"scan_status": ["queued", "running", "done", "failed"],"token_ledger_reason": ["purchase", "spend_listing_slot", "spend_scan_pack", "spend_pro_30d", "refund", "admin_adjust", "promo"],"token_purchase_provider": ["stripe", "razorpay"],"token_purchase_status": ["created", "paid", "failed", "refunded"],"user_role": ["user", "admin"]
           }
         }
 } as const
