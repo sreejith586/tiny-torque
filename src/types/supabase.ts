@@ -341,6 +341,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "entitlement_grants_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
     }
                   ]
                 },"feature_flags": {
@@ -725,6 +731,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "token_ledger_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
     }
                   ]
                 },"token_packs": {
@@ -738,7 +750,7 @@ isOneToOne: false
                     "active"?: boolean,"id"?: string,"price_amount"?: number,"price_currency"?: string,"sku"?: string,"sort_order"?: number,"stripe_price_id"?: string | null,"tokens"?: number
                   }
                   Relationships: [
-
+                    
                   ]
                 },"token_purchases": {
                   Row: {
@@ -768,6 +780,12 @@ isOneToOne: false
       columns: ["user_id"]
 isOneToOne: false
       referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "token_purchases_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
       referencedColumns: ["id"]
     }
                   ]
@@ -854,7 +872,15 @@ isOneToOne: false
           Functions: {
             "admin_adjust_tokens":
 { Args: { "p_delta": number,"p_note"?: string,"p_user": string }; Returns: {
-              "balance_after": number,"created_at": string,"delta": number,"id": string,"idempotency_key": string | null,"reason": Database["public"]['Enums']["token_ledger_reason"],"ref_id": string | null,"ref_type": string | null,"user_id": string
+              "balance_after": number,
+"created_at": string,
+"delta": number,
+"id": string,
+"idempotency_key": string | null,
+"reason": Database["public"]['Enums']["token_ledger_reason"],
+"ref_id": string | null,
+"ref_type": string | null,
+"user_id": string
             }
                           SetofOptions: {
         from: "*"
@@ -1010,8 +1036,16 @@ isOneToOne: false
         isSetofReturn: false
       } },
 "credit_tokens":
-{ Args: { "p_delta": number,"p_key"?: string,"p_ref_id"?: string,"p_ref_type"?: string,"p_reason": Database["public"]['Enums']["token_ledger_reason"],"p_user": string }; Returns: {
-              "balance_after": number,"created_at": string,"delta": number,"id": string,"idempotency_key": string | null,"reason": Database["public"]['Enums']["token_ledger_reason"],"ref_id": string | null,"ref_type": string | null,"user_id": string
+{ Args: { "p_delta": number,"p_key"?: string,"p_reason": Database["public"]['Enums']["token_ledger_reason"],"p_ref_id"?: string,"p_ref_type"?: string,"p_user": string }; Returns: {
+              "balance_after": number,
+"created_at": string,
+"delta": number,
+"id": string,
+"idempotency_key": string | null,
+"reason": Database["public"]['Enums']["token_ledger_reason"],
+"ref_id": string | null,
+"ref_type": string | null,
+"user_id": string
             }
                           SetofOptions: {
         from: "*"
@@ -1093,8 +1127,14 @@ isOneToOne: false
 { Args: { "": string }; Returns: (string)[]
                            },
 "spend_tokens":
-{ Args: { "p_cost": number,"p_expires_at"?: string,"p_grant_kind": Database["public"]['Enums']["entitlement_grant_kind"],"p_key"?: string,"p_quantity"?: number,"p_ref_id"?: string,"p_ref_type"?: string,"p_reason": Database["public"]['Enums']["token_ledger_reason"] }; Returns: {
-              "created_at": string,"expires_at": string | null,"id": string,"kind": Database["public"]['Enums']["entitlement_grant_kind"],"ledger_id": string | null,"quantity": number,"user_id": string
+{ Args: { "p_cost": number,"p_expires_at"?: string,"p_grant_kind": Database["public"]['Enums']["entitlement_grant_kind"],"p_key"?: string,"p_quantity"?: number,"p_reason": Database["public"]['Enums']["token_ledger_reason"],"p_ref_id"?: string,"p_ref_type"?: string }; Returns: {
+              "created_at": string,
+"expires_at": string | null,
+"id": string,
+"kind": Database["public"]['Enums']["entitlement_grant_kind"],
+"ledger_id": string | null,
+"quantity": number,
+"user_id": string
             }
                           SetofOptions: {
         from: "*"
