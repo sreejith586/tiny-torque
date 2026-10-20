@@ -1188,6 +1188,9 @@ isOneToOne: false
 "media_is_public":
 { Args: { "p_media_id": string }; Returns: boolean
                            },
+"mv_is_backend_caller":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
 "pgp_armor_headers":
 { Args: { "": string }; Returns: Record<string, unknown>[]
                            },
@@ -1381,7 +1384,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "account_type": ["individual", "shop"],"catalog_status": ["proposed", "verified"],"entitlement_grant_kind": ["listing_slot", "scan_pack", "pro_30d"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed", "reserved"],"listing_type": ["sale", "trade", "both"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"model_status": ["proposed", "verified", "merged"],"notification_type": ["offer_received", "offer_accepted", "offer_declined", "message", "listing_sold", "review_received", "badge_unlocked", "wishlist_match", "system"],"offer_status": ["pending", "accepted", "declined", "withdrawn", "expired", "completed", "cancelled"],"offer_type": ["cash", "buy_now", "trade"],"plan_tier": ["free", "pro"],"report_status": ["open", "reviewed", "dismissed"],"scan_kind": ["single", "group", "visual_search"],"scan_status": ["queued", "running", "done", "failed"],"token_ledger_reason": ["purchase", "spend_listing_slot", "spend_scan_pack", "spend_pro_30d", "refund", "admin_adjust", "promo"],"token_purchase_provider": ["stripe", "razorpay"],"token_purchase_status": ["created", "paid", "failed", "refunded"],"user_role": ["user", "admin"]
+            "account_type": ["individual", "shop"],"catalog_status": ["proposed", "verified"],"entitlement_grant_kind": ["listing_slot", "scan_pack", "pro_30d"],"feedback_kind": ["bug", "idea", "other"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed", "reserved"],"listing_type": ["sale", "trade", "both"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"model_status": ["proposed", "verified", "merged"],"notification_type": ["offer_received", "offer_accepted", "offer_declined", "message", "listing_sold", "review_received", "badge_unlocked", "wishlist_match", "system"],"offer_status": ["pending", "accepted", "declined", "withdrawn", "expired", "completed", "cancelled"],"offer_type": ["cash", "buy_now", "trade"],"plan_tier": ["free", "pro"],"report_status": ["open", "reviewed", "dismissed"],"scan_kind": ["single", "group", "visual_search"],"scan_status": ["queued", "running", "done", "failed"],"token_ledger_reason": ["purchase", "spend_listing_slot", "spend_scan_pack", "spend_pro_30d", "refund", "admin_adjust", "promo"],"token_purchase_provider": ["stripe", "razorpay"],"token_purchase_status": ["created", "paid", "failed", "refunded"],"user_role": ["user", "admin"]
           }
         }
 } as const

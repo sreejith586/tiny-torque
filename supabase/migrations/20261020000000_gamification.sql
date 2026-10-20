@@ -80,7 +80,10 @@ create trigger collection_items_emit_created
   after insert on public.collection_items
   for each row execute function public.emit_item_created_event();
 
--- First photo on an item (+5 XP, F-13): only when no other live media row exists for the item.
+-- First photo on an item (+5 XP, F-13): only when no other live media row for the item sorts
+-- before this one. AFTER ROW triggers fire once the whole statement has inserted, so a multi-row
+-- insert's rows all see each other — a plain "no other row exists" check would emit nothing. The
+-- (created_at, id) tiebreak makes exactly one row of any batch the first.
 create or replace function public.emit_item_photo_added_event() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
@@ -88,6 +91,7 @@ begin
     select 1 from public.media m
     where m.kind = 'item' and m.entity_id = new.entity_id and m.id <> new.id
       and m.status in ('uploading', 'ready')
+      and (m.created_at, m.id) < (new.created_at, new.id)
   ) then
     insert into public.domain_events (actor_id, type, entity, entity_id, payload)
       values (new.owner_id, 'item.photo_added', 'item', new.entity_id,
@@ -117,6 +121,16 @@ create trigger profiles_guard_gamification
   before update on public.profiles
   for each row execute function public.guard_gamification_columns();
 
+-- ---------- service-role check shared by the two RPCs ----------
+-- auth.role() can be NULL (older auth schema versions / test harnesses only set request.jwt.claims),
+-- and `NULL <> 'service_role'` is NULL — which would silently let the authorization check through.
+-- Coalesce, and also read the claims JSON directly, so "not the service role" is always a real false.
+create or replace function public.mv_is_backend_caller() returns boolean
+language sql stable as $$
+  select coalesce(auth.role(), '') = 'service_role'
+      or coalesce(nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role', '') = 'service_role';
+$$;
+
 -- ---------- gamification_events: the consumer's read path ----------
 -- domain_events is admin-read-only (0002). This returns just the events that feed the caller's own
 -- XP/badges: everything they did themselves, plus the two cross-actor cases — offer.completed is
@@ -136,7 +150,7 @@ language sql stable security definer set search_path = public as $$
   from public.domain_events e
   left join public.offers o on e.type = 'offer.completed' and o.id = e.entity_id
   where p_user is not null
-    and (p_user = auth.uid() or public.is_admin() or auth.role() = 'service_role')
+    and (p_user = auth.uid() or public.is_admin() or public.mv_is_backend_caller())
     and e.type in ('item.created', 'item.photo_added', 'listing.published', 'offer.completed',
                    'review.created', 'user.opened')
     and (
@@ -168,7 +182,7 @@ declare
   v_new       text[] := '{}';
 begin
   if p_user is null then raise exception 'not_authorized' using errcode = '42501'; end if;
-  if p_user is distinct from auth.uid() and not public.is_admin() and auth.role() <> 'service_role' then
+  if p_user is distinct from auth.uid() and not public.is_admin() and not public.mv_is_backend_caller() then
     raise exception 'not_authorized' using errcode = '42501';
   end if;
   if p_xp < 0 or p_level < 0 then raise exception 'invalid_state' using errcode = 'P0001'; end if;

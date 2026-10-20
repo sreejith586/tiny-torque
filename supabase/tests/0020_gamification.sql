@@ -4,7 +4,7 @@
 -- delete_account's cascade. Run via CI's pgTAP job.
 
 begin;
-select plan(22);
+select plan(24);
 
 insert into auth.users (id) values
   ('83000000-0000-0000-0000-00000000000a'),
@@ -80,6 +80,8 @@ select is(
      -> 'newly_unlocked'),
   '["first_add"]'::jsonb, 'apply_gamification returns the newly unlocked badge keys'
 );
+-- domain_events is admin-read-only (0002): count as the superuser, not as the user.
+select tests.clear_authentication();
 select is(
   (select xp from public.profiles where id = '83000000-0000-0000-0000-00000000000a'),
   15, 'xp is written through the RPC'
@@ -104,11 +106,13 @@ select is(
     where user_id = '83000000-0000-0000-0000-00000000000a' and type = 'badge_unlocked'),
   1, 'a badge_unlocked notification is created for the unlock'
 );
+select tests.authenticate_as('83000000-0000-0000-0000-00000000000a');
 select is(
   (select public.apply_gamification('83000000-0000-0000-0000-00000000000a', 15, 1,
      '[{"key":"first_add","progress":1,"unlocked":true}]'::jsonb) -> 'newly_unlocked'),
   '[]'::jsonb, 'replaying the same state unlocks nothing new (idempotent)'
 );
+select tests.clear_authentication();
 select is(
   (select count(*)::int from public.notifications
     where user_id = '83000000-0000-0000-0000-00000000000a' and type = 'badge_unlocked'),
