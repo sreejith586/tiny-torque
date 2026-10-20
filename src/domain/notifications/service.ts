@@ -25,7 +25,7 @@ export function notificationText(n: Pick<NotificationRow, 'type'>): string {
 }
 
 /** Pure: where tapping the notification should go, or null when there's nowhere to deep-link yet
- * (badge_unlocked/wishlist_match/system — none of those surfaces exist to link into). */
+ * (wishlist_match/system — neither surface exists to link into). */
 export function notificationLink(n: Pick<NotificationRow, 'type' | 'payload'>): string | null {
   const payload = (n.payload ?? {}) as Record<string, unknown>;
   switch (n.type) {
@@ -37,6 +37,7 @@ export function notificationLink(n: Pick<NotificationRow, 'type' | 'payload'>): 
     case 'message':
       return typeof payload.offer_id === 'string' ? `/deals/${payload.offer_id}` : '/offers';
     case 'review_received':
+    case 'badge_unlocked': // the badge grid lives on the profile stats dashboard (MV-S8-03)
       return '/profile';
     default:
       return null;

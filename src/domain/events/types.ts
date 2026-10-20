@@ -1,11 +1,15 @@
 // Typed event catalogue — every event name named across 04-feature-specs.md's per-feature
-// "Events" lines, plus invite.redeemed (emitted by the redeem_invite RPC, MV-S1-05).
+// "Events" lines, plus invite.redeemed (emitted by the redeem_invite RPC, MV-S1-05) and the S8
+// additions (D-079): item.photo_added + user.opened (F-13 XP inputs that had no event to count),
+// user.unblocked (settings blocked-users list) and feedback.created (settings feedback form).
 export const EVENT_TYPES = [
   'user.signed_up',
   'user.onboarded',
   'profile.updated',
   'user.deleted',
   'user.blocked',
+  'user.unblocked',
+  'user.opened',
   'user.suspended',
   'user.unsuspended',
   'item.created',
@@ -15,6 +19,7 @@ export const EVENT_TYPES = [
   'item.made_public',
   'item.made_private',
   'item.favorited',
+  'item.photo_added',
   'scan.requested',
   'scan.completed',
   'scan.accepted',
@@ -46,6 +51,7 @@ export const EVENT_TYPES = [
   'report.resolved',
   'review.created',
   'invite.redeemed',
+  'feedback.created',
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

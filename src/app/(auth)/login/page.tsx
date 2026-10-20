@@ -45,6 +45,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const suspended = searchParams.get('suspended') === '1';
+  const deleted = searchParams.get('deleted') === '1';
 
   const [method, setMethod] = useState<Method>('email');
   const [step, setStep] = useState<'identify' | 'otp'>('identify');
@@ -156,6 +157,11 @@ function LoginForm() {
       {suspended && (
         <p className="field-error" style={{ marginTop: 10 }}>
           Your account has been suspended. Contact support if you think this is a mistake.
+        </p>
+      )}
+      {deleted && (
+        <p className="muted" style={{ marginTop: 10, fontSize: 13 }}>
+          Your account has been deleted. Signing in again starts a fresh profile.
         </p>
       )}
 

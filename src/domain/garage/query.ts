@@ -68,6 +68,16 @@ export interface StatRow {
   variant: string | null;
   qty: number;
   price_paid: number;
+  rarity?: string | null;
+}
+
+/** F-02's rarity enum is common/uncommon/rare/super-rare/treasure-hunt/chase, but the column is
+ *  free text (Varun's prototype wrote labels like "Regular" / "Super Treasure Hunt"). "Common" here
+ *  = empty or any of the mainline-ish spellings; everything else counts as rarer than common. */
+const COMMON_RARITY = /^(common|regular|mainline|basic|standard|normal)$/i;
+export function isRarerThanCommon(rarity: string | null | undefined): boolean {
+  const r = (rarity ?? '').trim();
+  return r.length > 0 && !COMMON_RARITY.test(r);
 }
 
 export interface GarageStats {
@@ -77,18 +87,22 @@ export interface GarageStats {
   totalValue: number;
   /** Count of items that share brand+model+variant with at least one other item. */
   duplicates: number;
+  /** Items whose rarity is anything other than common (F-13 treasure_hunter badge). */
+  rareItems: number;
   topBrands: { brand: string; count: number }[];
 }
 
 export function computeStats(rows: StatRow[]): GarageStats {
   let totalQty = 0;
   let totalValue = 0;
+  let rareItems = 0;
   const brandCounts = new Map<string, number>();
   const groupSizes = new Map<string, number>();
 
   for (const r of rows) {
     totalQty += r.qty;
     totalValue += r.price_paid;
+    if (isRarerThanCommon(r.rarity)) rareItems += 1;
     brandCounts.set(r.brand, (brandCounts.get(r.brand) ?? 0) + 1);
     const key = `${r.brand}|${r.model ?? ''}|${r.variant ?? ''}`.toLowerCase();
     groupSizes.set(key, (groupSizes.get(key) ?? 0) + 1);
@@ -102,5 +116,5 @@ export function computeStats(rows: StatRow[]): GarageStats {
     .slice(0, 5)
     .map(([brand, count]) => ({ brand, count }));
 
-  return { totalItems: rows.length, totalQty, totalValue, duplicates, topBrands };
+  return { totalItems: rows.length, totalQty, totalValue, duplicates, rareItems, topBrands };
 }

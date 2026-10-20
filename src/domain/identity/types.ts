@@ -16,4 +16,10 @@ export interface ProfileCreateInput {
 }
 
 /** PATCH semantics: only keys present are written (fixes the Phase-1 upsert null-out bug). */
-export type ProfilePatch = Partial<ProfileCreateInput>;
+export type ProfilePatch = Partial<ProfileCreateInput> & {
+  bio?: string | null;
+  /** A `media` row id (kind 'banner'), not a URL (D-010). */
+  bannerMediaId?: string | null;
+  /** True stamps `tutorial_dismissed_at` (MV-S8-06). */
+  tutorialDismissed?: boolean;
+};

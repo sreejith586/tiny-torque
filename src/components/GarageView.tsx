@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { GarageItem, GarageSort } from '@/domain/garage';
-import { FilterIcon, SortIcon } from './icons';
+import { AddIcon, CameraIcon, FileIcon, FilterIcon, SortIcon } from './icons';
 import CarCard from './CarCard';
 
 const SORT_OPTIONS: { value: GarageSort; label: string }[] = [
@@ -170,14 +170,72 @@ export default function GarageView({
   if (nothingYet) {
     return (
       <div className="empty-state">
-        <p>Your garage is empty.</p>
-        <Link
-          href="/garage/add"
-          className="btn-primary"
-          style={{ marginTop: 12, display: 'inline-flex' }}
-        >
-          Add your first car
-        </Link>
+        <p style={{ fontWeight: 700, color: 'var(--cream)', fontSize: 16 }}>
+          Your garage is empty.
+        </p>
+        <p style={{ fontSize: 13, marginTop: 4 }}>
+          Add your first car — scan a photo, type it in, or import a spreadsheet.
+        </p>
+        {/* MV-S8-06: contextual first-run actions pointing at scan / manual / import. */}
+        <div className="empty-actions">
+          <Link href="/garage/scan" className="empty-action">
+            <span
+              className="add-choice-icon-badge"
+              style={{
+                background: 'color-mix(in srgb, var(--orange) 16%, var(--panel))',
+                color: 'var(--orange)',
+              }}
+            >
+              <CameraIcon size={20} />
+            </span>
+            <span>
+              <span style={{ display: 'block', fontWeight: 700, color: 'var(--cream)' }}>
+                Scan a photo
+              </span>
+              <span className="muted" style={{ fontSize: 12 }}>
+                AI reads the card and fills the details
+              </span>
+            </span>
+          </Link>
+          <Link href="/garage/add" className="empty-action">
+            <span
+              className="add-choice-icon-badge"
+              style={{
+                background: 'color-mix(in srgb, var(--teal) 16%, var(--panel))',
+                color: 'var(--teal)',
+              }}
+            >
+              <AddIcon size={20} />
+            </span>
+            <span>
+              <span style={{ display: 'block', fontWeight: 700, color: 'var(--cream)' }}>
+                Add manually
+              </span>
+              <span className="muted" style={{ fontSize: 12 }}>
+                Brand, model, photos — one at a time
+              </span>
+            </span>
+          </Link>
+          <Link href="/garage/import" className="empty-action">
+            <span
+              className="add-choice-icon-badge"
+              style={{
+                background: 'color-mix(in srgb, var(--violet) 16%, var(--panel))',
+                color: 'var(--violet)',
+              }}
+            >
+              <FileIcon size={20} />
+            </span>
+            <span>
+              <span style={{ display: 'block', fontWeight: 700, color: 'var(--cream)' }}>
+                Import a spreadsheet
+              </span>
+              <span className="muted" style={{ fontSize: 12 }}>
+                CSV or Excel, many cars at once
+              </span>
+            </span>
+          </Link>
+        </div>
       </div>
     );
   }

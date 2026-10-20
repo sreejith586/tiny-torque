@@ -189,3 +189,41 @@ export function HeartIcon({
     </svg>
   );
 }
+
+export function ShareIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="18" cy="5" r="2.5" />
+      <circle cx="6" cy="12" r="2.5" />
+      <circle cx="18" cy="19" r="2.5" />
+      <path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4" />
+    </Base>
+  );
+}
+
+export function TrophyIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M7 4h10v4a5 5 0 0 1-10 0V4z" />
+      <path d="M7 6H4.5a.5.5 0 0 0-.5.5V8a3 3 0 0 0 3 3M17 6h2.5a.5.5 0 0 1 .5.5V8a3 3 0 0 1-3 3" />
+      <path d="M12 13v3M9 20h6M10 16h4v4h-4z" />
+    </Base>
+  );
+}
+
+export function GearIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M5.3 18.7l1.5-1.5M17.2 6.8l1.5-1.5" />
+    </Base>
+  );
+}
+
+export function CheckIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </Base>
+  );
+}

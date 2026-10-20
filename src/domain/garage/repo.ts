@@ -160,7 +160,7 @@ export async function listPage(
 export async function statRows(supabase: Client, userId: string): Promise<StatRow[]> {
   const { data, error } = await supabase
     .from('collection_items')
-    .select('brand, model, variant, qty, price_paid')
+    .select('brand, model, variant, qty, price_paid, rarity')
     .eq('owner_id', userId)
     .is('deleted_at', null);
   if (error) throw error;

@@ -28,8 +28,11 @@ describe('notificationLink (MV-S6-06)', () => {
     expect(notificationLink({ type: 'review_received', payload: {} })).toBe('/profile');
   });
 
-  it('has no link for badge/wishlist/system notifications', () => {
-    expect(notificationLink({ type: 'badge_unlocked', payload: {} })).toBeNull();
+  it('sends badge_unlocked to the profile stats dashboard (MV-S8-03)', () => {
+    expect(notificationLink({ type: 'badge_unlocked', payload: {} })).toBe('/profile');
+  });
+
+  it('has no link for wishlist/system notifications', () => {
     expect(notificationLink({ type: 'wishlist_match', payload: {} })).toBeNull();
     expect(notificationLink({ type: 'system', payload: {} })).toBeNull();
   });
