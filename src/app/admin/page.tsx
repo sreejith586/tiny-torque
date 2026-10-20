@@ -17,9 +17,12 @@ export default function AdminOverviewPage() {
         <Link href="/admin/scan-jobs" className="btn-secondary">
           Scan jobs
         </Link>
+        <Link href="/admin/flags" className="btn-secondary">
+          Feature flags
+        </Link>
       </div>
       <p className="muted" style={{ fontSize: 13, marginTop: 14 }}>
-        More pages (Overview stats, Flags, Invites) land in later sprints.
+        More pages (Overview stats, Invites) land in later sprints.
       </p>
     </div>
   );

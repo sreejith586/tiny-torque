@@ -15,8 +15,24 @@ describe('identity schemas', () => {
       displayName: 'Sree',
       accountType: 'individual',
       countryCode: 'AE',
+      ageConfirmed: true,
+      termsVersion: '1',
     });
     expect(r.success).toBe(true);
+  });
+  it('requires the 18+ confirmation and a terms version (MV-W01-08, 07 P8)', () => {
+    const base = {
+      displayName: 'Sree',
+      accountType: 'individual',
+      countryCode: 'AE',
+      termsVersion: '1',
+    };
+    expect(profileCreateSchema.safeParse(base).success).toBe(false);
+    expect(profileCreateSchema.safeParse({ ...base, ageConfirmed: false }).success).toBe(false);
+    expect(
+      profileCreateSchema.safeParse({ ...base, ageConfirmed: true, termsVersion: '' }).success
+    ).toBe(false);
+    expect(profileCreateSchema.safeParse({ ...base, ageConfirmed: true }).success).toBe(true);
   });
   it('requires a country code (F-01 onboarding v2, MV-S1-04)', () => {
     const r = profileCreateSchema.safeParse({ displayName: 'Sree', accountType: 'individual' });
@@ -28,6 +44,8 @@ describe('identity schemas', () => {
       accountType: 'individual',
       countryCode: 'in',
       city: 'Bengaluru',
+      ageConfirmed: true,
+      termsVersion: '1',
     });
     expect(r.success).toBe(true);
     if (r.success) expect(r.data.countryCode).toBe('IN');

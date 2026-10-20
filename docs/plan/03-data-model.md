@@ -121,6 +121,38 @@ Feeds quota (count of `done` jobs this period), cost dashboard, and the scan-acc
 
 ### 2.23 `invites` (new, pilot gating) `code text pk, created_by, max_uses int, used_count int, expires_at, cohort text`. Onboarding requires a valid code while flag `invite_only` is on.
 
+### 2.24 `world_levels` (new, reference) — F-20, 0012
+
+`level int pk (1–5), name unique, display_slots, decor_slots, visitor_cap, host_cap, price int, min_xp_level int`. Seeded 5 rows (placeholder names/prices, D-070/D-064 status). Public read; no write policies (levels change by migration).
+
+### 2.25 `world_garages` (new) — F-20/F-21, 0012
+
+`user_id pk → profiles, level → world_levels default 1, name (1–40), open_mode enum public/followers/invite, featured_item_id → collection_items null, theme_item_id → world_items null, layout jsonb (zod document, default empty v1), score int, created_at, updated_at`. 1:1, created lazily by `ensure_world_garage()` (no insert policy). Select policy = owner ∨ admin ∨ (not blocked ∧ (public ∨ (followers ∧ viewer follows owner))); `invite` is owner-only until `world_invites` (0013_world_social). Owner update policy for name/open_mode/featured/theme/layout; `world_garages_guard` trigger rejects `level`/`score` changes outside the RPCs (GUC `mv.world_rpc`).
+
+### 2.26 `world_items` (new, reference) — F-27, 0012
+
+`id, sku unique, kind enum decor/theme/tune/trophy/consumable/signage, name, description, price int null (null = earned-only), min_level → world_levels, season_id uuid null (FK in 0014), active, art_path, effect jsonb, sort_order, created_at`. Read `active or is_admin()`; no write policies. Not seeded in W01 — the launch catalogue is the design-pack deliverable, added as data rows.
+
+### 2.27 `world_inventory` (new) — F-27, 0012
+
+`id, user_id → profiles, item_id → world_items, acquired_via enum purchase/earn/promo, ledger_id → token_ledger null, durable bool (set by the RPC: kind ≠ consumable), created_at`. Unique `(user_id, item_id) where durable`. Owner/admin read; **no insert/update/delete policies at all** (rows come from `buy_world_item()`, the earn consumer, admin RPCs).
+
+### 2.28 `token_ledger` (modify) — 0012
+
+`source enum purchased/earned/promo/adjust` (nullable; a BEFORE INSERT trigger derives it from `reason` — purchase/refund → purchased, earn\_\*/expire_earned → earned, promo, admin_adjust → adjust; spends stay NULL until W04's FIFO sets them). `token_ledger_reason` + `earn_quest, earn_daily, earn_race_participation, earn_host, earn_attend, earn_achievement, earn_referral, earn_season, expire_earned, spend_garage_level, spend_world_item, spend_meetup_host, spend_race_entry, spend_spotlight, spend_rename`. `entitlement_grant_kind` + `world_level, world_item` (the receipt rows World purchases create through `spend_tokens`).
+
+### 2.29 `profiles` (modify) — 0012
+
+`age_confirmed_at timestamptz` (18+ self-declaration at onboarding, D-073), `terms_version text` (accepted terms version, `src/lib/legal.ts`; re-stamped at sign-in on a bump). Neither is exposed on `public_profiles`.
+
+### 2.30 `feature_flags` (seed) — 0012
+
+`world, world_shop, world_earn, world_meetups, world_meetups_irl, world_races, world_clubs, world_presence`, all `enabled = false` (D-077).
+
+### 2.31 Later World tables (planned, per sprint — see 07 §7 for columns)
+
+0013 `world_social` (W03): `world_visits`, `world_kudos`, `world_guestbook`, `world_invites`; `reports.target_type` + garage/guestbook; `notifications.type` + visit/kudos. 0014 `quests_seasons` (W04): `quests`, `quest_progress`, `seasons`, `season_points`, `earn_tokens()`, `expire_earned_tokens()`. 0015 `clubs_meetups` (W06): `clubs`, `club_members`, `meetups`, `meetup_rsvps`, `meetup_showcase`, `transition_meetup()`, `rsvp_meetup()`. 0016 `races` (W08): `race_stats_versions`, `races`, `race_entries`, `race_results` (immutable), `enter_race()`, `lock_race()`. 0017 `meetups_irl` (W10): `venue_private`, `check_in_meetup()`. 0018 `world_ops` (W11): leaderboard views, cost-guard tables.
+
 ## 3. Functions / triggers / jobs
 
 | Name | Type | Purpose |
@@ -138,6 +170,12 @@ Feeds quota (count of `done` jobs this period), cost dashboard, and the scan-acc
 | `reset_scan_quotas()` | pg_cron monthly | or compute rolling on read — choose rolling (simpler, no job) |
 | `expire_listings()`, `expire_offers()` | pg_cron hourly | status transitions + events |
 | `wishlist_match()` | pg_cron nightly (stretch) | notifications |
+| `ensure_world_garage()` | RPC SECURITY DEFINER | lazy 1:1 garage; emits `world.garage_created` (0013_world_rpcs) |
+| `buy_world_level()` | RPC SECURITY DEFINER | next level: XP gate (`min_xp_level`), `spend_tokens('spend_garage_level', …, 'world_level')`, guard-GUC update, emits `world.level_up` |
+| `buy_world_item(item_id, key)` | RPC SECURITY DEFINER | active / not earned-only / `min_level` / durable uniqueness, `spend_tokens('spend_world_item', …, 'world_item')`, inventory row, emits `world.item_bought` |
+| `world_garages_guard()` | trigger | rejects `level`/`score` updates unless `mv.world_rpc = on` (set only inside the RPCs) |
+| `set_token_ledger_source()` / `token_ledger_source_for(reason)` | trigger + SQL fn | derives `token_ledger.source` from the reason when the writer leaves it null |
+| `earn_tokens()`, `transition_meetup()`, `rsvp_meetup()`, `check_in_meetup()`, `enter_race()`, `lock_race()`; Edge `run-race` | planned (W04–W10) | 07 §7 |
 
 ## 4. Migration plan (files)
 
@@ -157,6 +195,9 @@ File names follow the Supabase CLI convention `<YYYYMMDDHHMMSS>_<name>.sql` (req
 | 0009 | `tokens.sql` — packs, ledger, purchases, grants, spend RPC, entitlement fns | 7 |
 | 0010 | `gamification.sql` — achievements, user_achievements, xp columns | 8 |
 | 0011 | `jobs.sql` — pg_cron schedules | 9 |
+| 0012 | `20261020071121_world_core.sql` — world_levels (seed), world_garages, world_items, world_inventory, token_ledger.source + reasons, profiles 18+/terms, eight `world*` flags OFF | W01 |
+| 0013 | `20261020071122_world_rpcs.sql` — ensure_world_garage, buy_world_level, buy_world_item | W01 |
+| 0014–0018 | `world_social`, `quests_seasons`, `clubs_meetups`, `races`, `meetups_irl`, `world_ops` — see §2.31 | W03–W11 |
 
 ## 5. RLS test matrix (run in CI from Sprint 0)
 
