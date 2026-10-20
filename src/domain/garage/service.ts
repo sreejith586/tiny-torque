@@ -128,4 +128,10 @@ export async function addCollectionItems(
 }
 
 export type { CollectionItemInput, CollectionItemRow, GarageItem, DisplayMedia } from './types';
-export { GARAGE_PAGE_SIZE, type GarageQuery, type GarageSort, type GarageStats } from './query';
+export {
+  GARAGE_PAGE_SIZE,
+  computeStats,
+  type GarageQuery,
+  type GarageSort,
+  type GarageStats,
+} from './query';

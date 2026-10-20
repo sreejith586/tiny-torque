@@ -155,7 +155,7 @@ File names follow the Supabase CLI convention `<YYYYMMDDHHMMSS>_<name>.sql` (req
 | 0007 | `deals.sql` — offers, transition RPC, rate limit, reviews changes | 5 |
 | 0008 | `messaging_trust.sql` — deal_messages, blocks, reports changes, notifications, Realtime publication | 6 |
 | 0009 | `tokens.sql` — packs, ledger, purchases, grants, spend RPC, entitlement fns | 7 |
-| 0010 | `gamification.sql` — achievements, user_achievements, xp columns | 8 |
+| 0010 | `gamification.sql` (= `20261020000000_gamification.sql`) — achievements (seeded), user_achievements, `gamification_events`/`apply_gamification` RPCs + xp/level guard trigger, item event triggers, `profiles.banner_media_id` + public_profiles avatar/banner, public avatar/banner media, `feedback`, `blocked_users()`, `delete_account()` | 8 |
 | 0011 | `jobs.sql` — pg_cron schedules | 9 |
 
 ## 5. RLS test matrix (run in CI from Sprint 0)

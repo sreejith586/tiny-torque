@@ -126,6 +126,9 @@ export async function patchProfile(supabase: Client, userId: string, patch: Prof
   if (v.location !== undefined) row.location = v.location;
   if (v.mobile !== undefined) row.mobile = v.mobile;
   if (v.photoMediaId !== undefined) row.photo_url = v.photoMediaId;
+  if (v.bio !== undefined) row.bio = v.bio;
+  if (v.bannerMediaId !== undefined) row.banner_media_id = v.bannerMediaId;
+  if (v.tutorialDismissed) row.tutorial_dismissed_at = new Date().toISOString();
 
   if (v.handle !== undefined) {
     const current = await repo.getProfile(supabase, userId);
@@ -155,11 +158,12 @@ export async function patchProfile(supabase: Client, userId: string, patch: Prof
 // ---------- Account: delete + export (F-14, MV-S1-08) ----------
 
 /**
- * The columns a delete overwrites. Soft-delete via `deleted_at` (public_profiles filters it
- * out, so the profile vanishes from every other user immediately) plus anonymising the PII and
- * personal free-text (rule 15 / D-015: `mobile` above all). `handle` is kept — it is NOT NULL +
- * unique-constrained and isn't PII — and `country_code` is kept (also NOT NULL). Full erasure of
- * the auth user, storage objects, and owned rows is finalised in S8; this is the stub.
+ * The columns a delete overwrites — the TS mirror of what the `delete_account()` RPC (0020) writes
+ * to the profile row, kept so the anonymisation contract stays unit-tested here. Soft-delete via
+ * `deleted_at` (public_profiles filters it out, so the profile vanishes from every other user
+ * immediately) plus anonymising the PII and personal free-text (rule 15 / D-015: `mobile` above
+ * all). `handle` is kept — it is NOT NULL + unique-constrained and isn't PII — and `country_code`
+ * is kept (also NOT NULL).
  */
 export function anonymisedProfileFields(now: Date = new Date()): TablesUpdate<'profiles'> {
   return {
@@ -171,18 +175,19 @@ export function anonymisedProfileFields(now: Date = new Date()): TablesUpdate<'p
     location: null,
     store_name: null,
     photo_url: null,
+    banner_media_id: null,
   };
 }
 
-/** Anonymise + soft-delete the caller's own profile, then emit `user.deleted` (D-009). */
-export async function deleteAccount(supabase: Client, userId: string) {
-  await repo.updateProfile(supabase, userId, anonymisedProfileFields());
-  await emitEvent(supabase, {
-    actorId: userId,
-    type: 'user.deleted',
-    entity: 'profile',
-    entityId: userId,
-  });
+/**
+ * Full account deletion (F-01/F-14, MV-S8-05): the `delete_account()` RPC anonymises the profile
+ * (the fields above), settles open offers through transition_offer, removes listings, soft-deletes
+ * items, marks media removed, drops wishlist/favourites/follows/blocks/notifications and emits
+ * `user.deleted` — atomically, as the caller (auth.uid()). Ledger rows stay (finance). The
+ * auth.users row + storage objects need the service role and are purged by the S9 jobs function.
+ */
+export async function deleteAccount(supabase: Client) {
+  await repo.deleteAccount(supabase);
 }
 
 /** Shape the caller's own data (their profile + every collection item) for a JSON download. */

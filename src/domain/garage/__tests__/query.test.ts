@@ -54,6 +54,7 @@ describe('garage computeStats (F-02 stats)', () => {
     expect(computeStats([])).toEqual({
       totalItems: 0,
       totalQty: 0,
+      rareItems: 0,
       totalValue: 0,
       duplicates: 0,
       topBrands: [],
