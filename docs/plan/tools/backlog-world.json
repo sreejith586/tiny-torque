@@ -1,0 +1,1092 @@
+{
+  "meta": {
+    "cadence": "1-week sprints, Monday lock, Sunday demo on production (unchanged from H1, D-002/D-020/D-028)",
+    "capacity_hours": 20,
+    "estimate_note": "Hours of Sreejith's focused time driving Claude Code, same scale as 05. Design-pack and counsel items count only the engineering-side hours; the external work runs in parallel and is a dependency, not a task estimate.",
+    "release_rule": "Every sprint ends with a production deploy; World increments ship dark behind their flag and are turned on per cohort/country via flag audiences, never by code.",
+    "definition_of_done": [
+      "Migration on local + staging with pgTAP (RLS matrix incl. visitor / attendee / member / blocked roles)",
+      "Deployable to prod dark behind its `world*` flag",
+      "Every token movement and race result via a SECURITY DEFINER RPC or Edge job (P4) — client never asserts an amount",
+      "Service Vitest; replay-determinism test for anything computed from events (XP, quests, score, race)",
+      "UI in 6 themes at 360 px + 1280 px with loading/empty/error, matching the signed-off design-pack screen",
+      "Events emitted for every mutation; consumers (XP, notifications, score) wired",
+      "Playwright for the sprint's critical flow; guard.sh + CI green",
+      "PROGRESS.md updated; F-2x AC ticked in 04; any decision appended to DECISIONS.md",
+      "Reviewed by Sreejith"
+    ],
+    "features": {
+      "F-20": "Garage — the space (levels, slots, featured car, themes, decor, score)",
+      "F-21": "Visits & social (open house, invites, visits, kudos, guestbook, follows, leaderboards)",
+      "F-22": "Clubs (clubhouse, roles, club meetups, club leagues)",
+      "F-23": "Virtual meetups (schedule, RSVP, live room, showcase, best-in-show)",
+      "F-24": "In-person meetups (listing, approximate location, venue to confirmed, check-in, safety)",
+      "F-25": "Racing (seeded simulation, time trial, challenge, bracket events, replay, trophies)",
+      "F-26": "Progression (World XP rules, quests, streaks, seasons, earn engine)",
+      "F-27": "Shop & economy surfaces (levels, items, tunes, spotlight, /tokens integration)",
+      "F-28": "World trust, admin & ops (moderation, host rules, economy dashboard, cost guards, tooling)"
+    },
+    "gate": "Pilot success criteria (01 §6) met · S8 + S9 live on prod · 07 §13 decisions accepted · design pack signed off · 07 §10 'before W0' legal items closed"
+  },
+  "sprints": [
+    {
+      "id": 1,
+      "name": "W0 Foundations — decisions, design pack, schema dark, 18+ gate",
+      "goal": "Everything the World needs that is invisible to users: the §13 decisions accepted, Varun's design pack signed off, migration 0012 on staging, domain/world + the three purchase RPCs under test, the age gate and terms-version acceptance in place. No World screen is reachable.",
+      "demo": "`world_*` flags exist and are off; a founder's garage row is created on prod via the API scaffold and is invisible; Vitest/pgTAP for world_core green; onboarding shows the 18+ confirmation.",
+      "ships": "Migration 0012 (world_core) applied dark on prod; eight `world*` flags seeded off; 18+ confirmation + terms version recorded at onboarding. Nothing user-visible beyond the age checkbox.",
+      "risks": "Design pack slipping (W0 cannot exit without it — build DB/services meanwhile); counsel read of the India Online Gaming Act arriving late (racing is W8, but the credits wording in terms v2 depends on it).",
+      "decisions_locked": [
+        "07 §13 rows 1–12 accepted as D-xxx",
+        "Design-pack sign-off rows per screen (D-027 mechanism)",
+        "18+ at launch (P8)"
+      ],
+      "migrations": "0012 world_core",
+      "flags": "world, world_shop, world_earn, world_meetups, world_meetups_irl, world_races, world_clubs, world_presence (all OFF)",
+      "tasks": [
+        {
+          "id": "MV-W01-01",
+          "feature": "Docs",
+          "type": "docs",
+          "title": "Accept decisions + spec sections",
+          "desc": "Append 07 §13 rows to DECISIONS.md via /decide; add F-20…F-28 sections to 04 (rules/AC/events/flags per pillar) and §2.24+ tables to 03 from 07 §7; CLAUDE.md gains a World line in the module map.",
+          "est": 1.5,
+          "deps": ""
+        },
+        {
+          "id": "MV-W01-02",
+          "feature": "Design",
+          "type": "design",
+          "title": "Design-pack intake & sign-off",
+          "desc": "Review Varun's 13 World screens × 6 themes against 07 §5; log one D-xxx sign-off row per screen; agree garage-level names, credits naming, launch decor list (≈30), race/meetup format names (no Mattel series names).",
+          "est": 1,
+          "deps": ""
+        },
+        {
+          "id": "MV-W01-03",
+          "feature": "F-20",
+          "type": "db",
+          "title": "Migration 0012 world_core",
+          "desc": "`world_levels` (seed 5), `world_garages`, `world_items`, `world_inventory`; `token_ledger_reason` + earn/spend values, `token_ledger.source` enum; `profiles.age_confirmed_at`, `profiles.terms_version`; eight `world*` flags seeded off; RLS + pgTAP matrix (owner/visitor/anon/admin).",
+          "est": 3,
+          "deps": "MV-W01-01"
+        },
+        {
+          "id": "MV-W01-04",
+          "feature": "F-20",
+          "type": "backend",
+          "title": "domain/world core service",
+          "desc": "`pnpm gen:types`; `domain/world/{types,schema,repo,service}`: ensureGarage, getOwnGarage, getGarageForVisitor (respects open_mode + blocks), layout zod schema (slots ≤ level capacity, items owned + public); Vitest with mocked repo.",
+          "est": 3,
+          "deps": "MV-W01-03"
+        },
+        {
+          "id": "MV-W01-05",
+          "feature": "F-27",
+          "type": "db",
+          "title": "Purchase RPCs",
+          "desc": "`ensure_world_garage()`, `buy_world_level()`, `buy_world_item()` SECURITY DEFINER wrapping `spend_tokens` (D-021) with eligibility checks (XP level gate, min_level, earned-only = not purchasable, durable uniqueness); emit `world.level_up` / `world.item_bought`; pgTAP: authenticated cannot bypass, negative balance rejected.",
+          "est": 2.5,
+          "deps": "MV-W01-03"
+        },
+        {
+          "id": "MV-W01-06",
+          "feature": "F-20",
+          "type": "backend",
+          "title": "World event types + consumers skeleton",
+          "desc": "Add `world.*`, `meetup.*`, `race.*`, `club.*`, `quest.*` to `EVENT_TYPES` and entities; emit from every world service mutation; consumer registry stub (XP/notification hooks land in their sprints).",
+          "est": 1,
+          "deps": "MV-W01-04"
+        },
+        {
+          "id": "MV-W01-07",
+          "feature": "F-20",
+          "type": "backend",
+          "title": "`/api/v1/world` scaffold",
+          "desc": "Thin route handlers over services (GET garage by handle, GET own garage), zod on params, rate limit, same auth as server actions; smoke test; documented as the future-client seam (ADR-05).",
+          "est": 1.5,
+          "deps": "MV-W01-04"
+        },
+        {
+          "id": "MV-W01-08",
+          "feature": "Legal",
+          "type": "backend",
+          "title": "18+ gate + terms-version acceptance",
+          "desc": "Onboarding step gains the 18+ confirmation (D-042 wizard style), stored in `age_confirmed_at`; sign-in records `user.accepted_terms` with version; terms / privacy / community-guidelines v2 drafted (credits, virtual items are licences, DPDP/PDPL wording, grievance contact) and sent to counsel.",
+          "est": 2.5,
+          "deps": "MV-W01-03"
+        },
+        {
+          "id": "MV-W01-09",
+          "feature": "F-28",
+          "type": "ops",
+          "title": "Flags editor group + analytics names",
+          "desc": "`/admin` flags editor shows the World group with audience helpers (country, cohort); PostHog event names for world mirrored from domain events in `lib/analytics`.",
+          "est": 1,
+          "deps": "MV-W01-03"
+        },
+        {
+          "id": "MV-W01-10",
+          "feature": "Docs",
+          "type": "docs",
+          "title": "PROGRESS + runbook stubs",
+          "desc": "PROGRESS.md World section; 06 runbook gets placeholders for 'earn exploit', 'race ran twice', 'room abuse'.",
+          "est": 0.5,
+          "deps": "MV-W01-08"
+        },
+        {
+          "id": "MV-W01-11",
+          "feature": "F-20",
+          "type": "frontend",
+          "title": "STRETCH: World art pipeline",
+          "desc": "`public/world/` asset convention (levels, themes, decor at 1x/2x, dark/light variants), `<WorldArt>` wrapper over `<MediaImage>` conventions, size budget check in CI.",
+          "est": 2,
+          "deps": "MV-W01-02"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "W1a Garage v1 — scene, slots, featured car, shop basics",
+      "goal": "A collector opens /world, sees their garage rendered from their real public items, arranges cars in slots, picks a featured car, and buys a theme or an extra slot with credits.",
+      "demo": "Founder places five cars, sets a featured car, buys the 'Neon Workshop' theme; the scene re-renders in all 6 themes at 360px and 1280px; a private item disappears from its slot when made private.",
+      "ships": "Garage view/editor and shop basics deployed behind `world` + `world_shop` (still OFF).",
+      "risks": "Scene renderer scope creep — it is CSS layers + CarCard, not a canvas; keep slot anchors in one JSON map per breakpoint. Bottom-nav change needs its D-xxx sign-off row.",
+      "migrations": "—",
+      "flags": "—",
+      "tasks": [
+        {
+          "id": "MV-W02-01",
+          "feature": "F-20",
+          "type": "frontend",
+          "title": "/world home + nav entry",
+          "desc": "Home: your garage card (level, score, featured car), 'Open garages' list placeholder, quests placeholder; BottomNav/side-rail gains World (sign-off row); empty/loading/error states; `t()` keys.",
+          "est": 3,
+          "deps": "MV-W01-04"
+        },
+        {
+          "id": "MV-W02-02",
+          "feature": "F-20",
+          "type": "frontend",
+          "title": "Garage scene renderer",
+          "desc": "Layered illustrated scene by level + theme; slot anchor map per breakpoint; `CarCard` in slots; featured slot large; six themes; motion only from the D-045 register; no canvas/WebGL.",
+          "est": 4,
+          "deps": "MV-W02-01"
+        },
+        {
+          "id": "MV-W02-03",
+          "feature": "F-20",
+          "type": "frontend",
+          "title": "Garage editor",
+          "desc": "Slot picker from own public items (reuses garage list query), featured car, rename (first free, then `spend_rename`), save via server action with the layout zod schema; optimistic UI with rollback.",
+          "est": 3,
+          "deps": "MV-W02-02"
+        },
+        {
+          "id": "MV-W02-04",
+          "feature": "F-20",
+          "type": "backend",
+          "title": "Slot integrity consumer",
+          "desc": "Consumer on `item.deleted` / `item.made_private` / `offer.completed` (seller side) removes the item from slots and featured; buyer gets a 'park it' notification stub; Vitest.",
+          "est": 2,
+          "deps": "MV-W01-06"
+        },
+        {
+          "id": "MV-W02-05",
+          "feature": "F-27",
+          "type": "frontend",
+          "title": "Shop v1 + inventory",
+          "desc": "Levels, themes, extra slot purchase via `buy_*` RPCs; price from data; XP-gate messaging; `<Paywall>` → /tokens when short; inventory list; receipts in /tokens/history.",
+          "est": 3,
+          "deps": "MV-W01-05"
+        },
+        {
+          "id": "MV-W02-06",
+          "feature": "F-20",
+          "type": "test",
+          "title": "Vitest + Playwright garage smoke",
+          "desc": "Service tests for layout rules; Playwright: open world → place car → set featured → buy theme (fixture balance via `?__visual=1`-style seed, never prod).",
+          "est": 2,
+          "deps": "MV-W02-05"
+        },
+        {
+          "id": "MV-W02-07",
+          "feature": "Docs",
+          "type": "docs",
+          "title": "PROGRESS + F-20 AC check",
+          "desc": "Tick F-20 acceptance criteria; PROGRESS.md.",
+          "est": 0.5,
+          "deps": "MV-W02-06"
+        },
+        {
+          "id": "MV-W02-08",
+          "feature": "F-20",
+          "type": "frontend",
+          "title": "STRETCH: garage share image",
+          "desc": "OG image route for `/world/g/[handle]` (featured car + level + handle) reusing the S8 profile OG pattern.",
+          "est": 2,
+          "deps": "MV-W02-03"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "W1b Visits & social — open house, kudos, guestbook, marketplace bridge",
+      "goal": "Garages become places people visit: open-house modes, invite links, visit counts, kudos, a host-moderated guestbook, and the bridge from a displayed car to its marketplace listing. `world` + `world_shop` turn ON for founders.",
+      "demo": "Two founders visit each other's garages, leave kudos and a guestbook line, one starts an offer from a slot; a blocked user cannot see the garage; the clean-language validator rejects a slur in the guestbook.",
+      "ships": "Visits, kudos, guestbook, open-house modes, invites, 'Open garages' list live behind `world` + `world_shop` ON for the founders cohort. Community guidelines v2 published.",
+      "risks": "Rate limits on visits/kudos must be triggers, not app code; the deferred MV-S6-04 clean-language validator becomes mandatory here — budget it honestly.",
+      "migrations": "0013 world_social",
+      "flags": "world ON (founders), world_shop ON (founders)",
+      "tasks": [
+        {
+          "id": "MV-W03-01",
+          "feature": "F-21",
+          "type": "db",
+          "title": "Migration 0013 world_social",
+          "desc": "`world_visits` (unique per day), `world_kudos`, `world_guestbook`, `world_invites` (expiring tokens), `reports.target_type` + garage/guestbook, `notifications.type` + visit/kudos; rate-limit triggers; blocks enforced in policies; pgTAP.",
+          "est": 2.5,
+          "deps": "MV-W01-03"
+        },
+        {
+          "id": "MV-W03-02",
+          "feature": "F-21",
+          "type": "backend",
+          "title": "Visits / kudos / guestbook services + clean-language validator",
+          "desc": "`domain/world` visit record (dedup), kudos (1/day), guestbook create/hide; `lib/clean-language` server validator (MV-S6-04) shared with names/titles; blocks both ways; events `world.visited`, `world.kudos_given`, `world.guestbook_posted`.",
+          "est": 3,
+          "deps": "MV-W03-01"
+        },
+        {
+          "id": "MV-W03-03",
+          "feature": "F-21",
+          "type": "frontend",
+          "title": "Visitor garage view",
+          "desc": "`/world/g/[handle]`: scene read-only, kudos button, guestbook with host hide, 'For sale' badge + deep link, start-offer from slot (existing offers path), report garage; `public_profiles` only.",
+          "est": 3,
+          "deps": "MV-W03-02"
+        },
+        {
+          "id": "MV-W03-04",
+          "feature": "F-21",
+          "type": "frontend",
+          "title": "Open-house settings + invites",
+          "desc": "Settings › World: open mode (public/followers/invite), who can invite/challenge me; invite link generation + invite-by-handle with notification; invite acceptance page.",
+          "est": 2,
+          "deps": "MV-W03-02"
+        },
+        {
+          "id": "MV-W03-05",
+          "feature": "F-21",
+          "type": "frontend",
+          "title": "Open garages list + recent visitors",
+          "desc": "`/world` 'Open garages' (own country default, All toggle), recent visitors (handles only) on own garage, visit/kudos notifications in the bell.",
+          "est": 2.5,
+          "deps": "MV-W03-03"
+        },
+        {
+          "id": "MV-W03-06",
+          "feature": "F-21",
+          "type": "backend",
+          "title": "Follow button + counts",
+          "desc": "Pull the F-13 stretch forward: follow/unfollow on `/u/[handle]` and garage view using the existing `follows` table; follower-only open mode uses it.",
+          "est": 1.5,
+          "deps": "MV-W03-01"
+        },
+        {
+          "id": "MV-W03-07",
+          "feature": "F-21",
+          "type": "test",
+          "title": "pgTAP + Playwright visit flow",
+          "desc": "RLS matrix for 0013 incl. blocked visitor; Playwright: visit → kudos → guestbook → start offer.",
+          "est": 2,
+          "deps": "MV-W03-05"
+        },
+        {
+          "id": "MV-W03-08",
+          "feature": "F-28",
+          "type": "ops",
+          "title": "Guidelines v2 + World report queue",
+          "desc": "Publish community guidelines v2 (07 §9) on the legal page; `/admin` reports queue handles garage/guestbook targets; host hide audit via events.",
+          "est": 1.5,
+          "deps": "MV-W03-02"
+        },
+        {
+          "id": "MV-W03-09",
+          "feature": "Docs",
+          "type": "ops",
+          "title": "Flip `world` + `world_shop` for founders",
+          "desc": "Flag audience = founders cohort; PROGRESS.md; demo script.",
+          "est": 0.5,
+          "deps": "MV-W03-07"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "W2a Earn engine & quests",
+      "goal": "Credits can be earned, with the ceiling, idempotency and expiry rules of 07 §3 enforced server-side, and daily/weekly quests give collectors a reason to open the app.",
+      "demo": "A founder completes three daily quests and the 7-day streak; the ledger shows `source=earned` rows; a replay of the event log yields identical quest progress; `earn_tokens` is not callable from the client.",
+      "ships": "Quests, streaks and the earn RPC deployed behind `world_earn` (OFF until W2b).",
+      "risks": "Earn must be a consumer of events, never a client call; the daily ceiling and FIFO earned-first spend need their own tests. Keep the quest pool small (6 + 6).",
+      "migrations": "0014 quests_seasons",
+      "flags": "world_earn (seeded, OFF)",
+      "tasks": [
+        {
+          "id": "MV-W04-01",
+          "feature": "F-26",
+          "type": "db",
+          "title": "Migration 0014 quests_seasons",
+          "desc": "`quests` (seed 6 daily + 6 weekly), `quest_progress`, `seasons`, `season_points`; `earn_tokens()` SECURITY DEFINER callable only by service role / triggers, daily ceiling + idempotency key inside; `expire_earned_tokens()` job fn; FIFO earned-first in `spend_tokens`; pgTAP.",
+          "est": 3,
+          "deps": "MV-W01-03"
+        },
+        {
+          "id": "MV-W04-02",
+          "feature": "F-26",
+          "type": "backend",
+          "title": "domain/quests consumer + replay",
+          "desc": "Rules in `domain/quests/rules.ts`; progress from `domain_events` (trigger for cheap rules, jobs batch for the rest); completion → earn + XP + `quest.completed`; Vitest proves replay determinism (same as F-13).",
+          "est": 4,
+          "deps": "MV-W04-01"
+        },
+        {
+          "id": "MV-W04-03",
+          "feature": "F-26",
+          "type": "backend",
+          "title": "World XP rules + login streak",
+          "desc": "Add visit/kudos/host/attend/race/quest XP rules to `domain/gamification`; daily first-open streak with the 7-day credit; caps per 04 F-13.",
+          "est": 1.5,
+          "deps": "MV-W04-02"
+        },
+        {
+          "id": "MV-W04-04",
+          "feature": "F-26",
+          "type": "ops",
+          "title": "Jobs: quest reset + earned expiry",
+          "desc": "`supabase/functions/jobs`: daily/weekly reset, earned-credit expiry at 180 d with a T-14 d notification, idempotent runs; Deno tests on pure helpers.",
+          "est": 2,
+          "deps": "MV-W04-01"
+        },
+        {
+          "id": "MV-W04-05",
+          "feature": "F-26",
+          "type": "frontend",
+          "title": "Quests panel + streak",
+          "desc": "`/world` quests panel (3 daily / 3 weekly, D-045 progress fill), streak chip, completion toast + notification; empty/loading states.",
+          "est": 3,
+          "deps": "MV-W04-02"
+        },
+        {
+          "id": "MV-W04-06",
+          "feature": "F-27",
+          "type": "frontend",
+          "title": "/tokens World section + history reasons",
+          "desc": "'What credits buy in the World' block on `/tokens`; `/tokens/history` renders world reasons and earned vs purchased; expiry notice for earned balance.",
+          "est": 1.5,
+          "deps": "MV-W04-01"
+        },
+        {
+          "id": "MV-W04-07",
+          "feature": "F-26",
+          "type": "test",
+          "title": "Earn rules tests",
+          "desc": "Vitest: ceiling, idempotency, FIFO earned-first, expiry; pgTAP: `earn_tokens` denied to `authenticated`.",
+          "est": 2,
+          "deps": "MV-W04-04"
+        },
+        {
+          "id": "MV-W04-08",
+          "feature": "Docs",
+          "type": "docs",
+          "title": "PROGRESS + F-26 AC",
+          "desc": "Tick F-26 acceptance criteria; PROGRESS.md.",
+          "est": 0.5,
+          "deps": "MV-W04-07"
+        },
+        {
+          "id": "MV-W04-09",
+          "feature": "F-26",
+          "type": "backend",
+          "title": "STRETCH: referral earn",
+          "desc": "`earn_referral` on the invitee's first garage open, capped, tied to existing `invites`.",
+          "est": 2,
+          "deps": "MV-W04-02"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "W2b Shop complete, season v0, economy dashboard",
+      "goal": "The shop sells the full launch catalogue (decor placement, tunes placeholder, consumables), one free season track runs, garage score exists, and the owner can see sinks vs sources weekly. `world_earn` turns ON for founders.",
+      "demo": "Founder earns a theme through quests, places decor, climbs the season track; `/admin › World › Economy` shows sinks ÷ sources and earned vs purchased for the week; an earn freeze stops a test account.",
+      "ships": "Full shop, season v0, garage score, economy dashboard, earn-freeze tooling; `world_earn` ON for founders.",
+      "risks": "Economy dashboard is SQL views, not a BI tool (D-027 'no dashboards with charts beyond Top Brands' — use tables). Garage score must be replayable like XP.",
+      "migrations": "—",
+      "flags": "world_earn ON (founders)",
+      "tasks": [
+        {
+          "id": "MV-W05-01",
+          "feature": "F-27",
+          "type": "frontend",
+          "title": "Shop complete + decor placement",
+          "desc": "Item kinds (decor/theme/signage/consumable), level-locked and season-limited labels, earned-only visible but not purchasable, decor slots in the editor with placement validation.",
+          "est": 3.5,
+          "deps": "MV-W02-05"
+        },
+        {
+          "id": "MV-W05-02",
+          "feature": "F-27",
+          "type": "backend",
+          "title": "Inventory + placement service",
+          "desc": "`effect jsonb` schema, durable uniqueness, placement rules, `world.item_placed` events; Vitest.",
+          "est": 2,
+          "deps": "MV-W05-01"
+        },
+        {
+          "id": "MV-W05-03",
+          "feature": "F-26",
+          "type": "frontend",
+          "title": "Season v0 page + rollover job",
+          "desc": "Season page (theme, free track milestones, end date, progress); jobs: season rollover (freeze, award, reset) with determinism test.",
+          "est": 3,
+          "deps": "MV-W04-04"
+        },
+        {
+          "id": "MV-W05-04",
+          "feature": "F-26",
+          "type": "backend",
+          "title": "Garage score + World badges",
+          "desc": "Score consumer (event increments + nightly recompute), leaderboard-ready; seed World achievements (first visit, host, 10 kudos, season finisher).",
+          "est": 2,
+          "deps": "MV-W04-02"
+        },
+        {
+          "id": "MV-W05-05",
+          "feature": "F-28",
+          "type": "ops",
+          "title": "Economy dashboard (admin)",
+          "desc": "`/admin › World › Economy`: sinks ÷ sources, earned vs purchased spend share, ceiling hit rate, balance distribution, expired credits — SQL views, plain tables, weekly review template in 06.",
+          "est": 2.5,
+          "deps": "MV-W04-01"
+        },
+        {
+          "id": "MV-W05-06",
+          "feature": "F-28",
+          "type": "ops",
+          "title": "Earn freeze + runbook",
+          "desc": "Admin RPC to freeze/unfreeze earn per user (logged as `tokens.adjusted`-style event), `world_earn` audience as the global freeze; runbook 'earn exploit'.",
+          "est": 1.5,
+          "deps": "MV-W05-05"
+        },
+        {
+          "id": "MV-W05-07",
+          "feature": "F-26",
+          "type": "test",
+          "title": "Playwright quest → earn → buy",
+          "desc": "End-to-end: complete quest, see earned credits, buy decor, place it.",
+          "est": 1.5,
+          "deps": "MV-W05-02"
+        },
+        {
+          "id": "MV-W05-08",
+          "feature": "Docs",
+          "type": "ops",
+          "title": "Flip `world_earn` + docs",
+          "desc": "Founders audience; PROGRESS.md; F-27 AC tick.",
+          "est": 1,
+          "deps": "MV-W05-07"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "W3a Virtual meetups — host, RSVP, live room",
+      "goal": "A collector schedules a meetup at their garage, others RSVP, and at start time a live room opens with chat, a showcase grid and host controls. The state machine is an RPC, the host fee is a platform fee.",
+      "demo": "A founder hosts a 'JDM night' with 8 RSVPs; the room goes live on schedule, three showcase cars each, host mutes a test account; reminders arrive at T-24h and T-1h.",
+      "ships": "Virtual meetups deployed behind `world_meetups` (OFF until W3b).",
+      "risks": "Reuse deal-chat components and channel pattern — no new chat stack. Capacity is tied to garage level, so the shop must already sell levels (it does).",
+      "migrations": "0015 clubs_meetups",
+      "flags": "world_meetups, world_clubs (seeded, OFF)",
+      "tasks": [
+        {
+          "id": "MV-W06-01",
+          "feature": "F-23",
+          "type": "db",
+          "title": "Migration 0015 clubs_meetups",
+          "desc": "`clubs`, `club_members`, `meetups`, `meetup_rsvps`, `meetup_showcase`; messaging thread kind `meetup`; `transition_meetup(id, action)` (draft→scheduled→live→ended→cancelled; host fee via `spend_tokens`, refund on cancel ≥ 24 h before), `rsvp_meetup()`; notification types; pgTAP.",
+          "est": 3.5,
+          "deps": "MV-W01-03"
+        },
+        {
+          "id": "MV-W06-02",
+          "feature": "F-23",
+          "type": "backend",
+          "title": "domain/meetups service + state machine",
+          "desc": "`state.ts` like deals; capacity by host level (+50 % Pro), visibility (public/followers/club/invite), blocks, co-hosts; events `meetup.*`; Vitest on transitions.",
+          "est": 3.5,
+          "deps": "MV-W06-01"
+        },
+        {
+          "id": "MV-W06-03",
+          "feature": "F-23",
+          "type": "frontend",
+          "title": "Meetup list, detail, create form",
+          "desc": "`/world/meetups` (upcoming / mine / club), detail with RSVP + showcase picker (≤3 public cars), single-page create form (virtual section first; in-person section hidden until W5).",
+          "est": 3.5,
+          "deps": "MV-W06-02"
+        },
+        {
+          "id": "MV-W06-04",
+          "feature": "F-23",
+          "type": "frontend",
+          "title": "Live room",
+          "desc": "Realtime chat reusing deal-chat components, showcase grid, reactions, host mute/kick/end; room opens only in `live`; mobile-first at 360px.",
+          "est": 3.5,
+          "deps": "MV-W06-03"
+        },
+        {
+          "id": "MV-W06-05",
+          "feature": "F-23",
+          "type": "ops",
+          "title": "Reminders + auto transitions",
+          "desc": "Jobs: T-24h / T-1h notifications + Resend email, scheduled→live→ended transitions; idempotent.",
+          "est": 1.5,
+          "deps": "MV-W06-01"
+        },
+        {
+          "id": "MV-W06-06",
+          "feature": "F-23",
+          "type": "test",
+          "title": "pgTAP + Playwright meetup flow",
+          "desc": "RLS for 0015 (host/attendee/outsider/blocked); Playwright: create → RSVP → room message.",
+          "est": 2,
+          "deps": "MV-W06-04"
+        },
+        {
+          "id": "MV-W06-07",
+          "feature": "Docs",
+          "type": "docs",
+          "title": "PROGRESS + F-23 AC",
+          "desc": "PROGRESS.md; acceptance criteria tick.",
+          "est": 0.5,
+          "deps": "MV-W06-06"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "W3b Best-in-show, clubs v1, hosting rules",
+      "goal": "Meetups end with a best-in-show result and XP/credits for attending and hosting; clubs exist with a clubhouse and club-hosted meetups; host eligibility and suspension rules are enforced. `world_meetups` + `world_clubs` turn ON for founders.",
+      "demo": "Founders' meetup: 10 attendees, best-in-show voted and frozen at end, attendees earn credits; a club is created, three members join, the club schedules a recurring club night.",
+      "ships": "Best-in-show, photo wall, clubs, club meetups, hosting rules; `world_meetups` + `world_clubs` ON for founders.",
+      "risks": "Clubs can move to W6 if W3a slips (07 §14 question for Varun). Host eligibility rules must read upheld reports, so the S6 reports resolution fields are a dependency.",
+      "migrations": "—",
+      "flags": "world_meetups ON (founders), world_clubs ON (founders)",
+      "tasks": [
+        {
+          "id": "MV-W07-01",
+          "feature": "F-23",
+          "type": "backend",
+          "title": "Best-in-show + photo wall + attend/host rewards",
+          "desc": "One vote per attendee, frozen at `ended`; results card; photo wall as `media` rows; attendance = joined room ≥ 10 min → `earn_attend`; host with ≥ 5 attendees → `earn_host`.",
+          "est": 3,
+          "deps": "MV-W06-04"
+        },
+        {
+          "id": "MV-W07-02",
+          "feature": "F-22",
+          "type": "backend",
+          "title": "domain/clubs service",
+          "desc": "Create (slug citext), join modes (open/apply/invite), roles, member management, bans, blocks; events `club.*`; Vitest.",
+          "est": 2.5,
+          "deps": "MV-W06-01"
+        },
+        {
+          "id": "MV-W07-03",
+          "feature": "F-22",
+          "type": "frontend",
+          "title": "Club page + create/join",
+          "desc": "Clubhouse: members' featured cars grid, feed (recent events), upcoming meetups; create club form; join/apply/invite; member list with roles.",
+          "est": 3.5,
+          "deps": "MV-W07-02"
+        },
+        {
+          "id": "MV-W07-04",
+          "feature": "F-22",
+          "type": "frontend",
+          "title": "Club meetups + recurring club night",
+          "desc": "Host a meetup as a club; recurring template spawns instances via jobs; club visibility mode on meetups.",
+          "est": 2,
+          "deps": "MV-W07-03"
+        },
+        {
+          "id": "MV-W07-05",
+          "feature": "F-28",
+          "type": "ops",
+          "title": "Host eligibility + suspension",
+          "desc": "Host requires F-13 level ≥ 2 and no upheld report in 90 d; two upheld reports → hosting suspended (event + notification); admin meetup/club queues; appeal note field.",
+          "est": 2,
+          "deps": "MV-W07-01"
+        },
+        {
+          "id": "MV-W07-06",
+          "feature": "F-22",
+          "type": "test",
+          "title": "Playwright club flow + pgTAP",
+          "desc": "Create club → join → club meetup; RLS for club roles.",
+          "est": 1.5,
+          "deps": "MV-W07-04"
+        },
+        {
+          "id": "MV-W07-07",
+          "feature": "Docs",
+          "type": "ops",
+          "title": "Flip `world_meetups` + `world_clubs`; founders' meetup",
+          "desc": "Founders audience; run the first real meetup as the demo; PROGRESS.md; F-22/F-23 AC.",
+          "est": 1,
+          "deps": "MV-W07-06"
+        },
+        {
+          "id": "MV-W07-08",
+          "feature": "F-22",
+          "type": "frontend",
+          "title": "STRETCH: club leaderboard",
+          "desc": "Club ranking by members' garage score (plain table).",
+          "est": 2,
+          "deps": "MV-W05-04"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "W4a Racing core — stats, time trial, challenge, replay",
+      "goal": "Cars race in a seeded, server-side simulation: stats from catalogue segment, condition, rarity, tunes and driver level with a 10 % cap on paid/level influence; time trials and head-to-head challenges run and replay from the seed.",
+      "demo": "Same seed → identical result in CI; a founder beats a ghost time, challenges another founder, both watch the replay; an unmatched car races with the neutral archetype.",
+      "ships": "Racing core deployed behind `world_races` (OFF until W4b).",
+      "risks": "Stats model must be versioned from day one (results pin a version); `catalog_models.segment` is admin-curated and sparse at first — the neutral archetype must feel fair. No wagering language anywhere.",
+      "migrations": "0016 races",
+      "flags": "world_races (seeded, OFF)",
+      "tasks": [
+        {
+          "id": "MV-W08-01",
+          "feature": "F-25",
+          "type": "backend",
+          "title": "Stats module v1",
+          "desc": "`domain/races/stats.ts`: archetype from `catalog_models.segment` (sports/muscle/exotic/truck/classic/fantasy/neutral), scale factor, condition → reliability, rarity bonus, tunes + driver level combined cap ≤ 10 % (test asserts it), seeded RNG (xorshift from seed + entry order); `race_stats_versions` pin.",
+          "est": 4,
+          "deps": ""
+        },
+        {
+          "id": "MV-W08-02",
+          "feature": "F-25",
+          "type": "db",
+          "title": "Migration 0016 races",
+          "desc": "`catalog_models.segment` (nullable enum), `race_stats_versions`, `races`, `race_entries`, `race_results` (no update/delete policies), season link; `enter_race()` (ownership + public + fee via `spend_tokens` with `spend_race_entry`), `lock_race()` sets seed; pgTAP incl. immutability.",
+          "est": 3,
+          "deps": "MV-W08-01"
+        },
+        {
+          "id": "MV-W08-03",
+          "feature": "F-25",
+          "type": "backend",
+          "title": "Edge `run-race` + scheduler",
+          "desc": "Deno function: lock → derive seed → simulate (pure `lib.ts`) → write results once → emit `race.completed`; jobs trigger at `scheduled_at`; Deno tests on the pure sim; idempotent on race id.",
+          "est": 3.5,
+          "deps": "MV-W08-02"
+        },
+        {
+          "id": "MV-W08-04",
+          "feature": "F-25",
+          "type": "frontend",
+          "title": "Race hub: time trial + challenge",
+          "desc": "`/world/races`: time trial vs ghost best (free), challenge a handle (free, accept/decline like offers), my races, results list; respects 'who can challenge me'.",
+          "est": 3.5,
+          "deps": "MV-W08-03"
+        },
+        {
+          "id": "MV-W08-05",
+          "feature": "F-25",
+          "type": "frontend",
+          "title": "Replay viewer",
+          "desc": "Lane progress view rendered from seed + stats version (D-045 progress-fill motion), breakdown panel (why this car won), share result card.",
+          "est": 2.5,
+          "deps": "MV-W08-04"
+        },
+        {
+          "id": "MV-W08-06",
+          "feature": "F-25",
+          "type": "test",
+          "title": "Determinism + immutability tests",
+          "desc": "Vitest: same seed/stats version → same result across runs; pgTAP: results cannot be updated even by owner; Playwright time trial.",
+          "est": 1.5,
+          "deps": "MV-W08-05"
+        },
+        {
+          "id": "MV-W08-07",
+          "feature": "Docs",
+          "type": "docs",
+          "title": "PROGRESS + F-25 AC",
+          "desc": "PROGRESS.md; acceptance criteria tick.",
+          "est": 0.5,
+          "deps": "MV-W08-06"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "name": "W4b Race events, trophies, season points",
+      "goal": "Hosted bracket events (8/16 cars) with a platform entry fee, cosmetic prizes only, live ticker, season points, tunes in the shop and dispute tooling. Counsel's read of the racing posture is recorded. `world_races` turns ON for founders.",
+      "demo": "A 16-car bracket at a founder's garage runs round by round on prod, spectators watch the ticker, the winner gets a trophy item and a title; admin re-runs a round from its seed and gets the same result.",
+      "ships": "Bracket events, trophies/titles, ticker, tunes, dispute tooling; `world_races` ON for founders.",
+      "risks": "This is where the India Online Gaming Act exposure lives: entry fee is a platform fee and prizes are cosmetic — the rules engine must make a 'paid entry → credit reward' path impossible, with a test.",
+      "migrations": "—",
+      "flags": "world_races ON (founders)",
+      "decisions_locked": ["Counsel confirmation of 07 §3 racing posture logged as a D-row"],
+      "tasks": [
+        {
+          "id": "MV-W09-01",
+          "feature": "F-25",
+          "type": "frontend",
+          "title": "Bracket events",
+          "desc": "Create event at garage/club (capacity 8/16, fee from data), lock at capacity/time, rounds run by the scheduler, bracket view, entrants list; host cancel → fee refunds.",
+          "est": 4,
+          "deps": "MV-W08-03"
+        },
+        {
+          "id": "MV-W09-02",
+          "feature": "F-25",
+          "type": "backend",
+          "title": "Prizes: trophies, titles, season points",
+          "desc": "Trophy items are earned-only inventory; titles on profile/garage; season points consumer on `race.completed`; badge progress; a test asserts no credit reward exists for paid-entry races.",
+          "est": 2.5,
+          "deps": "MV-W09-01"
+        },
+        {
+          "id": "MV-W09-03",
+          "feature": "F-25",
+          "type": "frontend",
+          "title": "Live ticker + spectator page",
+          "desc": "Realtime broadcast of round results, spectator view, `race_result` notifications.",
+          "est": 2.5,
+          "deps": "MV-W09-01"
+        },
+        {
+          "id": "MV-W09-04",
+          "feature": "F-27",
+          "type": "frontend",
+          "title": "Tunes in shop + eligibility hints",
+          "desc": "Tune items with `effect jsonb` (cap enforced server-side), 'accept the catalogue match to race with real stats' hint on unmatched items (links to S3 match flow).",
+          "est": 2,
+          "deps": "MV-W05-01"
+        },
+        {
+          "id": "MV-W09-05",
+          "feature": "F-28",
+          "type": "ops",
+          "title": "Dispute tooling",
+          "desc": "Admin: re-run race from seed, stats version shown per race, cancel-with-refund; runbook 'race ran twice'.",
+          "est": 1.5,
+          "deps": "MV-W09-02"
+        },
+        {
+          "id": "MV-W09-06",
+          "feature": "F-25",
+          "type": "test",
+          "title": "Playwright bracket + pgTAP",
+          "desc": "Bracket end-to-end with mocked scheduler time; RLS for entries/results.",
+          "est": 2,
+          "deps": "MV-W09-03"
+        },
+        {
+          "id": "MV-W09-07",
+          "feature": "Legal",
+          "type": "docs",
+          "title": "Racing posture copy review + D-row",
+          "desc": "Counsel confirmation of 07 §3/§10 recorded via /decide; copy audit for wagering language ('win', 'prize', 'stake') across race screens and terms.",
+          "est": 1,
+          "deps": "MV-W09-02"
+        },
+        {
+          "id": "MV-W09-08",
+          "feature": "Docs",
+          "type": "ops",
+          "title": "Flip `world_races` + docs",
+          "desc": "Founders audience; PROGRESS.md; F-25 AC.",
+          "est": 1,
+          "deps": "MV-W09-06"
+        },
+        {
+          "id": "MV-W09-09",
+          "feature": "F-26",
+          "type": "frontend",
+          "title": "STRETCH: season league standings",
+          "desc": "Monthly league table from `season_points` (plain table).",
+          "est": 2,
+          "deps": "MV-W09-02"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "name": "W5 In-person meetups",
+      "goal": "Collectors can list a real-world meetup with approximate location, RSVP, see the venue only once confirmed, check in for XP, and report problems. The platform is a listing service with safety rules, never the organiser.",
+      "demo": "A UAE founder lists a public-venue meetup; the public page shows city + area only; a confirmed attendee sees the venue; host checks attendees in; an under-18 or suspended host cannot create one.",
+      "ships": "In-person meetups behind `world_meetups_irl` ON for UAE founders first (country audience), India after the IT-Rules/grievance review.",
+      "risks": "Privacy of venue data (RLS to confirmed RSVPs only, tested); liability posture in copy; hosts may try to collect money in chat — guidelines + report path, no payment features.",
+      "migrations": "0017 meetups_irl",
+      "flags": "world_meetups_irl ON (UAE founders)",
+      "tasks": [
+        {
+          "id": "MV-W10-01",
+          "feature": "F-24",
+          "type": "db",
+          "title": "Migration 0017 meetups_irl",
+          "desc": "`meetups.kind = in_person` fields: `city`, `area_text`, `venue_private` (select policy = host or `checked_in/going` RSVP), `host_agreement_accepted_at`, check-in columns; pgTAP visibility matrix.",
+          "est": 2,
+          "deps": "MV-W06-01"
+        },
+        {
+          "id": "MV-W10-02",
+          "feature": "F-24",
+          "type": "backend",
+          "title": "IRL rules service",
+          "desc": "Host must be 18+ confirmed + eligible; public fields pass a no-address validator; check-in (host confirms) → XP + `earn_attend`; cancellation notifications; events `meetup.checked_in`.",
+          "est": 2.5,
+          "deps": "MV-W10-01"
+        },
+        {
+          "id": "MV-W10-03",
+          "feature": "F-24",
+          "type": "frontend",
+          "title": "Create (in-person section) + listing + detail",
+          "desc": "Same single-page form, in-person section (city/area, date, capacity, host rules, safety agreement checkbox); listing with safety banner; venue reveal for confirmed; RSVP + waitlist.",
+          "est": 3.5,
+          "deps": "MV-W10-02"
+        },
+        {
+          "id": "MV-W10-04",
+          "feature": "F-24",
+          "type": "frontend",
+          "title": "Host check-in + photo wall + report",
+          "desc": "Host attendee list with check-in, post-event photo wall, report meetup/host, 'TinyTorque is not the organiser' disclaimer placement.",
+          "est": 2.5,
+          "deps": "MV-W10-03"
+        },
+        {
+          "id": "MV-W10-05",
+          "feature": "F-28",
+          "type": "ops",
+          "title": "IRL guidelines, admin queue, insurance question",
+          "desc": "Guidelines IRL section (public venues, 18+, no alcohol, no money via platform, permits are the host's); admin IRL queue with 24 h first-action SLA; insurance/liability question logged for counsel.",
+          "est": 2,
+          "deps": "MV-W10-02"
+        },
+        {
+          "id": "MV-W10-06",
+          "feature": "F-24",
+          "type": "test",
+          "title": "pgTAP venue visibility + Playwright",
+          "desc": "Matrix: host / going / waitlist / declined / outsider / blocked; Playwright list → RSVP → check-in.",
+          "est": 2,
+          "deps": "MV-W10-04"
+        },
+        {
+          "id": "MV-W10-07",
+          "feature": "Docs",
+          "type": "ops",
+          "title": "Flip `world_meetups_irl` for UAE founders",
+          "desc": "Country audience AE; PROGRESS.md; F-24 AC.",
+          "est": 1,
+          "deps": "MV-W10-06"
+        },
+        {
+          "id": "MV-W10-08",
+          "feature": "Docs",
+          "type": "docs",
+          "title": "PROGRESS + runbook",
+          "desc": "Runbook 'IRL incident report' path; PROGRESS.md.",
+          "est": 0.5,
+          "deps": "MV-W10-07"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "name": "W6a Leaderboards, live-ops tooling, cost guards",
+      "goal": "Everything the owner needs to run seasons without code changes: leaderboards, labelled Spotlight, concurrency caps and cost alerts, moderation SLA view, season rollover end to end, admin World tools.",
+      "demo": "Season 1 rolls over on prod: leaderboards freeze, trophies are awarded, season 2 opens; `/admin` shows report age vs SLA and Realtime usage against plan limits.",
+      "ships": "Leaderboards, Spotlight, season rollover, admin World tools, cost alerts.",
+      "risks": "Leaderboards are materialised views refreshed by a job, never live queries; Spotlight must be labelled (01 §7, D-022) and is a consumable, not a ranking boost.",
+      "migrations": "0018 world_ops",
+      "flags": "—",
+      "tasks": [
+        {
+          "id": "MV-W11-01",
+          "feature": "F-28",
+          "type": "db",
+          "title": "Migration 0018 world_ops",
+          "desc": "Materialised views: garage score, race wins, attendance (country/global/season); `world_spotlights` consumable; refresh job; pgTAP for public read.",
+          "est": 2.5,
+          "deps": "MV-W05-04"
+        },
+        {
+          "id": "MV-W11-02",
+          "feature": "F-21",
+          "type": "frontend",
+          "title": "Leaderboards + Spotlight",
+          "desc": "`/world/leaderboards` (plain tables, country/global/season tabs); labelled Spotlight slot on 'Open garages' bought via `spend_spotlight`.",
+          "est": 2.5,
+          "deps": "MV-W11-01"
+        },
+        {
+          "id": "MV-W11-03",
+          "feature": "F-28",
+          "type": "ops",
+          "title": "Concurrency caps + cost alerts",
+          "desc": "Live meetups per hour cap by flag audience, Realtime/Edge/storage usage alerts at 70 % of plan, cost panel in `/admin`.",
+          "est": 2.5,
+          "deps": "MV-W06-05"
+        },
+        {
+          "id": "MV-W11-04",
+          "feature": "F-28",
+          "type": "ops",
+          "title": "Moderation SLA view + appeals",
+          "desc": "Report age vs 24 h / 72 h SLA table, appeal note flow on resolved reports, host suspension automation audit.",
+          "est": 2.5,
+          "deps": "MV-W07-05"
+        },
+        {
+          "id": "MV-W11-05",
+          "feature": "F-26",
+          "type": "backend",
+          "title": "Season rollover end to end + club leagues",
+          "desc": "Freeze leaderboards, award season trophies/titles, reset points, open next season from a seed row; club league points; determinism test.",
+          "est": 3,
+          "deps": "MV-W11-01"
+        },
+        {
+          "id": "MV-W11-06",
+          "feature": "F-28",
+          "type": "frontend",
+          "title": "Admin World tools",
+          "desc": "Buttons on existing admin pages: revoke item, earn freeze, cancel meetup with refund, re-run race, suspend host; each logs an event.",
+          "est": 2.5,
+          "deps": "MV-W09-05"
+        },
+        {
+          "id": "MV-W11-07",
+          "feature": "F-28",
+          "type": "test",
+          "title": "Rollover + views tests",
+          "desc": "pgTAP for views and spotlight; Vitest rollover determinism.",
+          "est": 1.5,
+          "deps": "MV-W11-05"
+        },
+        {
+          "id": "MV-W11-08",
+          "feature": "Docs",
+          "type": "docs",
+          "title": "Runbooks + weekly review template",
+          "desc": "06: live-ops calendar, weekly economy review, moderation SLA, season rollover checklist.",
+          "est": 1,
+          "deps": "MV-W11-07"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "name": "W6b Hardening & first public season",
+      "goal": "Full RLS matrix and critical-flow Playwright for the World, performance and six-theme visual review of every screen, legal v2 live, backups and kill-switch drills, then the first season opens to the whole pilot cohort.",
+      "demo": "Season 1 opens to the full cohort with a founders' launch meetup; all six World Playwright flows green in CI; terms v2 acceptance recorded on sign-in; a flag flip hides the World within one request.",
+      "ships": "World open to the full pilot cohort (all `world*` flags except `world_presence`); terms/privacy/guidelines v2 live; KPI dashboards; incident runbooks rehearsed.",
+      "risks": "This sprint has 3 h buffer for carry-over; if W4b or W5 slipped, launch with racing or IRL meetups still founders-only rather than cutting hardening.",
+      "migrations": "—",
+      "flags": "all world* ON for pilot cohort except world_presence",
+      "tasks": [
+        {
+          "id": "MV-W12-01",
+          "feature": "F-28",
+          "type": "test",
+          "title": "Full World RLS matrix + critical flows",
+          "desc": "pgTAP across all 0012–0018 tables (owner/visitor/attendee/member/blocked/anon/admin); six Playwright World flows in CI on every preview.",
+          "est": 3,
+          "deps": "MV-W11-07"
+        },
+        {
+          "id": "MV-W12-02",
+          "feature": "F-20",
+          "type": "frontend",
+          "title": "Performance + six-theme visual review",
+          "desc": "Garage page SSR + cached scene JSON, image budgets, p95 < 2.5 s on 4G; D-056 visual review of all 13 screens × 6 themes at 360/1280 against the design pack; fixes.",
+          "est": 3.5,
+          "deps": "MV-W11-02"
+        },
+        {
+          "id": "MV-W12-03",
+          "feature": "F-28",
+          "type": "ops",
+          "title": "KPI funnels + economy SQL",
+          "desc": "PostHog funnels for 07 §11 KPIs; §3.4 metrics as saved SQL in the admin dashboard; weekly review scheduled.",
+          "est": 2,
+          "deps": "MV-W11-08"
+        },
+        {
+          "id": "MV-W12-04",
+          "feature": "Legal",
+          "type": "ops",
+          "title": "Terms / privacy / guidelines v2 live",
+          "desc": "Counsel-approved v2 published; version bump forces re-acceptance (event); DPDP/PDPL consent copy; grievance contact on the legal page.",
+          "est": 2,
+          "deps": "MV-W09-07"
+        },
+        {
+          "id": "MV-W12-05",
+          "feature": "F-28",
+          "type": "ops",
+          "title": "Backup/restore drill + kill-switch rehearsal",
+          "desc": "Restore drill covering World tables on staging; rehearse `world_shop` + `world_earn` freeze and per-flag kill within a sprint demo; incident runbooks reviewed.",
+          "est": 2,
+          "deps": "MV-W12-01"
+        },
+        {
+          "id": "MV-W12-06",
+          "feature": "F-26",
+          "type": "ops",
+          "title": "Launch: season 1 to the cohort",
+          "desc": "Seed season 1, founders' launch meetup, flag audiences widened to the pilot cohort, in-app announcement + email; day-1 metrics check.",
+          "est": 2,
+          "deps": "MV-W12-04"
+        },
+        {
+          "id": "MV-W12-07",
+          "feature": "Docs",
+          "type": "docs",
+          "title": "Plan docs close-out",
+          "desc": "PROGRESS.md; 02 §8 updated (engine decision still deferred, presence/3D in the later register); 07 marked 'in execution' with deviations logged.",
+          "est": 1,
+          "deps": "MV-W12-06"
+        },
+        {
+          "id": "MV-W12-08",
+          "feature": "Buffer",
+          "type": "ops",
+          "title": "Carry-over buffer",
+          "desc": "Reserved for slips from W4b/W5/W6a.",
+          "est": 3,
+          "deps": ""
+        },
+        {
+          "id": "MV-W12-09",
+          "feature": "F-21",
+          "type": "frontend",
+          "title": "STRETCH: presence prototype",
+          "desc": "Supabase Realtime Presence 'who is here' on garage pages behind `world_presence`, founders only, connection-count guard.",
+          "est": 3,
+          "deps": "MV-W03-03"
+        }
+      ]
+    }
+  ]
+}
