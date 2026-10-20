@@ -94,6 +94,7 @@ export async function createProfile(supabase: Client, userId: string, input: Pro
     handle = await suggestAvailableHandle(supabase, v.displayName);
   }
 
+  const now = new Date().toISOString();
   await repo.insertProfile(supabase, {
     id: userId,
     display_name: v.displayName,
@@ -105,7 +106,9 @@ export async function createProfile(supabase: Client, userId: string, input: Pro
     handle,
     country_code: v.countryCode,
     city: v.city ?? null,
-    onboarding_completed_at: new Date().toISOString(),
+    onboarding_completed_at: now,
+    age_confirmed_at: now,
+    terms_version: v.termsVersion,
   });
 
   await emitEvent(supabase, {
@@ -114,6 +117,38 @@ export async function createProfile(supabase: Client, userId: string, input: Pro
     entity: 'profile',
     entityId: userId,
   });
+  // The consent record counsel can audit (07 §10 "consent capture recorded as an event").
+  await emitEvent(supabase, {
+    actorId: userId,
+    type: 'user.accepted_terms',
+    entity: 'profile',
+    entityId: userId,
+    payload: { version: v.termsVersion, age_confirmed: true, at: 'onboarding' },
+  });
+}
+
+/**
+ * Sign-in acceptance (MV-W01-08, 07 §11 "terms version accepted at sign-in recorded as
+ * `user.accepted_terms`"): when the stored version differs from `version` (a bump, or a profile
+ * from before versions existed), stamps the new version and logs the event. Returns whether
+ * anything was recorded. No profile yet = onboarding will record it; nothing to do here.
+ */
+export async function recordTermsAcceptance(
+  supabase: Client,
+  userId: string,
+  version: string
+): Promise<boolean> {
+  const profile = await repo.getProfile(supabase, userId);
+  if (!profile || profile.terms_version === version) return false;
+  await repo.updateProfile(supabase, userId, { terms_version: version });
+  await emitEvent(supabase, {
+    actorId: userId,
+    type: 'user.accepted_terms',
+    entity: 'profile',
+    entityId: userId,
+    payload: { version, previous: profile.terms_version, at: 'sign_in' },
+  });
+  return true;
 }
 
 /** Profile edit with PATCH semantics — untouched fields are never nulled (MV-S0-09). */

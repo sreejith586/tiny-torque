@@ -13,7 +13,11 @@ export interface ProfileCreateInput {
   handle?: string | null;
   countryCode: string;
   city?: string | null;
+  /** MV-W01-08 (07 P8): adults only — must be literally `true`; stored as profiles.age_confirmed_at. */
+  ageConfirmed: true;
+  /** The terms/privacy version accepted at onboarding (src/lib/legal.ts CURRENT_TERMS_VERSION). */
+  termsVersion: string;
 }
 
 /** PATCH semantics: only keys present are written (fixes the Phase-1 upsert null-out bug). */
-export type ProfilePatch = Partial<ProfileCreateInput>;
+export type ProfilePatch = Partial<Omit<ProfileCreateInput, 'ageConfirmed' | 'termsVersion'>>;

@@ -26,6 +26,13 @@ test('market is public', async ({ page }) => {
   expect(res?.status()).toBe(200);
 });
 
+test('World API seam is dark (MV-W01-07, D-028)', async ({ request }) => {
+  // No session → 401; a public-garage lookup while the `world` flag is OFF → 404. Nothing
+  // World-facing is reachable until the flag flips (and then only for its audience).
+  expect((await request.get('/api/v1/world/me')).status()).toBe(401);
+  expect((await request.get('/api/v1/world/garages/no_such_collector_xyz')).status()).toBe(404);
+});
+
 test('unknown handle 404s (F-14 AC)', async ({ page }) => {
   const res = await page.goto('/u/no_such_collector_xyz');
   expect(res?.status()).toBe(404);
