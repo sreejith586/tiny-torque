@@ -53,7 +53,7 @@ export async function updateGarage(
     TablesUpdate<'world_garages'>,
     'name' | 'open_mode' | 'featured_item_id' | 'theme_item_id'
   > & {
-    layout?: Json;
+    layout?: NonNullable<Json>;
   }
 ): Promise<WorldGarageRow> {
   const { data, error } = await supabase

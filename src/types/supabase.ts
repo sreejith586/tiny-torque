@@ -822,13 +822,13 @@ isOneToOne: false
                   ]
                 },"world_garages": {
                   Row: {
-                    "created_at": string,"featured_item_id": string | null,"layout": Json,"level": number,"name": string,"open_mode": Database["public"]['Enums']["world_open_mode"],"score": number,"theme_item_id": string | null,"updated_at": string,"user_id": string
+                    "created_at": string,"featured_item_id": string | null,"layout": NonNullable<Json>,"level": number,"name": string,"open_mode": Database["public"]['Enums']["world_open_mode"],"score": number,"theme_item_id": string | null,"updated_at": string,"user_id": string
                   }
                   Insert: {
-                    "created_at"?: string,"featured_item_id"?: string | null,"layout"?: Json,"level"?: number,"name": string,"open_mode"?: Database["public"]['Enums']["world_open_mode"],"score"?: number,"theme_item_id"?: string | null,"updated_at"?: string,"user_id": string
+                    "created_at"?: string,"featured_item_id"?: string | null,"layout"?: NonNullable<Json>,"level"?: number,"name": string,"open_mode"?: Database["public"]['Enums']["world_open_mode"],"score"?: number,"theme_item_id"?: string | null,"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "created_at"?: string,"featured_item_id"?: string | null,"layout"?: Json,"level"?: number,"name"?: string,"open_mode"?: Database["public"]['Enums']["world_open_mode"],"score"?: number,"theme_item_id"?: string | null,"updated_at"?: string,"user_id"?: string
+                    "created_at"?: string,"featured_item_id"?: string | null,"layout"?: NonNullable<Json>,"level"?: number,"name"?: string,"open_mode"?: Database["public"]['Enums']["world_open_mode"],"score"?: number,"theme_item_id"?: string | null,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -908,13 +908,13 @@ isOneToOne: false
                   ]
                 },"world_items": {
                   Row: {
-                    "active": boolean,"art_path": string | null,"created_at": string,"description": string | null,"effect": Json,"id": string,"kind": Database["public"]['Enums']["world_item_kind"],"min_level": number,"name": string,"price": number | null,"season_id": string | null,"sku": string,"sort_order": number
+                    "active": boolean,"art_path": string | null,"created_at": string,"description": string | null,"effect": NonNullable<Json>,"id": string,"kind": Database["public"]['Enums']["world_item_kind"],"min_level": number,"name": string,"price": number | null,"season_id": string | null,"sku": string,"sort_order": number
                   }
                   Insert: {
-                    "active"?: boolean,"art_path"?: string | null,"created_at"?: string,"description"?: string | null,"effect"?: Json,"id"?: string,"kind": Database["public"]['Enums']["world_item_kind"],"min_level"?: number,"name": string,"price"?: number | null,"season_id"?: string | null,"sku": string,"sort_order"?: number
+                    "active"?: boolean,"art_path"?: string | null,"created_at"?: string,"description"?: string | null,"effect"?: NonNullable<Json>,"id"?: string,"kind": Database["public"]['Enums']["world_item_kind"],"min_level"?: number,"name": string,"price"?: number | null,"season_id"?: string | null,"sku": string,"sort_order"?: number
                   }
                   Update: {
-                    "active"?: boolean,"art_path"?: string | null,"created_at"?: string,"description"?: string | null,"effect"?: Json,"id"?: string,"kind"?: Database["public"]['Enums']["world_item_kind"],"min_level"?: number,"name"?: string,"price"?: number | null,"season_id"?: string | null,"sku"?: string,"sort_order"?: number
+                    "active"?: boolean,"art_path"?: string | null,"created_at"?: string,"description"?: string | null,"effect"?: NonNullable<Json>,"id"?: string,"kind"?: Database["public"]['Enums']["world_item_kind"],"min_level"?: number,"name"?: string,"price"?: number | null,"season_id"?: string | null,"sku"?: string,"sort_order"?: number
                   }
                   Relationships: [
                     {
@@ -1010,6 +1010,7 @@ isOneToOne: false
 "admin_search_users":
 { Args: { "p_limit"?: number,"p_query": string }; Returns: {
               "account_type": Database["public"]['Enums']["account_type"],
+"age_confirmed_at": string | null,
 "bio": string | null,
 "city": string | null,
 "country_code": string,
@@ -1034,6 +1035,7 @@ isOneToOne: false
 "scan_quota_used": number,
 "store_name": string | null,
 "suspended_until": string | null,
+"terms_version": string | null,
 "tokens": number,
 "tutorial_dismissed_at": string | null,
 "updated_at": string,
@@ -1048,6 +1050,7 @@ isOneToOne: false
 "admin_set_suspension":
 { Args: { "p_days"?: number,"p_user_id": string }; Returns: {
               "account_type": Database["public"]['Enums']["account_type"],
+"age_confirmed_at": string | null,
 "bio": string | null,
 "city": string | null,
 "country_code": string,
@@ -1072,6 +1075,7 @@ isOneToOne: false
 "scan_quota_used": number,
 "store_name": string | null,
 "suspended_until": string | null,
+"terms_version": string | null,
 "tokens": number,
 "tutorial_dismissed_at": string | null,
 "updated_at": string,
@@ -1127,7 +1131,7 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: {
               "created_at": string,
 "featured_item_id": string | null,
-"layout": Json,
+"layout": NonNullable<Json>,
 "level": number,
 "name": string,
 "open_mode": Database["public"]['Enums']["world_open_mode"],
@@ -1218,7 +1222,7 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: {
               "created_at": string,
 "featured_item_id": string | null,
-"layout": Json,
+"layout": NonNullable<Json>,
 "level": number,
 "name": string,
 "open_mode": Database["public"]['Enums']["world_open_mode"],
@@ -1316,6 +1320,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"token_ledger_source_for":
+{ Args: { "p_reason": Database["public"]['Enums']["token_ledger_reason"] }; Returns: Database["public"]['Enums']["token_ledger_source"]
+                           },
 "transition_offer":
 { Args: { "p_action": string,"p_offer_id": string }; Returns: {
               "amount": number | null,

@@ -142,7 +142,7 @@ export async function saveLayout(
     publicItemIds: new Set(publicItems.map((i) => i.id)),
     ownedWorldItemIds: new Set(own.inventory.map((i) => i.item_id)),
   });
-  await repo.updateGarage(supabase, userId, { layout: layout as unknown as Json });
+  await repo.updateGarage(supabase, userId, { layout: layout as unknown as NonNullable<Json> });
   await emitEvent(supabase, {
     actorId: userId,
     type: 'world.layout_saved',
