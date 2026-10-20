@@ -1,4 +1,4 @@
-// Gamification service (MV-S8-02, F-13, D-009/D-066). Components/routes import from here.
+// Gamification service (MV-S8-02, F-13, D-009/D-079). Components/routes import from here.
 //
 // The consumer is pull-based: syncGamification() runs when the owner opens /garage or /profile,
 // reads their slice of the event log, recomputes XP/level/badges from scratch with the pure rules

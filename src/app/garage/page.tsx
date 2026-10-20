@@ -29,7 +29,7 @@ async function loadFirstPage(searchParams: Record<string, string | string[] | un
     listGarage(supabase, user.id),
     getProfile(supabase, user.id),
   ]);
-  // The gamification consumer runs here too (D-066) so XP/badges catch up right after an add, and
+  // The gamification consumer runs here too (D-079) so XP/badges catch up right after an add, and
   // the unlock toast shows where the collector actually is. Never let it take the garage down.
   let unlocked: Badge[] = [];
   try {

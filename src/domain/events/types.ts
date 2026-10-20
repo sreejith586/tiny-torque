@@ -1,6 +1,6 @@
 // Typed event catalogue — every event name named across 04-feature-specs.md's per-feature
 // "Events" lines, plus invite.redeemed (emitted by the redeem_invite RPC, MV-S1-05) and the S8
-// additions (D-066): item.photo_added + user.opened (F-13 XP inputs that had no event to count),
+// additions (D-079): item.photo_added + user.opened (F-13 XP inputs that had no event to count),
 // user.unblocked (settings blocked-users list) and feedback.created (settings feedback form).
 export const EVENT_TYPES = [
   'user.signed_up',

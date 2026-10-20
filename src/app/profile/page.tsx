@@ -57,7 +57,7 @@ async function loadProfileData(
   const profile = await getProfile(supabase, user.id);
   if (!profile) redirect('/onboarding');
 
-  // The gamification consumer runs on profile view (D-066). Never let it take the page down: if
+  // The gamification consumer runs on profile view (D-079). Never let it take the page down: if
   // the RPCs are missing (migration not yet applied on this environment) fall back to the stored
   // xp and an empty badge list.
   let summary: GamificationSummary;

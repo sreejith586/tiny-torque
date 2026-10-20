@@ -1,7 +1,7 @@
 // F-13 replay script (MV-S8-02): recompute every collector's XP / level / badges from the event
 // log with the SAME pure rules the app uses (src/domain/gamification/rules.ts) and write the result
 // through apply_gamification. Idempotent — running it on an already-correct profile changes
-// nothing and emits nothing. It is the backstop for the pull-based in-app consumer (D-066) and the
+// nothing and emits nothing. It is the backstop for the pull-based in-app consumer (D-079) and the
 // "dropping xp and replaying yields the same values" proof (F-13 AC) against real data.
 //
 //   SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… node scripts/gamification-replay.ts [--dry-run] [--user <uuid>]
