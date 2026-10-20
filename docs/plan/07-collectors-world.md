@@ -273,6 +273,8 @@ Capacity assumption: D-002 (≈ 20 h/sprint, solo + Claude Code). Each phase end
 
 Twelve sprints. The first user-visible value (W1) lands after three sprints, which is the point at which to decide whether to continue.
 
+Task-level breakdown (101 tasks, estimates, dependencies, per-sprint demo and flag changes): `08-collectors-world-sprint-plan.md`, generated from `tools/backlog-world.json`.
+
 ---
 
 ## 9. Community rules, trust & safety
