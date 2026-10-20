@@ -972,6 +972,7 @@ isOneToOne: false
 "admin_search_users":
 { Args: { "p_limit"?: number,"p_query": string }; Returns: {
               "account_type": Database["public"]['Enums']["account_type"],
+"banner_media_id": string | null,
 "bio": string | null,
 "city": string | null,
 "country_code": string,
@@ -1010,6 +1011,7 @@ isOneToOne: false
 "admin_set_suspension":
 { Args: { "p_days"?: number,"p_user_id": string }; Returns: {
               "account_type": Database["public"]['Enums']["account_type"],
+"banner_media_id": string | null,
 "bio": string | null,
 "city": string | null,
 "country_code": string,
@@ -1142,11 +1144,11 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
-"delete_account":
-{ Args: Record<PropertyKey, never>; Returns: undefined
-                           },
 "dearmor":
 { Args: { "": string }; Returns: string
+                           },
+"delete_account":
+{ Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "emit_event":
 { Args: { "p_actor_id": string,"p_entity": string,"p_entity_id"?: string,"p_payload"?: Json,"p_type": string }; Returns: undefined
