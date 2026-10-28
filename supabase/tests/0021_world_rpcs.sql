@@ -72,9 +72,13 @@ select tests.authenticate_as('71000000-0000-0000-0000-00000000000a');
 select throws_ok($$select public.buy_world_level()$$, 'P0001', 'xp_level_too_low',
   'level 2 needs XP tier 1 — a rookie is refused even before the balance is checked');
 
--- give A tier 1 but no tokens → insufficient_balance; balance untouched
+-- give A tier 1 but no tokens → insufficient_balance; balance untouched.
+-- profiles.xp/level are consumer-maintained (S8 guard trigger, D-079): a fixture write has to set
+-- the same transaction-local flag apply_gamification() uses, exactly like the gamification tests.
 select tests.clear_authentication();
+select set_config('mv.gamification_write', '1', true);
 update public.profiles set level = 1 where id = '71000000-0000-0000-0000-00000000000a';
+select set_config('mv.gamification_write', '', true);
 select tests.authenticate_as('71000000-0000-0000-0000-00000000000a');
 select throws_ok($$select public.buy_world_level()$$, 'P0001', 'insufficient_balance',
   'a short balance is rejected by spend_tokens');
