@@ -24,7 +24,64 @@ export const XP_RULES = {
   fiveStarReview: 20,
   /** daily first open +5 */
   dailyFirstOpen: 5,
+  /** daily quest completed +15 (F-13 stretch, MV-S8-07) */
+  dailyQuest: 15,
 } as const;
+
+export interface DailyQuest {
+  key: string;
+  title: string;
+  /** The event type that completes it — must be one the rules already count. */
+  event: string;
+  href: string;
+}
+
+/** Three quests rotating by UTC day (MV-S8-07). Completion is derived from that day's events
+ *  alone, so a replay sees exactly the same quests completed on exactly the same days. */
+export const DAILY_QUESTS: readonly DailyQuest[] = [
+  { key: 'add_car', title: 'Add a car to your garage', event: 'item.created', href: '/garage/add' },
+  {
+    key: 'add_photo',
+    title: 'Add a photo to one of your cars',
+    event: 'item.photo_added',
+    href: '/garage',
+  },
+  {
+    key: 'list_car',
+    title: 'List a car on the Market',
+    event: 'listing.published',
+    href: '/garage',
+  },
+];
+
+/** Days since the Unix epoch for a YYYY-MM-DD UTC day. */
+export function dayNumber(day: string): number {
+  const [y, m, d] = day.split('-').map(Number);
+  return Math.floor(Date.UTC(y!, m! - 1, d!) / 86_400_000);
+}
+
+export function questForDay(day: string): DailyQuest {
+  return DAILY_QUESTS[dayNumber(day) % DAILY_QUESTS.length]!;
+}
+
+export interface DailyQuestStatus extends DailyQuest {
+  day: string;
+  xp: number;
+  done: boolean;
+}
+
+/** Today's quest and whether the user's events for that UTC day already complete it. */
+export function questStatus(
+  userId: string,
+  events: readonly GamificationEvent[],
+  day: string
+): DailyQuestStatus {
+  const quest = questForDay(day);
+  const done = events.some(
+    (e) => e.type === quest.event && utcDay(e.occurred_at) === day && eventPaysUser(e, userId)
+  );
+  return { ...quest, day, xp: XP_RULES.dailyQuest, done };
+}
 
 export interface LevelDef {
   level: number;
@@ -151,8 +208,10 @@ export function computeXp(
     dealCompleted: 0,
     fiveStarReview: 0,
     dailyFirstOpen: 0,
+    dailyQuest: 0,
   };
   const itemsPerDay = new Map<string, number>();
+  const typesPerDay = new Map<string, Set<string>>();
   const openDays = new Set<string>();
   const completedOffers = new Set<string>();
   const reviews = new Set<string>();
@@ -160,6 +219,11 @@ export function computeXp(
 
   for (const e of events) {
     if (!eventPaysUser(e, userId)) continue;
+    {
+      const d = utcDay(e.occurred_at);
+      if (!typesPerDay.has(d)) typesPerDay.set(d, new Set());
+      typesPerDay.get(d)!.add(e.type);
+    }
     switch (e.type) {
       case 'item.created': {
         const d = utcDay(e.occurred_at);
@@ -203,6 +267,9 @@ export function computeXp(
     breakdown.itemCreated! += Math.min(n * XP_RULES.itemCreated, XP_RULES.itemCreatedDailyCap);
   }
   breakdown.dailyFirstOpen = openDays.size * XP_RULES.dailyFirstOpen;
+  for (const [day, types] of typesPerDay) {
+    if (types.has(questForDay(day).event)) breakdown.dailyQuest! += XP_RULES.dailyQuest;
+  }
 
   const xp = Object.values(breakdown).reduce((a, b) => a + b, 0);
   return { xp, breakdown };

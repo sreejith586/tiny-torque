@@ -7,6 +7,8 @@ import { listReviewsForSeller, type SellerReviewRow } from '@/domain/reviews';
 import {
   syncGamification,
   levelProgress,
+  questStatus,
+  utcDay,
   type Badge,
   type GamificationSummary,
 } from '@/domain/gamification';
@@ -43,6 +45,7 @@ async function loadProfileData(
       summary: {
         level: levelProgress(FIXTURE_PROFILE.xp),
         badges: FIXTURE_BADGES,
+        quest: questStatus(FIXTURE_PROFILE.id, [], utcDay(new Date().toISOString())),
         newlyUnlocked: [],
         xpDelta: 0,
       },
@@ -64,7 +67,13 @@ async function loadProfileData(
   try {
     summary = await syncGamification(supabase, user.id);
   } catch {
-    summary = { level: levelProgress(profile.xp), badges: [], newlyUnlocked: [], xpDelta: 0 };
+    summary = {
+      level: levelProgress(profile.xp),
+      badges: [],
+      quest: questStatus(user.id, [], utcDay(new Date().toISOString())),
+      newlyUnlocked: [],
+      xpDelta: 0,
+    };
   }
 
   const [stats, reviewRows] = await Promise.all([
@@ -103,7 +112,12 @@ export default async function ProfilePage({
       <p className="page-sub">Your collection at a glance, your level and your badges.</p>
       <ProfileView profile={profile} tier={summary.level.tier} reviews={reviews} />
       {summary.badges.length > 0 ? (
-        <ProfileStats stats={stats} level={summary.level} badges={summary.badges} />
+        <ProfileStats
+          stats={stats}
+          level={summary.level}
+          badges={summary.badges}
+          quest={summary.quest}
+        />
       ) : (
         <p className="muted" style={{ fontSize: 13, marginTop: 8 }}>
           Stats and badges are warming up — check back in a moment.

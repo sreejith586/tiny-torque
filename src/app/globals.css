@@ -1829,3 +1829,34 @@ header {
   padding-left: 18px;
   margin: 6px 0;
 }
+
+/* ---------- MV-S8-07: Pro flair (garage-log-147's proBadgeShine on the Pro pill) ---------- */
+.pro-pill {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--gold) 35%, var(--panel)),
+    color-mix(in srgb, var(--gold) 12%, var(--panel))
+  );
+  color: var(--gold);
+  border-color: color-mix(in srgb, var(--gold) 55%, var(--border));
+}
+
+.pro-pill::before {
+  content: '';
+  position: absolute;
+  top: -70%;
+  left: -70%;
+  width: 32%;
+  height: 240%;
+  background: linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: rotate(18deg);
+  animation: proBadgeShine 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.profile-hero-avatar.pro {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 45%, transparent);
+}
