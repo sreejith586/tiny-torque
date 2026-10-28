@@ -84,6 +84,8 @@ supabase functions serve ai-scan --env-file supabase/.env.local
 
 `src/domain/{identity,garage,catalog,ai,marketplace,deals,messaging,tokens,entitlements,gamification,trust,flags,events}` · routes in `src/app/{(auth),garage,market,offers,deals,profile,u/[handle],settings,tokens,admin,api}` · Edge: `supabase/functions/{ai-scan,stripe-webhook,jobs}`.
 
+**Collectors World (H3, parallel track since 2026-10-20, D-066 — ships dark behind `world*` flags):** `src/domain/world` (+ `meetups`, `races`, `clubs`, `quests` as they land) · routes `src/app/world/*` (W02+) and `src/app/api/v1/world/*` (future-client seam) · migrations `*_world_*.sql` · spec `docs/plan/07-collectors-world.md`, plan `08-collectors-world-sprint-plan.md`, **state in `docs/plan/PROGRESS-WORLD.md`** (not PROGRESS.md); legal drafts in `docs/legal/`. Task IDs `MV-Wnn-nn`, same protocol as above.
+
 ## Definition of Done (short)
 
 Migration on local+staging with pgTAP · deployable to prod dark behind its flag · service Vitest · UI in 6 themes with loading/empty/error, matching prototype · events emitted · flag if risky · Playwright updated for critical flows · guard.sh + CI green · PROGRESS.md updated · docs touched · reviewed by Sreejith.

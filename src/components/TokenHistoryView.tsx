@@ -8,6 +8,23 @@ const REASON_LABEL: Record<TokenLedgerReason, string> = {
   refund: 'Refunded',
   admin_adjust: 'Admin adjustment',
   promo: 'Promo credit',
+  // Collectors World reasons (07 §3.1, F-26/F-27) — ledger values exist from 0012_world_core;
+  // nothing writes them until the World flags turn on.
+  earn_quest: 'Earned — quest',
+  earn_daily: 'Earned — daily login',
+  earn_race_participation: 'Earned — race',
+  earn_host: 'Earned — hosted a meetup',
+  earn_attend: 'Earned — attended a meetup',
+  earn_achievement: 'Earned — achievement',
+  earn_referral: 'Earned — referral',
+  earn_season: 'Earned — season milestone',
+  expire_earned: 'Expired — earned credits',
+  spend_garage_level: 'Spent — garage level',
+  spend_world_item: 'Spent — World item',
+  spend_meetup_host: 'Spent — meetup hosting fee',
+  spend_race_entry: 'Spent — race entry',
+  spend_spotlight: 'Spent — Spotlight',
+  spend_rename: 'Spent — garage rename',
 };
 
 export default function TokenHistoryView({ ledger }: { ledger: TokenLedgerRow[] }) {

@@ -158,6 +158,8 @@ export const FIXTURE_PROFILE: ProfileRow = {
   scan_quota_reset_at: '2026-09-01T08:00:00.000Z',
   onboarding_completed_at: '2026-09-01T08:00:00.000Z',
   tutorial_dismissed_at: null,
+  age_confirmed_at: '2026-09-01T08:00:00.000Z',
+  terms_version: '1',
   suspended_until: null,
   rating_avg: null,
   rating_count: 0,
@@ -290,6 +292,7 @@ export const FIXTURE_LEDGER: TokenLedgerRow[] = [
     ref_type: 'token_purchase',
     ref_id: null,
     idempotency_key: 'fix-evt-1',
+    source: 'purchased',
     created_at: '2026-09-05T08:00:00.000Z',
   },
   {
@@ -301,6 +304,7 @@ export const FIXTURE_LEDGER: TokenLedgerRow[] = [
     ref_type: null,
     ref_id: null,
     idempotency_key: null,
+    source: null,
     created_at: '2026-09-10T08:00:00.000Z',
   },
 ];
