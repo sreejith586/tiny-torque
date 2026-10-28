@@ -4,17 +4,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { patchProfile, signOut } from '@/domain/identity';
+import { patchProfile } from '@/domain/identity';
 import { uploadProfileMedia } from '@/domain/media';
 import { compressImage } from '@/lib/image';
 import { initials } from '@/lib/initials';
-import { deleteAccountAction } from '@/app/profile/actions';
 import type { AccountType, ProfileRow } from '@/types/database';
-import type { GarageStats } from '@/domain/garage';
-import { CameraIcon } from './icons';
+import { CameraIcon, GearIcon, ShareIcon, TrophyIcon } from './icons';
 import MediaImage from './MediaImage';
 import StarRating from './StarRating';
-import ThemeSwitcher from './ThemeSwitcher';
 
 export type ProfileReview = {
   id: string;
@@ -23,13 +20,17 @@ export type ProfileReview = {
   buyerName: string;
 };
 
+// Own profile (F-14 v2, MV-S8-03/04): banner hero + avatar, the edit form (now with bio), links
+// out to the public page / settings / wishlist, and the buyer-review list. Stats, level and
+// badges render in the sibling <ProfileStats>; everything that used to be "settings" on this
+// screen (theme, export, delete, sign-out) moved to /settings (MV-S8-05).
 export default function ProfileView({
   profile,
-  topBrands = [],
+  tier,
   reviews = [],
 }: {
   profile: ProfileRow;
-  topBrands?: GarageStats['topBrands'];
+  tier: string;
   reviews?: ProfileReview[];
 }) {
   const supabase = createClient();
@@ -40,33 +41,51 @@ export default function ProfileView({
   const [accountType, setAccountType] = useState<AccountType>(profile.account_type);
   const [storeName, setStoreName] = useState(profile.store_name ?? '');
   const [location, setLocation] = useState(profile.location ?? '');
+  const [bio, setBio] = useState(profile.bio ?? '');
   const [saving, setSaving] = useState(false);
-  const [signingOut, setSigningOut] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [photoMediaId, setPhotoMediaId] = useState(profile.photo_url);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [bannerMediaId, setBannerMediaId] = useState(profile.banner_media_id);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState<'photo' | 'banner' | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
 
-  async function handlePhotoChange(file: File) {
+  async function handleImageChange(kind: 'avatar' | 'banner', file: File) {
     setPhotoError(null);
-    setUploadingPhoto(true);
+    setUploading(kind === 'avatar' ? 'photo' : 'banner');
     const localPreview = URL.createObjectURL(file);
-    setPhotoPreview(localPreview);
+    if (kind === 'avatar') setPhotoPreview(localPreview);
+    else setBannerPreview(localPreview);
     try {
       const blob = await compressImage(file);
-      const media = await uploadProfileMedia(supabase, profile.id, blob, { bytes: blob.size });
-      await patchProfile(supabase, profile.id, { photoMediaId: media.id });
-      setPhotoMediaId(media.id);
+      const media = await uploadProfileMedia(
+        supabase,
+        profile.id,
+        blob,
+        { bytes: blob.size },
+        kind
+      );
+      if (kind === 'avatar') {
+        await patchProfile(supabase, profile.id, { photoMediaId: media.id });
+        setPhotoMediaId(media.id);
+      } else {
+        await patchProfile(supabase, profile.id, { bannerMediaId: media.id });
+        setBannerMediaId(media.id);
+      }
       router.refresh();
     } catch {
-      setPhotoError('Could not update your photo. Try again.');
+      setPhotoError(
+        kind === 'avatar'
+          ? 'Could not update your photo. Try again.'
+          : 'Could not update your banner. Try again.'
+      );
     } finally {
-      setUploadingPhoto(false);
+      setUploading(null);
       URL.revokeObjectURL(localPreview);
-      setPhotoPreview(null);
+      if (kind === 'avatar') setPhotoPreview(null);
+      else setBannerPreview(null);
     }
   }
 
@@ -79,6 +98,7 @@ export default function ProfileView({
         accountType,
         storeName: accountType === 'shop' ? storeName.trim() : null,
         location: location.trim() || null,
+        bio: bio.trim() || null,
       });
       setEditing(false);
       router.refresh();
@@ -89,39 +109,46 @@ export default function ProfileView({
     }
   }
 
-  async function handleSignOut() {
-    setSigningOut(true);
-    try {
-      await signOut(supabase);
-      router.push('/login');
-      router.refresh();
-    } catch {
-      setSigningOut(false);
-    }
-  }
-
-  async function handleDelete() {
-    if (
-      !window.confirm(
-        'Delete your account? This removes your profile from public view and erases your personal details. This cannot be undone.'
-      )
-    )
-      return;
-    setDeleting(true);
-    try {
-      await deleteAccountAction(); // anonymises + soft-deletes, signs out, redirects to /login
-    } catch {
-      setError('Could not delete your account. Please try again.');
-      setDeleting(false);
-    }
-  }
-
-  const maxBrandCount = topBrands[0]?.count ?? 1;
+  const publicUrl = `/u/${profile.handle}`;
 
   return (
     <div>
-      <div className="panel" style={{ marginBottom: 16 }}>
-        <label className="profile-avatar-btn" aria-label="Change your profile photo">
+      <div className="profile-banner">
+        {bannerPreview ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={bannerPreview}
+            alt=""
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : bannerMediaId ? (
+          <MediaImage
+            mediaId={bannerMediaId}
+            alt=""
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : null}
+        <label className="icon-btn profile-banner-edit" aria-label="Change your banner photo">
+          <CameraIcon size={16} />
+          <input
+            type="file"
+            accept="image/*"
+            className="profile-banner-input"
+            disabled={uploading !== null}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = '';
+              if (file) void handleImageChange('banner', file);
+            }}
+          />
+        </label>
+      </div>
+
+      <div className="panel" style={{ marginBottom: 16, paddingTop: 0 }}>
+        <label
+          className="profile-avatar-btn profile-hero-avatar"
+          aria-label="Change your profile photo"
+        >
           {photoPreview ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -149,11 +176,11 @@ export default function ProfileView({
             type="file"
             accept="image/*"
             className="profile-avatar-input"
-            disabled={uploadingPhoto}
+            disabled={uploading !== null}
             onChange={(e) => {
               const file = e.target.files?.[0];
               e.target.value = '';
-              if (file) void handlePhotoChange(file);
+              if (file) void handleImageChange('avatar', file);
             }}
           />
         </label>
@@ -163,12 +190,30 @@ export default function ProfileView({
           </p>
         )}
 
+        <div style={{ textAlign: 'center', marginBottom: 12 }}>
+          <div style={{ fontFamily: 'var(--font-heading)', fontSize: 22, fontWeight: 700 }}>
+            {profile.display_name}
+          </div>
+          <div className="muted" style={{ fontSize: 13 }}>
+            @{profile.handle}
+          </div>
+          <div style={{ marginTop: 8, display: 'flex', justifyContent: 'center', gap: 6 }}>
+            <span className="level-pill">
+              <TrophyIcon size={12} />
+              {tier}
+            </span>
+            {profile.account_type === 'shop' && <span className="level-pill">Shop</span>}
+            {profile.plan === 'pro' && <span className="level-pill">Pro</span>}
+          </div>
+        </div>
+
         {!editing ? (
           <>
-            <div className="toggle-row">
-              <span className="muted">Display name</span>
-              <span>{profile.display_name}</span>
-            </div>
+            {profile.bio && (
+              <p style={{ fontSize: 14, lineHeight: 1.5, textAlign: 'center', marginBottom: 8 }}>
+                {profile.bio}
+              </p>
+            )}
             <div className="toggle-row">
               <span className="muted">Account type</span>
               <span>{profile.account_type === 'shop' ? 'Shop / store' : 'Collector'}</span>
@@ -179,10 +224,14 @@ export default function ProfileView({
                 <span>{profile.store_name}</span>
               </div>
             )}
-            {profile.location && (
+            {(profile.city || profile.location) && (
               <div className="toggle-row">
                 <span className="muted">Location</span>
-                <span>{profile.location}</span>
+                <span>
+                  {[profile.city ?? profile.location, profile.country_code]
+                    .filter(Boolean)
+                    .join(', ')}
+                </span>
               </div>
             )}
             {profile.mobile && (
@@ -191,10 +240,6 @@ export default function ProfileView({
                 <span>{profile.mobile}</span>
               </div>
             )}
-            <div className="toggle-row">
-              <span className="muted">Plan</span>
-              <span>{profile.plan === 'pro' ? 'Pro' : 'Free'}</span>
-            </div>
             <div className="toggle-row">
               <span className="muted">Rating</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -209,13 +254,23 @@ export default function ProfileView({
                 )}
               </span>
             </div>
-            <button
-              className="btn-secondary"
-              style={{ marginTop: 14 }}
-              onClick={() => setEditing(true)}
-            >
-              Edit profile
-            </button>
+            <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+              <button
+                className="btn-secondary"
+                style={{ fontSize: 13, padding: '12px 8px' }}
+                onClick={() => setEditing(true)}
+              >
+                Edit profile
+              </button>
+              <Link
+                href={publicUrl}
+                className="btn-secondary"
+                style={{ fontSize: 13, padding: '12px 8px', whiteSpace: 'nowrap' }}
+              >
+                <ShareIcon size={14} />
+                Public page
+              </Link>
+            </div>
           </>
         ) : (
           <>
@@ -250,6 +305,19 @@ export default function ProfileView({
             <label htmlFor="location">Location</label>
             <input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
 
+            <label htmlFor="bio">Bio</label>
+            <textarea
+              id="bio"
+              rows={3}
+              maxLength={280}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="What do you collect? (280 characters)"
+            />
+            <p className="muted" style={{ fontSize: 11, textAlign: 'right' }}>
+              {bio.length}/280
+            </p>
+
             {error && <p className="field-error">{error}</p>}
 
             <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
@@ -264,40 +332,23 @@ export default function ProfileView({
         )}
       </div>
 
-      {topBrands.length > 0 && (
-        <>
-          <div className="section-title">Top brands in your garage</div>
-          <div className="rank-card">
-            {topBrands.map((b, i) => (
-              <div className="brand-rank-row" key={b.brand}>
-                <div className="brand-rank-num">#{i + 1}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span className="brand-rank-name">{b.brand}</span>
-                    <span className="brand-rank-count">
-                      {b.count} item{b.count === 1 ? '' : 's'}
-                    </span>
-                  </div>
-                  <div className="brand-rank-bar-track">
-                    <div
-                      className="brand-rank-bar-fill"
-                      style={{ width: `${Math.round((b.count / maxBrandCount) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      <Link
-        href="/profile/wishlist"
-        className="btn-secondary"
-        style={{ display: 'block', textAlign: 'center', marginBottom: 16 }}
-      >
-        My wishlist
-      </Link>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+        <Link
+          href="/profile/wishlist"
+          className="btn-secondary"
+          style={{ fontSize: 13, padding: '12px 8px' }}
+        >
+          My wishlist
+        </Link>
+        <Link
+          href="/settings"
+          className="btn-secondary"
+          style={{ fontSize: 13, padding: '12px 8px' }}
+        >
+          <GearIcon size={14} />
+          Settings
+        </Link>
+      </div>
 
       <div className="section-title">Buyer reviews — trust score</div>
       {reviews.length === 0 ? (
@@ -315,38 +366,6 @@ export default function ProfileView({
           </div>
         ))
       )}
-
-      <div className="panel" style={{ marginBottom: 16, marginTop: 16 }}>
-        <h2 style={{ fontSize: 16 }}>Appearance</h2>
-        <p className="muted" style={{ fontSize: 13, marginTop: 4 }}>
-          Theme choice is saved on this device only.
-        </p>
-        <ThemeSwitcher />
-      </div>
-
-      <div className="panel" style={{ marginBottom: 16 }}>
-        <h2 style={{ fontSize: 16 }}>Account</h2>
-        <p className="muted" style={{ fontSize: 13, marginTop: 4 }}>
-          Download a copy of your collection, or delete your account.
-        </p>
-        <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
-          <a className="btn-secondary" href="/api/export">
-            Export my data
-          </a>
-          <button className="btn-danger" onClick={handleDelete} disabled={deleting}>
-            {deleting ? 'Deleting…' : 'Delete account'}
-          </button>
-        </div>
-        {error && !editing && (
-          <p className="field-error" style={{ marginTop: 10 }}>
-            {error}
-          </p>
-        )}
-      </div>
-
-      <button className="btn-danger" onClick={handleSignOut} disabled={signingOut}>
-        {signingOut ? 'Signing out…' : 'Sign out'}
-      </button>
     </div>
   );
 }

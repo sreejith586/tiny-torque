@@ -1,6 +1,8 @@
 // Typed event catalogue — every event name named across 04-feature-specs.md's per-feature
-// "Events" lines, plus invite.redeemed (emitted by the redeem_invite RPC, MV-S1-05), plus the
-// Collectors World catalogue (F-20…F-28, MV-W01-06): world.* / meetup.* / race.* / club.* /
+// "Events" lines, plus invite.redeemed (emitted by the redeem_invite RPC, MV-S1-05), the S8
+// additions (D-079): item.photo_added + user.opened (F-13 XP inputs that had no event to count),
+// user.unblocked (settings blocked-users list) and feedback.created (settings feedback form), plus
+// the Collectors World catalogue (F-20…F-28, MV-W01-06): world.* / meetup.* / race.* / club.* /
 // quest.* are registered up front so every World sprint emits from the same list; consumers
 // (XP, score, notifications) land in their own sprints (W02 slot-integrity, W04 earn engine…).
 export const EVENT_TYPES = [
@@ -10,6 +12,8 @@ export const EVENT_TYPES = [
   'profile.updated',
   'user.deleted',
   'user.blocked',
+  'user.unblocked',
+  'user.opened',
   'user.suspended',
   'user.unsuspended',
   'item.created',
@@ -19,6 +23,7 @@ export const EVENT_TYPES = [
   'item.made_public',
   'item.made_private',
   'item.favorited',
+  'item.photo_added',
   'scan.requested',
   'scan.completed',
   'scan.accepted',
@@ -52,6 +57,7 @@ export const EVENT_TYPES = [
   'report.resolved',
   'review.created',
   'invite.redeemed',
+  'feedback.created',
   'flag.updated',
   // ---- Collectors World (07 §2, §6.2) ----
   'world.garage_created',

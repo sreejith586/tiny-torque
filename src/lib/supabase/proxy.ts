@@ -38,7 +38,7 @@ export async function refreshSession(request: NextRequest) {
 export async function getUserGuardInfo(
   request: NextRequest,
   userId: string
-): Promise<{ role: string | null; suspendedUntil: string | null }> {
+): Promise<{ role: string | null; suspendedUntil: string | null; deletedAt: string | null }> {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -56,8 +56,12 @@ export async function getUserGuardInfo(
 
   const { data } = await supabase
     .from('profiles')
-    .select('role, suspended_until')
+    .select('role, suspended_until, deleted_at')
     .eq('id', userId)
     .maybeSingle();
-  return { role: data?.role ?? null, suspendedUntil: data?.suspended_until ?? null };
+  return {
+    role: data?.role ?? null,
+    suspendedUntil: data?.suspended_until ?? null,
+    deletedAt: data?.deleted_at ?? null,
+  };
 }

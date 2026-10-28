@@ -2,6 +2,13 @@ import type { Tables } from '@/lib/supabase/types';
 
 export type ReportRow = Tables<'reports'>;
 export type BlockRow = Tables<'blocks'>;
+/** One row of the blocked_users() RPC (settings › blocked users, F-14). */
+export interface BlockedUser {
+  blocked_id: string;
+  display_name: string;
+  handle: string;
+  created_at: string;
+}
 
 export type ReportTargetType = 'listing' | 'user' | 'message';
 

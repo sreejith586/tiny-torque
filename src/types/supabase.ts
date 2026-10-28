@@ -5,7 +5,20 @@ export type Database = {
   
   "public": {
           Tables: {
-            "ai_scan_jobs": {
+            "achievements": {
+                  Row: {
+                    "description": string,"icon": string,"key": string,"name": string,"rule": NonNullable<Json>,"sort_order": number
+                  }
+                  Insert: {
+                    "description": string,"icon"?: string,"key": string,"name": string,"rule"?: NonNullable<Json>,"sort_order"?: number
+                  }
+                  Update: {
+                    "description"?: string,"icon"?: string,"key"?: string,"name"?: string,"rule"?: NonNullable<Json>,"sort_order"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"ai_scan_jobs": {
                   Row: {
                     "accepted_count": number,"candidates": NonNullable<Json>,"cost_usd": number | null,"created_at": string,"error": string | null,"id": string,"input_tokens": number | null,"kind": Database["public"]['Enums']["scan_kind"],"latency_ms": number | null,"media_id": string | null,"model": string | null,"output_tokens": number | null,"status": Database["public"]['Enums']["scan_status"],"user_id": string
                   }
@@ -374,6 +387,31 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"feedback": {
+                  Row: {
+                    "created_at": string,"id": string,"kind": Database["public"]['Enums']["feedback_kind"],"message": string,"page": string | null,"user_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"kind"?: Database["public"]['Enums']["feedback_kind"],"message": string,"page"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"kind"?: Database["public"]['Enums']["feedback_kind"],"message"?: string,"page"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "feedback_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "feedback_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"follows": {
                   Row: {
                     "created_at": string,"followee_id": string,"follower_id": string
@@ -617,16 +655,22 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "account_type": Database["public"]['Enums']["account_type"],"age_confirmed_at": string | null,"bio": string | null,"city": string | null,"country_code": string,"created_at": string,"deleted_at": string | null,"display_name": string,"handle": string,"handle_changed_at": string | null,"id": string,"level": number,"location": string | null,"mobile": string | null,"onboarding_completed_at": string | null,"photo_url": string | null,"plan": Database["public"]['Enums']["plan_tier"],"pro_until": string | null,"rating_avg": number | null,"rating_count": number,"role": Database["public"]['Enums']["user_role"],"scan_quota_bonus": number,"scan_quota_reset_at": string,"scan_quota_used": number,"store_name": string | null,"suspended_until": string | null,"terms_version": string | null,"tokens": number,"tutorial_dismissed_at": string | null,"updated_at": string,"xp": number
+                    "account_type": Database["public"]['Enums']["account_type"],"age_confirmed_at": string | null,"banner_media_id": string | null,"bio": string | null,"city": string | null,"country_code": string,"created_at": string,"deleted_at": string | null,"display_name": string,"handle": string,"handle_changed_at": string | null,"id": string,"level": number,"location": string | null,"mobile": string | null,"onboarding_completed_at": string | null,"photo_url": string | null,"plan": Database["public"]['Enums']["plan_tier"],"pro_until": string | null,"rating_avg": number | null,"rating_count": number,"role": Database["public"]['Enums']["user_role"],"scan_quota_bonus": number,"scan_quota_reset_at": string,"scan_quota_used": number,"store_name": string | null,"suspended_until": string | null,"terms_version": string | null,"tokens": number,"tutorial_dismissed_at": string | null,"updated_at": string,"xp": number
                   }
                   Insert: {
-                    "account_type": Database["public"]['Enums']["account_type"],"age_confirmed_at"?: string | null,"bio"?: string | null,"city"?: string | null,"country_code"?: string,"created_at"?: string,"deleted_at"?: string | null,"display_name": string,"handle": string,"handle_changed_at"?: string | null,"id": string,"level"?: number,"location"?: string | null,"mobile"?: string | null,"onboarding_completed_at"?: string | null,"photo_url"?: string | null,"plan"?: Database["public"]['Enums']["plan_tier"],"pro_until"?: string | null,"rating_avg"?: number | null,"rating_count"?: number,"role"?: Database["public"]['Enums']["user_role"],"scan_quota_bonus"?: number,"scan_quota_reset_at"?: string,"scan_quota_used"?: number,"store_name"?: string | null,"suspended_until"?: string | null,"terms_version"?: string | null,"tokens"?: number,"tutorial_dismissed_at"?: string | null,"updated_at"?: string,"xp"?: number
+                    "account_type": Database["public"]['Enums']["account_type"],"age_confirmed_at"?: string | null,"banner_media_id"?: string | null,"bio"?: string | null,"city"?: string | null,"country_code"?: string,"created_at"?: string,"deleted_at"?: string | null,"display_name": string,"handle": string,"handle_changed_at"?: string | null,"id": string,"level"?: number,"location"?: string | null,"mobile"?: string | null,"onboarding_completed_at"?: string | null,"photo_url"?: string | null,"plan"?: Database["public"]['Enums']["plan_tier"],"pro_until"?: string | null,"rating_avg"?: number | null,"rating_count"?: number,"role"?: Database["public"]['Enums']["user_role"],"scan_quota_bonus"?: number,"scan_quota_reset_at"?: string,"scan_quota_used"?: number,"store_name"?: string | null,"suspended_until"?: string | null,"terms_version"?: string | null,"tokens"?: number,"tutorial_dismissed_at"?: string | null,"updated_at"?: string,"xp"?: number
                   }
                   Update: {
-                    "account_type"?: Database["public"]['Enums']["account_type"],"age_confirmed_at"?: string | null,"bio"?: string | null,"city"?: string | null,"country_code"?: string,"created_at"?: string,"deleted_at"?: string | null,"display_name"?: string,"handle"?: string,"handle_changed_at"?: string | null,"id"?: string,"level"?: number,"location"?: string | null,"mobile"?: string | null,"onboarding_completed_at"?: string | null,"photo_url"?: string | null,"plan"?: Database["public"]['Enums']["plan_tier"],"pro_until"?: string | null,"rating_avg"?: number | null,"rating_count"?: number,"role"?: Database["public"]['Enums']["user_role"],"scan_quota_bonus"?: number,"scan_quota_reset_at"?: string,"scan_quota_used"?: number,"store_name"?: string | null,"suspended_until"?: string | null,"terms_version"?: string | null,"tokens"?: number,"tutorial_dismissed_at"?: string | null,"updated_at"?: string,"xp"?: number
+                    "account_type"?: Database["public"]['Enums']["account_type"],"age_confirmed_at"?: string | null,"banner_media_id"?: string | null,"bio"?: string | null,"city"?: string | null,"country_code"?: string,"created_at"?: string,"deleted_at"?: string | null,"display_name"?: string,"handle"?: string,"handle_changed_at"?: string | null,"id"?: string,"level"?: number,"location"?: string | null,"mobile"?: string | null,"onboarding_completed_at"?: string | null,"photo_url"?: string | null,"plan"?: Database["public"]['Enums']["plan_tier"],"pro_until"?: string | null,"rating_avg"?: number | null,"rating_count"?: number,"role"?: Database["public"]['Enums']["user_role"],"scan_quota_bonus"?: number,"scan_quota_reset_at"?: string,"scan_quota_used"?: number,"store_name"?: string | null,"suspended_until"?: string | null,"terms_version"?: string | null,"tokens"?: number,"tutorial_dismissed_at"?: string | null,"updated_at"?: string,"xp"?: number
                   }
                   Relationships: [
                     {
+      foreignKeyName: "profiles_banner_media_id_fkey"
+      columns: ["banner_media_id"]
+isOneToOne: false
+      referencedRelation: "media"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "profiles_country_code_fkey"
       columns: ["country_code"]
 isOneToOne: false
@@ -783,6 +827,37 @@ isOneToOne: false
       referencedColumns: ["id"]
     },{
       foreignKeyName: "token_purchases_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"user_achievements": {
+                  Row: {
+                    "achievement_key": string,"progress": number,"unlocked_at": string | null,"updated_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "achievement_key": string,"progress"?: number,"unlocked_at"?: string | null,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "achievement_key"?: string,"progress"?: number,"unlocked_at"?: string | null,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "user_achievements_achievement_key_fkey"
+      columns: ["achievement_key"]
+isOneToOne: false
+      referencedRelation: "achievements"
+      referencedColumns: ["key"]
+    },{
+      foreignKeyName: "user_achievements_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "user_achievements_user_id_fkey"
       columns: ["user_id"]
 isOneToOne: false
       referencedRelation: "public_profiles"
@@ -968,16 +1043,22 @@ isOneToOne: false
                   ]
                 },"public_profiles": {
                   Row: {
-                    "account_type": Database["public"]['Enums']["account_type"] | null,"bio": string | null,"city": string | null,"country_code": string | null,"created_at": string | null,"display_name": string | null,"handle": string | null,"id": string | null,"is_pro": boolean | null,"level": number | null,"rating_avg": number | null,"rating_count": number | null,"store_name": string | null,"xp": number | null
+                    "account_type": Database["public"]['Enums']["account_type"] | null,"avatar_media_id": string | null,"banner_media_id": string | null,"bio": string | null,"city": string | null,"country_code": string | null,"created_at": string | null,"display_name": string | null,"handle": string | null,"id": string | null,"is_pro": boolean | null,"level": number | null,"rating_avg": number | null,"rating_count": number | null,"store_name": string | null,"xp": number | null
                   }
                   Insert: {
-                           "account_type"?: Database["public"]['Enums']["account_type"] | null,"bio"?: string | null,"city"?: string | null,"country_code"?: string | null,"created_at"?: string | null,"display_name"?: string | null,"handle"?: string | null,"id"?: string | null,"is_pro"?: never,"level"?: number | null,"rating_avg"?: number | null,"rating_count"?: number | null,"store_name"?: string | null,"xp"?: number | null
+                           "account_type"?: Database["public"]['Enums']["account_type"] | null,"avatar_media_id"?: string | null,"banner_media_id"?: string | null,"bio"?: string | null,"city"?: string | null,"country_code"?: string | null,"created_at"?: string | null,"display_name"?: string | null,"handle"?: string | null,"id"?: string | null,"is_pro"?: never,"level"?: number | null,"rating_avg"?: number | null,"rating_count"?: number | null,"store_name"?: string | null,"xp"?: number | null
                          }
                         Update: {
-                           "account_type"?: Database["public"]['Enums']["account_type"] | null,"bio"?: string | null,"city"?: string | null,"country_code"?: string | null,"created_at"?: string | null,"display_name"?: string | null,"handle"?: string | null,"id"?: string | null,"is_pro"?: never,"level"?: number | null,"rating_avg"?: number | null,"rating_count"?: number | null,"store_name"?: string | null,"xp"?: number | null
+                           "account_type"?: Database["public"]['Enums']["account_type"] | null,"avatar_media_id"?: string | null,"banner_media_id"?: string | null,"bio"?: string | null,"city"?: string | null,"country_code"?: string | null,"created_at"?: string | null,"display_name"?: string | null,"handle"?: string | null,"id"?: string | null,"is_pro"?: never,"level"?: number | null,"rating_avg"?: number | null,"rating_count"?: number | null,"store_name"?: string | null,"xp"?: number | null
                          }
                         Relationships: [
                     {
+      foreignKeyName: "profiles_banner_media_id_fkey"
+      columns: ["banner_media_id"]
+isOneToOne: false
+      referencedRelation: "media"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "profiles_country_code_fkey"
       columns: ["country_code"]
 isOneToOne: false
@@ -1011,6 +1092,7 @@ isOneToOne: false
 { Args: { "p_limit"?: number,"p_query": string }; Returns: {
               "account_type": Database["public"]['Enums']["account_type"],
 "age_confirmed_at": string | null,
+"banner_media_id": string | null,
 "bio": string | null,
 "city": string | null,
 "country_code": string,
@@ -1051,6 +1133,7 @@ isOneToOne: false
 { Args: { "p_days"?: number,"p_user_id": string }; Returns: {
               "account_type": Database["public"]['Enums']["account_type"],
 "age_confirmed_at": string | null,
+"banner_media_id": string | null,
 "bio": string | null,
 "city": string | null,
 "country_code": string,
@@ -1087,6 +1170,14 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"apply_gamification":
+{ Args: { "p_badges"?: Json,"p_level": number,"p_user": string,"p_xp": number }; Returns: Json
+                           },
+"blocked_users":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "blocked_id": string,"created_at": string,"display_name": string,"handle": string
+            }[]
+                           },
 "buy_now":
 { Args: { "p_listing_id": string }; Returns: {
               "amount": number | null,
@@ -1215,6 +1306,9 @@ isOneToOne: false
 "dearmor":
 { Args: { "": string }; Returns: string
                            },
+"delete_account":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "emit_event":
 { Args: { "p_actor_id": string,"p_entity": string,"p_entity_id"?: string,"p_payload"?: Json,"p_type": string }; Returns: undefined
                            },
@@ -1243,6 +1337,11 @@ isOneToOne: false
 "entitlement_scan_quota":
 { Args: { "p_user": string }; Returns: number
                            },
+"gamification_events":
+{ Args: { "p_user"?: string }; Returns: {
+              "actor_id": string,"entity": string,"entity_id": string,"id": number,"occurred_at": string,"payload": Json,"type": string
+            }[]
+                           },
 "gen_random_uuid":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
@@ -1268,6 +1367,9 @@ isOneToOne: false
                            },
 "media_is_public":
 { Args: { "p_media_id": string }; Returns: boolean
+                           },
+"mv_is_backend_caller":
+{ Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "pgp_armor_headers":
 { Args: { "": string }; Returns: Record<string, unknown>[]
@@ -1349,7 +1451,7 @@ isOneToOne: false
       } }
           }
           Enums: {
-            "account_type": "individual"|"shop","catalog_status": "proposed"|"verified","entitlement_grant_kind": "listing_slot"|"scan_pack"|"pro_30d"|"world_level"|"world_item","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed"|"reserved","listing_type": "sale"|"trade"|"both","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","model_status": "proposed"|"verified"|"merged","notification_type": "offer_received"|"offer_accepted"|"offer_declined"|"message"|"listing_sold"|"review_received"|"badge_unlocked"|"wishlist_match"|"system","offer_status": "pending"|"accepted"|"declined"|"withdrawn"|"expired"|"completed"|"cancelled","offer_type": "cash"|"buy_now"|"trade","plan_tier": "free"|"pro","report_status": "open"|"reviewed"|"dismissed","scan_kind": "single"|"group"|"visual_search","scan_status": "queued"|"running"|"done"|"failed","token_ledger_reason": "purchase"|"spend_listing_slot"|"spend_scan_pack"|"spend_pro_30d"|"refund"|"admin_adjust"|"promo"|"earn_quest"|"earn_daily"|"earn_race_participation"|"earn_host"|"earn_attend"|"earn_achievement"|"earn_referral"|"earn_season"|"expire_earned"|"spend_garage_level"|"spend_world_item"|"spend_meetup_host"|"spend_race_entry"|"spend_spotlight"|"spend_rename","token_ledger_source": "purchased"|"earned"|"promo"|"adjust","token_purchase_provider": "stripe"|"razorpay","token_purchase_status": "created"|"paid"|"failed"|"refunded","user_role": "user"|"admin","world_acquired_via": "purchase"|"earn"|"promo","world_item_kind": "decor"|"theme"|"tune"|"trophy"|"consumable"|"signage","world_open_mode": "public"|"followers"|"invite"
+            "account_type": "individual"|"shop","catalog_status": "proposed"|"verified","entitlement_grant_kind": "listing_slot"|"scan_pack"|"pro_30d"|"world_level"|"world_item","feedback_kind": "bug"|"idea"|"other","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed"|"reserved","listing_type": "sale"|"trade"|"both","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","model_status": "proposed"|"verified"|"merged","notification_type": "offer_received"|"offer_accepted"|"offer_declined"|"message"|"listing_sold"|"review_received"|"badge_unlocked"|"wishlist_match"|"system","offer_status": "pending"|"accepted"|"declined"|"withdrawn"|"expired"|"completed"|"cancelled","offer_type": "cash"|"buy_now"|"trade","plan_tier": "free"|"pro","report_status": "open"|"reviewed"|"dismissed","scan_kind": "single"|"group"|"visual_search","scan_status": "queued"|"running"|"done"|"failed","token_ledger_reason": "purchase"|"spend_listing_slot"|"spend_scan_pack"|"spend_pro_30d"|"refund"|"admin_adjust"|"promo"|"earn_quest"|"earn_daily"|"earn_race_participation"|"earn_host"|"earn_attend"|"earn_achievement"|"earn_referral"|"earn_season"|"expire_earned"|"spend_garage_level"|"spend_world_item"|"spend_meetup_host"|"spend_race_entry"|"spend_spotlight"|"spend_rename","token_ledger_source": "purchased"|"earned"|"promo"|"adjust","token_purchase_provider": "stripe"|"razorpay","token_purchase_status": "created"|"paid"|"failed"|"refunded","user_role": "user"|"admin","world_acquired_via": "purchase"|"earn"|"promo","world_item_kind": "decor"|"theme"|"tune"|"trophy"|"consumable"|"signage","world_open_mode": "public"|"followers"|"invite"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -1465,7 +1567,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "account_type": ["individual", "shop"],"catalog_status": ["proposed", "verified"],"entitlement_grant_kind": ["listing_slot", "scan_pack", "pro_30d", "world_level", "world_item"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed", "reserved"],"listing_type": ["sale", "trade", "both"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"model_status": ["proposed", "verified", "merged"],"notification_type": ["offer_received", "offer_accepted", "offer_declined", "message", "listing_sold", "review_received", "badge_unlocked", "wishlist_match", "system"],"offer_status": ["pending", "accepted", "declined", "withdrawn", "expired", "completed", "cancelled"],"offer_type": ["cash", "buy_now", "trade"],"plan_tier": ["free", "pro"],"report_status": ["open", "reviewed", "dismissed"],"scan_kind": ["single", "group", "visual_search"],"scan_status": ["queued", "running", "done", "failed"],"token_ledger_reason": ["purchase", "spend_listing_slot", "spend_scan_pack", "spend_pro_30d", "refund", "admin_adjust", "promo", "earn_quest", "earn_daily", "earn_race_participation", "earn_host", "earn_attend", "earn_achievement", "earn_referral", "earn_season", "expire_earned", "spend_garage_level", "spend_world_item", "spend_meetup_host", "spend_race_entry", "spend_spotlight", "spend_rename"],"token_ledger_source": ["purchased", "earned", "promo", "adjust"],"token_purchase_provider": ["stripe", "razorpay"],"token_purchase_status": ["created", "paid", "failed", "refunded"],"user_role": ["user", "admin"],"world_acquired_via": ["purchase", "earn", "promo"],"world_item_kind": ["decor", "theme", "tune", "trophy", "consumable", "signage"],"world_open_mode": ["public", "followers", "invite"]
+            "account_type": ["individual", "shop"],"catalog_status": ["proposed", "verified"],"entitlement_grant_kind": ["listing_slot", "scan_pack", "pro_30d", "world_level", "world_item"],"feedback_kind": ["bug", "idea", "other"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed", "reserved"],"listing_type": ["sale", "trade", "both"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"model_status": ["proposed", "verified", "merged"],"notification_type": ["offer_received", "offer_accepted", "offer_declined", "message", "listing_sold", "review_received", "badge_unlocked", "wishlist_match", "system"],"offer_status": ["pending", "accepted", "declined", "withdrawn", "expired", "completed", "cancelled"],"offer_type": ["cash", "buy_now", "trade"],"plan_tier": ["free", "pro"],"report_status": ["open", "reviewed", "dismissed"],"scan_kind": ["single", "group", "visual_search"],"scan_status": ["queued", "running", "done", "failed"],"token_ledger_reason": ["purchase", "spend_listing_slot", "spend_scan_pack", "spend_pro_30d", "refund", "admin_adjust", "promo", "earn_quest", "earn_daily", "earn_race_participation", "earn_host", "earn_attend", "earn_achievement", "earn_referral", "earn_season", "expire_earned", "spend_garage_level", "spend_world_item", "spend_meetup_host", "spend_race_entry", "spend_spotlight", "spend_rename"],"token_ledger_source": ["purchased", "earned", "promo", "adjust"],"token_purchase_provider": ["stripe", "razorpay"],"token_purchase_status": ["created", "paid", "failed", "refunded"],"user_role": ["user", "admin"],"world_acquired_via": ["purchase", "earn", "promo"],"world_item_kind": ["decor", "theme", "tune", "trophy", "consumable", "signage"],"world_open_mode": ["public", "followers", "invite"]
           }
         }
 } as const

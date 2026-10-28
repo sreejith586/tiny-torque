@@ -74,6 +74,12 @@ export async function isHandleAvailable(
   return !data;
 }
 
+/** Caller-only cascade delete (0020 `delete_account()`); see service.deleteAccount. */
+export async function deleteAccount(supabase: Client) {
+  const { error } = await supabase.rpc('delete_account');
+  if (error) throw error;
+}
+
 export async function redeemInvite(supabase: Client, code: string) {
   const { error } = await supabase.rpc('redeem_invite', { p_code: code });
   if (error) throw error;

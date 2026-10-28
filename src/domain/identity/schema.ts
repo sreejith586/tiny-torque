@@ -94,6 +94,11 @@ export const profilePatchSchema = z.object({
   mobile: z.string().trim().max(20).nullish(),
   photoMediaId: z.string().uuid().nullish(),
   handle: handleSchema.optional(),
+  bio: z.string().trim().max(280, 'Bio must be 280 characters or fewer').nullish(),
+  /** A `media` row id (kind 'banner'), D-010 — F-14 public-profile banner. */
+  bannerMediaId: z.string().uuid().nullish(),
+  /** True = stamp tutorial_dismissed_at now (F-01 onboarding tutorial, MV-S8-06). */
+  tutorialDismissed: z.boolean().optional(),
 });
 
 export type ProfileCreateParsed = z.infer<typeof profileCreateSchema>;

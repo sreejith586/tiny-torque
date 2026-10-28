@@ -9,7 +9,7 @@
 **Rules**
 
 - Login screen: country picker (AE, IN prominent; full E.164 list behind "other"), phone input, "Use email instead" toggle. OTP 6 digits, 10-min validity, resend after 30 s, max 5 sends/hour/number (Supabase rate limits + our own counter).
-- First login → onboarding = the prototype's **single "Set up your profile" form** (D-027/D-041), extended with: invite code field (shown only while `invite_only` flag on), handle (auto-suggested from display name, editable, uniqueness checked on blur via server action, inline error), country (native `<select>`, prefilled from dial code / email default AE) replacing the free-text location, city (native `<datalist>` from a static per-country list, free text allowed). Existing fields stay: display name, account type (collector/shop), store name for shop. No steps, no progress bar, no avatar (media arrives in S2; avatar only if the prototype profile gets one via a D-row). Tutorial (S8) is skippable.
+- First login → onboarding = the prototype's **single "Set up your profile" form** (D-027/D-041), extended with: invite code field (shown only while `invite_only` flag on), handle (auto-suggested from display name, editable, uniqueness checked on blur via server action, inline error), country (native `<select>`, prefilled from dial code / email default AE) replacing the free-text location, city (native `<datalist>` from a static per-country list, free text allowed). Existing fields stay: display name, account type (collector/shop), store name for shop. No steps, no progress bar, no avatar (media arrives in S2; avatar only if the prototype profile gets one via a D-row). Tutorial (S8) is skippable. ✅ MV-S8-06 — 4-step tour over `/garage` until `tutorial_dismissed_at` is stamped; garage empty state points at scan / manual / import.
 - Profile edit uses PATCH semantics (never nulls untouched fields — fixes current upsert bug).
 - Account deletion: anonymise PII, soft-delete items/listings, keep ledger rows (finance) with user pseudonymised.
   **AC**
@@ -139,13 +139,13 @@ Bell with unread count (Realtime on `notifications`); list with mark-read; types
 ## F-13 Gamification (lite)
 
 XP rules (code): add item +10 (cap 50/day), first photo on item +5, publish listing +15, complete deal +50 (both sides), receive 5★ review +20, daily first open +5. Levels: 0/100/300/700/1500/3000 XP → tiers "Rookie / Collector / Serious Collector / Curator / Legend / Vault Master" (names from Varun's prototype where they exist; confirm). Five badges per 03 §2.18 with progress. Stats dashboard on profile. Daily quest = stretch.
-**AC** XP computed only from `domain_events` (replayable: dropping `xp` and replaying yields same values — test).
+**AC** XP computed only from `domain_events` (replayable: dropping `xp` and replaying yields same values — test). ✅ MV-S8-02 — `src/domain/gamification/rules.test.ts` ("replay determinism"), `scripts/gamification-replay.ts`, D-079.
 **Events** `xp.granted`, `badge.unlocked`
 
 ## F-14 Profile & public page
 
 `/u/{handle}`: banner, avatar, name, handle, shop badge, country/city, level/tier, rating, member since, follow button (stretch), tabs: Public collection · Listings · Reviews. Share sheet (Web Share API) with OG image. Settings: edit profile, switch account type, theme (6, per-device), export/backup, tokens history, blocked users, delete account, T&Cs/privacy, feedback/bug report.
-**AC** Public page renders for anon with only `public_profiles` fields; private items absent.
+**AC** Public page renders for anon with only `public_profiles` fields; private items absent. ✅ MV-S8-04 — `e2e/profile-settings.spec.ts` (public profile v2: tabs, level pill, share; mobile absent), `supabase/tests/0020_gamification.sql` (public_profiles avatar/banner columns). Settings list ✅ MV-S8-05 (`/settings`, D-080). Follow button = stretch (MV-S8-07, not built).
 
 ## F-15 Trust & safety
 

@@ -1,5 +1,6 @@
 import type { ProfileRow, CountryRow, PublicProfileRow } from '@/types/database';
 import type { GarageItem } from '@/domain/garage';
+import type { Badge } from '@/domain/gamification/types';
 import type { Listing } from '@/domain/marketplace';
 import type { TokenPackRow, TokenLedgerRow } from '@/domain/tokens';
 
@@ -149,9 +150,10 @@ export const FIXTURE_PROFILE: ProfileRow = {
   handle_changed_at: null,
   country_code: 'IN',
   city: 'Bengaluru',
-  bio: null,
+  bio: 'Hot Wheels mainlines and the odd Treasure Hunt. Bengaluru based.',
+  banner_media_id: null,
   pro_until: null,
-  xp: 120,
+  xp: 320,
   level: 3,
   scan_quota_used: 0,
   scan_quota_bonus: 0,
@@ -166,6 +168,60 @@ export const FIXTURE_PROFILE: ProfileRow = {
 };
 
 // F-14: /u/{handle} reads public_profiles, not profiles — a distinct (narrower) shape.
+// F-13 (MV-S8-03): badge grid for the ?__visual harness — two unlocked, three in progress.
+export const FIXTURE_BADGES: Badge[] = [
+  {
+    key: 'first_add',
+    name: 'First Add',
+    description: 'Add your first car to the garage.',
+    icon: 'add',
+    progress: 1,
+    target: 1,
+    unlocked: true,
+    unlockedAt: '2026-09-02T08:00:00.000Z',
+  },
+  {
+    key: 'growing_garage',
+    name: 'Growing Garage',
+    description: 'Reach 25 cars in your garage.',
+    icon: 'garage',
+    progress: 6,
+    target: 25,
+    unlocked: false,
+    unlockedAt: null,
+  },
+  {
+    key: 'treasure_hunter',
+    name: 'Treasure Hunter',
+    description: 'Own 5 cars rarer than common.',
+    icon: 'bolt',
+    progress: 2,
+    target: 5,
+    unlocked: false,
+    unlockedAt: null,
+  },
+  {
+    key: 'deal_maker',
+    name: 'Deal Maker',
+    description: 'Complete your first deal.',
+    icon: 'offers',
+    progress: 1,
+    target: 1,
+    unlocked: true,
+    unlockedAt: '2026-09-20T08:00:00.000Z',
+  },
+  {
+    key: 'value_collector',
+    name: 'Value Collector',
+    description: 'Your collection is worth 1,000 or more.',
+    icon: 'market',
+    progress: 310,
+    target: 1000,
+    unlocked: false,
+    unlockedAt: null,
+  },
+];
+
 export const FIXTURE_PUBLIC_PROFILE: PublicProfileRow = {
   id: FIXTURE_PROFILE.id,
   handle: FIXTURE_PROFILE.handle,
@@ -179,6 +235,8 @@ export const FIXTURE_PUBLIC_PROFILE: PublicProfileRow = {
   xp: FIXTURE_PROFILE.xp,
   created_at: FIXTURE_PROFILE.created_at,
   is_pro: FIXTURE_PROFILE.plan === 'pro',
+  avatar_media_id: FIXTURE_PROFILE.photo_url,
+  banner_media_id: FIXTURE_PROFILE.banner_media_id,
   rating_avg: null,
   rating_count: 0,
 };

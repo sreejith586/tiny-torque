@@ -2,7 +2,13 @@
 // create_report RPC (rate limit, D-021-style atomic check); blocks are a plain table — its own
 // RLS ("Users manage their own blocks", blocker_id = auth.uid()) is the backstop.
 import type { Client } from '@/lib/supabase/types';
-import type { AdminReportAction, ReportRow, ReportReason, ReportTargetType } from './types';
+import type {
+  AdminReportAction,
+  BlockedUser,
+  ReportRow,
+  ReportReason,
+  ReportTargetType,
+} from './types';
 
 export async function createReport(
   supabase: Client,
@@ -32,6 +38,27 @@ export async function blockUser(
     .from('blocks')
     .insert({ blocker_id: blockerId, blocked_id: blockedId });
   if (error) throw error;
+}
+
+export async function unblockUser(
+  supabase: Client,
+  blockerId: string,
+  blockedId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('blocks')
+    .delete()
+    .eq('blocker_id', blockerId)
+    .eq('blocked_id', blockedId);
+  if (error) throw error;
+}
+
+/** The caller's own block list with names (blocked_users() RPC — public_profiles hides blocked
+ *  users from the blocker, so the names can't come from the view). */
+export async function listBlockedUsers(supabase: Client): Promise<BlockedUser[]> {
+  const { data, error } = await supabase.rpc('blocked_users');
+  if (error) throw error;
+  return (data ?? []) as BlockedUser[];
 }
 
 /** Admin-only (RLS: "Admins can read all reports"). */

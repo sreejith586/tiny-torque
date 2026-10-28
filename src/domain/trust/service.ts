@@ -1,6 +1,7 @@
 // Trust & safety service (MV-S6-05/07, F-15/F-16). Components/routes import from here, never
 // from repo.
 import type { Client } from '@/lib/supabase/types';
+import { emitEvent } from '@/domain/events';
 import * as repo from './repo';
 import { createReportSchema, resolveReportSchema } from './schema';
 
@@ -34,7 +35,29 @@ export async function submitReport(supabase: Client, input: unknown) {
   }
 }
 
-export const blockUser = repo.blockUser;
+/** Block + emit `user.blocked` (F-15 Events; the row insert itself never emitted one). */
+export async function blockUser(supabase: Client, blockerId: string, blockedId: string) {
+  await repo.blockUser(supabase, blockerId, blockedId);
+  await emitEvent(supabase, {
+    actorId: blockerId,
+    type: 'user.blocked',
+    entity: 'profile',
+    entityId: blockedId,
+  });
+}
+
+/** Settings › blocked users › Unblock (F-14, MV-S8-05). */
+export async function unblockUser(supabase: Client, blockerId: string, blockedId: string) {
+  await repo.unblockUser(supabase, blockerId, blockedId);
+  await emitEvent(supabase, {
+    actorId: blockerId,
+    type: 'user.unblocked',
+    entity: 'profile',
+    entityId: blockedId,
+  });
+}
+
+export const listBlockedUsers = repo.listBlockedUsers;
 export const listOpenReports = repo.listOpenReports;
 
 export async function resolveReport(supabase: Client, input: unknown) {

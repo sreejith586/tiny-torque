@@ -193,7 +193,7 @@ File names follow the Supabase CLI convention `<YYYYMMDDHHMMSS>_<name>.sql` (req
 | 0007 | `deals.sql` — offers, transition RPC, rate limit, reviews changes | 5 |
 | 0008 | `messaging_trust.sql` — deal_messages, blocks, reports changes, notifications, Realtime publication | 6 |
 | 0009 | `tokens.sql` — packs, ledger, purchases, grants, spend RPC, entitlement fns | 7 |
-| 0010 | `gamification.sql` — achievements, user_achievements, xp columns | 8 |
+| 0010 | `gamification.sql` (= `20261020000000_gamification.sql`) — achievements (seeded), user_achievements, `gamification_events`/`apply_gamification` RPCs + xp/level guard trigger, item event triggers, `profiles.banner_media_id` + public_profiles avatar/banner, public avatar/banner media, `feedback`, `blocked_users()`, `delete_account()` | 8 |
 | 0011 | `jobs.sql` — pg_cron schedules | 9 |
 | 0012 | `20261020071121_world_core.sql` — world_levels (seed), world_garages, world_items, world_inventory, token_ledger.source + reasons, profiles 18+/terms, eight `world*` flags OFF | W01 |
 | 0013 | `20261020071122_world_rpcs.sql` — ensure_world_garage, buy_world_level, buy_world_item | W01 |
