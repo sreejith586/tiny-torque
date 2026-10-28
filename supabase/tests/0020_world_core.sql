@@ -88,7 +88,7 @@ select is(
 -- ---------- anon ----------
 select tests.authenticate_anon();
 select is((select count(*)::int from public.world_levels), 5, 'anon reads the level table');
-select is((select count(*)::int from public.world_items), 1, 'anon sees only active items');
+select is((select count(*)::int from public.world_items where sku like 't\_%'), 1, 'anon sees only active items (fixture rows; 0013a seeds mechanic rows too)');
 select is((select count(*)::int from public.world_garages), 2, 'anon sees exactly the public garages (A, E)');
 select is(tests.visible_inventory_rows(), 0, 'anon sees no inventory');
 
@@ -155,7 +155,7 @@ select is(
 select tests.clear_authentication();
 select tests.authenticate_as('70000000-0000-0000-0000-00000000000d');
 select is((select count(*)::int from public.world_garages), 4, 'admin sees every garage');
-select is((select count(*)::int from public.world_items), 2, 'admin sees inactive items too');
+select is((select count(*)::int from public.world_items where sku like 't\_%'), 2, 'admin sees inactive items too');
 select is((select count(*)::int from public.world_inventory), 1, 'admin reads inventory');
 
 -- ---------- token_ledger.source is derived from the reason ----------
