@@ -1,5 +1,6 @@
 import type { GarageStats } from '@/domain/garage';
-import type { Badge, LevelProgress } from '@/domain/gamification';
+import type { Badge, DailyQuestStatus, LevelProgress } from '@/domain/gamification';
+import DailyQuestCard from './DailyQuestCard';
 import { AddIcon, BoltIcon, GarageIcon, MarketIcon, OffersIcon, TrophyIcon } from './icons';
 
 // MV-S8-03 (F-13): the profile stats dashboard — totals, value, dupes, level bar, badge grid with
@@ -125,11 +126,13 @@ export default function ProfileStats({
   stats,
   level,
   badges,
+  quest,
   currency,
 }: {
   stats: GarageStats;
   level: LevelProgress;
   badges: Badge[];
+  quest?: DailyQuestStatus;
   currency?: string | null;
 }) {
   return (
@@ -155,6 +158,7 @@ export default function ProfileStats({
       </div>
 
       <LevelCard level={level} />
+      {quest && <DailyQuestCard quest={quest} />}
 
       <div className="section-title">Badges</div>
       <BadgeGrid badges={badges} />

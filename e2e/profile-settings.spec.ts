@@ -33,6 +33,7 @@ test('profile stats dashboard renders level, badges and top brands (F-13, fixtur
   // five badges, two of them unlocked in the fixture
   await expect(page.locator('.badge-card')).toHaveCount(5);
   await expect(page.locator('.badge-card.locked')).toHaveCount(3);
+  await expect(page.getByText(/Today's quest/)).toBeVisible(); // MV-S8-07 daily quest card
   await expect(page.getByText('Top brands in your garage')).toBeVisible();
   await expect(page.getByRole('link', { name: /Settings/ })).toBeVisible();
 });
@@ -44,6 +45,7 @@ test('public profile v2 has tabs, level pill and share (F-14, fixture harness)',
   test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
   await expect(page.getByRole('heading', { name: 'Varun' })).toBeVisible();
   await expect(page.getByText(/Level 3 · Serious Collector/)).toBeVisible();
+  await expect(page.getByText(/12 followers/)).toBeVisible(); // MV-S8-07 follower count
   await expect(page.getByRole('button', { name: 'Share this profile' })).toBeVisible();
   // tabs switch content
   await page.getByRole('tab', { name: /Listings/ }).click();

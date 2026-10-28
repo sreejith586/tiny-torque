@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { patchProfile } from '@/domain/identity';
 import { uploadProfileMedia } from '@/domain/media';
+import { isProActive } from '@/domain/entitlements';
 import { compressImage } from '@/lib/image';
 import { initials } from '@/lib/initials';
 import type { AccountType, ProfileRow } from '@/types/database';
@@ -110,6 +111,8 @@ export default function ProfileView({
   }
 
   const publicUrl = `/u/${profile.handle}`;
+  // Pro is derived (pro_until > now or plan='pro'), same rule as domain/entitlements.isProActive.
+  const isPro = isProActive(profile);
 
   return (
     <div>
@@ -146,7 +149,7 @@ export default function ProfileView({
 
       <div className="panel" style={{ marginBottom: 16, paddingTop: 0 }}>
         <label
-          className="profile-avatar-btn profile-hero-avatar"
+          className={`profile-avatar-btn profile-hero-avatar ${isPro ? 'pro' : ''}`}
           aria-label="Change your profile photo"
         >
           {photoPreview ? (
@@ -203,7 +206,7 @@ export default function ProfileView({
               {tier}
             </span>
             {profile.account_type === 'shop' && <span className="level-pill">Shop</span>}
-            {profile.plan === 'pro' && <span className="level-pill">Pro</span>}
+            {isPro && <span className="level-pill pro-pill">Pro</span>}
           </div>
         </div>
 
