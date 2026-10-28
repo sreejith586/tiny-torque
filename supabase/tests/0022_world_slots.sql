@@ -4,7 +4,7 @@
 -- paid rename, the RPC-only name column, and the theme ownership guard. Run via CI's pgTAP job.
 
 begin;
-select plan(31);
+select plan(32);
 
 insert into auth.users (id) values
   ('72000000-0000-0000-0000-00000000000a'),
@@ -132,6 +132,9 @@ select is((select tokens from public.profiles where id = '72000000-0000-0000-000
 select is((select count(*)::int from public.token_ledger where reason = 'spend_rename'), 1, 'the paid rename is a spend_rename ledger row');
 select tests.authenticate_as('72000000-0000-0000-0000-00000000000a');
 select throws_ok($$select public.rename_world_garage('   ')$$, 'P0001', 'invalid_name', 'an empty name is rejected');
+select throws_ok(
+  $$select public.buy_world_item((select id from public.world_items where sku = 'garage_rename'))$$,
+  'P0002', 'item_not_found', 'the rename row is priced data, not a purchasable item');
 select throws_ok(
   $$update public.world_garages set name = 'free rename' where user_id = '72000000-0000-0000-0000-00000000000a'$$,
   '42501', 'rpc_only_column', 'the owner cannot rename by direct update (priced column)');

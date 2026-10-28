@@ -1,0 +1,192 @@
+/* Collectors World screens (MV-W02-01/02/03/05) — composed from the prototype's panel / card
+   language and theme tokens only (D-027, rule 13). The scene is CSS layers + the existing CarCard,
+   never a canvas (07 §5.1). Level backdrops are token mixes until the design pack's art lands
+   (platform art goes to public/world/, MV-W01-11). */
+
+.scene {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  padding: 14px;
+  background: var(--panel);
+  --cols: 2;
+}
+
+/* ---- backdrop layers by level (data-backdrop) ---- */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.backdrop::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 38% 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--panel-alt) 70%, var(--bg)),
+    color-mix(in srgb, var(--panel) 60%, transparent)
+  );
+}
+
+.backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 62% 0 0 0;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--border) 60%, transparent), var(--bg));
+}
+
+.scene[data-backdrop='garage'] .backdrop::before {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--teal) 14%, var(--panel-alt)),
+    color-mix(in srgb, var(--panel) 60%, transparent)
+  );
+}
+
+.scene[data-backdrop='showroom'] .backdrop::before {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--gold) 18%, var(--panel-alt)),
+    color-mix(in srgb, var(--panel) 60%, transparent)
+  );
+}
+
+.scene[data-backdrop='warehouse'] .backdrop::before {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--violet) 18%, var(--panel-alt)),
+    color-mix(in srgb, var(--panel) 60%, transparent)
+  );
+}
+
+.scene[data-backdrop='vault'] .backdrop::before {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--orange) 22%, var(--panel-alt)),
+    color-mix(in srgb, var(--panel) 55%, transparent)
+  );
+}
+
+/* a bought theme tints the floor; art replaces this when the pack lands */
+.scene[data-theme]:not([data-theme='none']) .backdrop::after {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--teal) 22%, transparent), var(--bg));
+}
+
+.sign {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.signName {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  color: var(--cream);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.featured {
+  position: relative;
+  margin: 0 auto 12px;
+  max-width: 320px;
+}
+
+.featuredLabel {
+  position: relative;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 6px;
+}
+
+.slots {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  gap: 10px;
+}
+
+.emptySlot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+}
+
+.featured .emptySlot {
+  min-height: 160px;
+}
+
+.editorRow {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.editorRow label {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.editorRow select {
+  margin: 0;
+}
+
+.shopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.shopRow:first-of-type {
+  border-top: 0;
+}
+
+.shopName {
+  font-weight: 600;
+  color: var(--cream);
+}
+
+.shopMeta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.price {
+  font-family: var(--font-heading);
+  color: var(--orange);
+  white-space: nowrap;
+}
+
+@media (min-width: 700px) {
+  .scene {
+    --cols: 3;
+    padding: 18px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .scene {
+    --cols: 4;
+  }
+}

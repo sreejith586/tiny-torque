@@ -227,3 +227,15 @@ export function CheckIcon(props: IconProps) {
     </Base>
   );
 }
+
+/** Collectors World tab (MV-W02-01). Not in garage-log-147.html — a globe in the same stroke
+ *  language, pending Varun's sign-off (D-084). */
+export function WorldIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18" />
+      <path d="M12 3c2.8 2.6 4.2 5.6 4.2 9s-1.4 6.4-4.2 9c-2.8-2.6-4.2-5.6-4.2-9S9.2 5.6 12 3z" />
+    </Base>
+  );
+}

@@ -16,17 +16,20 @@ alter table public.world_levels
 -- PLACEHOLDER caps (same status as the level prices, D-070/D-064).
 update public.world_levels set max_extra_slots =
   case level when 1 then 2 when 2 then 3 when 3 then 4 when 4 then 5 else 6 end;
+-- S8 (D-079) numbers XP tiers 1–6 (1 = Rookie at 0 XP, 2 = Collector at 100 XP …); 0012's seed
+-- assumed 0-based tiers. Re-align: garage level n needs XP tier n (level 1 is the free start).
+update public.world_levels set min_xp_level = level;
 
 alter table public.world_garages
   add column if not exists extra_slots  integer not null default 0 check (extra_slots >= 0),
   add column if not exists rename_count integer not null default 0 check (rename_count >= 0);
 
 -- Mechanics as data rows (07 §3.3 "pricing is data"): the extra slot is a consumable item with an
--- `effect.grants` the purchase RPC understands; the rename price lives on an inactive item row
--- the rename RPC reads (inactive = not listed, not purchasable through buy_world_item).
+-- `effect.grants` the purchase RPC understands; the rename price lives on an item row the rename
+-- RPC reads (active so the shop can show the price, but buy_world_item refuses it — see below).
 insert into public.world_items (sku, kind, name, description, price, min_level, active, effect, sort_order) values
   ('extra_display_slot', 'consumable', 'Extra display slot', 'One more car on show, beyond what your level gives you.', 15, 1, true,  '{"grants": "display_slot"}', 1000),
-  ('garage_rename',      'consumable', 'Garage rename',      'Rename your garage. The first one is free.',               5,  1, false, '{"grants": "rename"}',       1001)
+  ('garage_rename',      'consumable', 'Garage rename',      'Rename your garage. The first one is free.',               5,  1, true,  '{"grants": "rename"}',       1001)
 on conflict (sku) do nothing;
 
 -- ---------- guard: RPC-only columns + theme ownership ----------
@@ -86,6 +89,7 @@ begin
   if v_garage.level < v_item.min_level then raise exception 'level_too_low' using errcode = 'P0001'; end if;
 
   v_grants := v_item.effect ->> 'grants';
+  if v_grants = 'rename' then raise exception 'item_not_found' using errcode = 'P0002'; end if; -- rename_world_garage only
   if v_grants = 'display_slot' then
     select max_extra_slots into v_cap from public.world_levels where level = v_garage.level;
     if v_garage.extra_slots >= coalesce(v_cap, 0) then

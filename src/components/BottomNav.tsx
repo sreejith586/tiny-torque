@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { APP_SHELL_HIDDEN_ON } from '@/lib/shell-routes';
-import { AddIcon, GarageIcon, MarketIcon, OffersIcon, ProfileIcon } from './icons';
+import { AddIcon, GarageIcon, MarketIcon, OffersIcon, ProfileIcon, WorldIcon } from './icons';
 
 // Mobile-first bottom tab bar, matching the prototype's tab structure and icon set
 // (garage-log-147.html, D-044): Garage, Market, Add Car, Deals, Profile. The /offers route and
@@ -22,14 +22,20 @@ const TABS: ReadonlyArray<{
   { href: '/profile', label: 'Profile', Icon: ProfileIcon },
 ];
 
-export default function BottomNav() {
+const WORLD_TAB = { href: '/world', label: 'World', Icon: WorldIcon } as const;
+
+/** `worldEnabled` (MV-W02-01, D-084 proposed): the Collectors World tab appears only for users the
+ *  `world` flag is on for — the bar is the prototype's five tabs otherwise (D-027). */
+export default function BottomNav({ worldEnabled = false }: { worldEnabled?: boolean }) {
   const pathname = usePathname();
 
   if (pathname && APP_SHELL_HIDDEN_ON.includes(pathname)) return null;
 
+  const tabs = worldEnabled ? [...TABS.slice(0, 2), WORLD_TAB, ...TABS.slice(2)] : TABS;
+
   return (
     <nav className="bottom-nav">
-      {TABS.map((tab) => {
+      {tabs.map((tab) => {
         const active =
           pathname === tab.href ||
           (tab.href !== '/garage/add' && pathname?.startsWith(tab.href + '/'));
@@ -37,7 +43,7 @@ export default function BottomNav() {
           <Link
             key={tab.href}
             href={tab.href}
-            className={`nav-item ${tab.isAdd ? 'nav-add' : ''} ${active ? 'active' : ''}`}
+            className={`nav-item ${'isAdd' in tab && tab.isAdd ? 'nav-add' : ''} ${active ? 'active' : ''}`}
           >
             <span className="nav-icon">
               <tab.Icon size={20} />
