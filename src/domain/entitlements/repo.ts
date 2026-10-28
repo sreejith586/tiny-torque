@@ -14,3 +14,11 @@ export async function listingSlots(supabase: Client, userId: string): Promise<nu
   if (error) throw error;
   return data ?? 0;
 }
+
+/** DB-backed Pro check (pro_until > now(), D-021 backstop) — prefer `isProActive(profile)` when
+ *  you already have the profile row loaded; this is for contexts that only have a user id. */
+export async function isPro(supabase: Client, userId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('is_pro', { p_user: userId });
+  if (error) throw error;
+  return data ?? false;
+}

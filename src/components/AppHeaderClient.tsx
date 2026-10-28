@@ -14,16 +14,19 @@ export default function AppHeaderClient({
   displayName,
   photoMediaId,
   initialUnreadCount,
+  initialTokens,
   viewerId,
 }: {
   signedIn: boolean;
   displayName: string | null;
   photoMediaId: string | null;
   initialUnreadCount: number;
+  initialTokens: number;
   viewerId: string | null;
 }) {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
+  const [tokens, setTokens] = useState(initialTokens);
 
   useEffect(() => {
     if (!viewerId) return;
@@ -39,6 +42,17 @@ export default function AppHeaderClient({
           filter: `user_id=eq.${viewerId}`,
         },
         () => setUnreadCount((n) => n + 1)
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${viewerId}`,
+        },
+        // recompute_token_balance (MV-S7-01) updates profiles.tokens whenever the ledger moves.
+        (payload) => setTokens((payload.new as { tokens?: number }).tokens ?? 0)
       )
       .subscribe();
 
@@ -60,6 +74,16 @@ export default function AppHeaderClient({
         </span>
       </Link>
       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        {signedIn && (
+          <Link
+            href="/tokens"
+            className="btn-secondary"
+            aria-label={`${tokens} tokens — buy more`}
+            style={{ width: 'auto', padding: '6px 12px', fontSize: 13, fontWeight: 700 }}
+          >
+            {tokens}
+          </Link>
+        )}
         {signedIn && (
           <Link
             href="/notifications"

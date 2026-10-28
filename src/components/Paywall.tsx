@@ -1,12 +1,13 @@
-// Reusable paywall placeholder (MV-S3-06, F-11). Shown when a free-plan limit is hit. The
-// "buy" CTA is intentionally disabled until the token economy lands (S7, flag token_purchase).
+// Reusable paywall (MV-S3-06/S7-06, F-11). Shown when a free-plan limit is hit. The CTA now links
+// to the token store (S7) instead of a disabled "coming soon" button.
+import Link from 'next/link';
 
 type PaywallContext = 'scan' | 'photos' | 'listings';
 
 const COPY: Record<PaywallContext, { title: string; body: string; cta: string }> = {
   scan: {
     title: 'Out of scans this month',
-    body: 'You’ve used your free AI scans for this 30-day period. Pro members get a much higher scan quota.',
+    body: 'You’ve used your free AI scans for this 30-day period. Buy a scan pack or upgrade to Pro for a much higher quota.',
     cta: 'Buy a scan pack',
   },
   photos: {
@@ -16,8 +17,8 @@ const COPY: Record<PaywallContext, { title: string; body: string; cta: string }>
   },
   listings: {
     title: 'Listing limit reached',
-    body: 'Free members can keep 2 active listings. Pro members get unlimited listings.',
-    cta: 'Upgrade to Pro',
+    body: 'Free members can keep 2 active listings. Buy an extra slot or upgrade to Pro for unlimited listings.',
+    cta: 'Get more listing slots',
   },
 };
 
@@ -29,9 +30,9 @@ export default function Paywall({ context }: { context: PaywallContext }) {
       <p className="muted" style={{ fontSize: 13, marginTop: 6 }}>
         {c.body}
       </p>
-      <button className="btn-primary" style={{ marginTop: 14 }} disabled title="Coming soon">
-        {c.cta} (coming soon)
-      </button>
+      <Link href="/tokens" className="btn-primary" style={{ marginTop: 14, display: 'block' }}>
+        {c.cta}
+      </Link>
     </div>
   );
 }

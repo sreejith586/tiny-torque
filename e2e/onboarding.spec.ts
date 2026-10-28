@@ -51,7 +51,10 @@ test('sign-in → onboarding → profile, and mobile is absent from the public p
     await page.getByLabel('Display name').click(); // blur handle → availability check runs
     await expect(page.getByText(`mini-vault.app/u/${HANDLE}`)).toBeVisible();
     await page.getByRole('button', { name: 'Next' }).click();
-    // Location — defaults are fine; submit.
+    // Location — defaults are fine.
+    await page.getByRole('button', { name: 'Continue' }).click();
+    // Photo (optional) + the required 18+/terms confirmation (MV-W01-08); submit.
+    await page.getByRole('checkbox', { name: /18 or older/ }).check();
     await page.getByRole('button', { name: 'Enter my garage' }).click();
     await expect(page).toHaveURL(/\/garage$/);
   }

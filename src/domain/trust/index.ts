@@ -2,6 +2,7 @@ export * from './service';
 export type {
   ReportRow,
   BlockRow,
+  BlockedUser,
   ReportTargetType,
   ReportReason,
   AdminReportAction,

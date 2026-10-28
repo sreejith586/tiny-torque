@@ -7,7 +7,7 @@ import { isVisualHarness, harnessAllowed, VISUAL_COOKIE } from '@/lib/visual-fix
 // the routes that require a signed-in user.
 //
 // Public (no auth required): /, /login, /onboarding, /market (+ listing
-// detail, F-06), /u/{handle} public profiles, static assets. Everything else —
+// detail, F-06), /u/{handle} public profiles, /legal/*, static assets. Everything else —
 // /garage, /profile, /offers, /deals, /notifications, /settings, /tokens,
 // /admin — requires a session. /admin additionally requires profiles.role =
 // 'admin' (MV-S1-06) —
@@ -20,6 +20,10 @@ function isPublicPath(pathname: string) {
   if (PUBLIC_PATHS.has(pathname)) return true;
   if (pathname.startsWith('/market/')) return true;
   if (pathname.startsWith('/u/')) return true;
+  if (pathname.startsWith('/legal/')) return true;
+  // /api/v1/* (MV-W01-07, ADR-05 future-client seam): JSON handlers do their own auth and answer
+  // 401/404 — a redirect to /login is meaningless to a non-browser client.
+  if (pathname.startsWith('/api/v1/')) return true;
   return false;
 }
 
@@ -54,7 +58,18 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user && !isPublicPath(pathname)) {
-    const { role, suspendedUntil } = await getUserGuardInfo(request, user.id);
+    const { role, suspendedUntil, deletedAt } = await getUserGuardInfo(request, user.id);
+    // MV-S8-05: a deleted (anonymised) account still has an auth.users row until the S9 purge job
+    // removes it. Treat its session as over: clear the auth cookies and send them to /login.
+    if (deletedAt) {
+      const redirectUrl = new URL('/login', request.url);
+      redirectUrl.searchParams.set('deleted', '1');
+      const res = NextResponse.redirect(redirectUrl);
+      for (const c of request.cookies.getAll()) {
+        if (c.name.startsWith('sb-')) res.cookies.delete(c.name);
+      }
+      return res;
+    }
     // MV-S5-08: a suspended user is blocked from every protected route, not just /admin — the
     // field only exists since S6 (messaging_trust), so this was unreachable before now.
     if (suspendedUntil && new Date(suspendedUntil) > new Date()) {

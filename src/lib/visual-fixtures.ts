@@ -1,6 +1,8 @@
 import type { ProfileRow, CountryRow, PublicProfileRow } from '@/types/database';
 import type { GarageItem } from '@/domain/garage';
+import type { Badge } from '@/domain/gamification/types';
 import type { Listing } from '@/domain/marketplace';
+import type { TokenPackRow, TokenLedgerRow } from '@/domain/tokens';
 
 // D-027 / D-041 visual-baseline harness. `?__visual=1` makes the signed-in pages (garage, car
 // detail, profile; add/scan/offers need no data) render this deterministic fixture data with no
@@ -148,21 +150,78 @@ export const FIXTURE_PROFILE: ProfileRow = {
   handle_changed_at: null,
   country_code: 'IN',
   city: 'Bengaluru',
-  bio: null,
+  bio: 'Hot Wheels mainlines and the odd Treasure Hunt. Bengaluru based.',
+  banner_media_id: null,
   pro_until: null,
-  xp: 120,
+  xp: 320,
   level: 3,
   scan_quota_used: 0,
   scan_quota_bonus: 0,
   scan_quota_reset_at: '2026-09-01T08:00:00.000Z',
   onboarding_completed_at: '2026-09-01T08:00:00.000Z',
   tutorial_dismissed_at: null,
+  age_confirmed_at: '2026-09-01T08:00:00.000Z',
+  terms_version: '1',
   suspended_until: null,
   rating_avg: null,
   rating_count: 0,
 };
 
 // F-14: /u/{handle} reads public_profiles, not profiles — a distinct (narrower) shape.
+// F-13 (MV-S8-03): badge grid for the ?__visual harness — two unlocked, three in progress.
+export const FIXTURE_BADGES: Badge[] = [
+  {
+    key: 'first_add',
+    name: 'First Add',
+    description: 'Add your first car to the garage.',
+    icon: 'add',
+    progress: 1,
+    target: 1,
+    unlocked: true,
+    unlockedAt: '2026-09-02T08:00:00.000Z',
+  },
+  {
+    key: 'growing_garage',
+    name: 'Growing Garage',
+    description: 'Reach 25 cars in your garage.',
+    icon: 'garage',
+    progress: 6,
+    target: 25,
+    unlocked: false,
+    unlockedAt: null,
+  },
+  {
+    key: 'treasure_hunter',
+    name: 'Treasure Hunter',
+    description: 'Own 5 cars rarer than common.',
+    icon: 'bolt',
+    progress: 2,
+    target: 5,
+    unlocked: false,
+    unlockedAt: null,
+  },
+  {
+    key: 'deal_maker',
+    name: 'Deal Maker',
+    description: 'Complete your first deal.',
+    icon: 'offers',
+    progress: 1,
+    target: 1,
+    unlocked: true,
+    unlockedAt: '2026-09-20T08:00:00.000Z',
+  },
+  {
+    key: 'value_collector',
+    name: 'Value Collector',
+    description: 'Your collection is worth 1,000 or more.',
+    icon: 'market',
+    progress: 310,
+    target: 1000,
+    unlocked: false,
+    unlockedAt: null,
+  },
+];
+
 export const FIXTURE_PUBLIC_PROFILE: PublicProfileRow = {
   id: FIXTURE_PROFILE.id,
   handle: FIXTURE_PROFILE.handle,
@@ -176,6 +235,8 @@ export const FIXTURE_PUBLIC_PROFILE: PublicProfileRow = {
   xp: FIXTURE_PROFILE.xp,
   created_at: FIXTURE_PROFILE.created_at,
   is_pro: FIXTURE_PROFILE.plan === 'pro',
+  avatar_media_id: FIXTURE_PROFILE.photo_url,
+  banner_media_id: FIXTURE_PROFILE.banner_media_id,
   rating_avg: null,
   rating_count: 0,
 };
@@ -252,5 +313,56 @@ export const FIXTURE_LISTINGS: Listing[] = [
     open_to_offers: false,
     open_to_trade: true,
     media: [{ id: 'fix-l3', url: PHOTO }],
+  },
+];
+
+// S7 tokens store / history (MV-S7-05).
+export const FIXTURE_PACKS: TokenPackRow[] = [
+  {
+    id: '30000000-0000-4000-8000-000000000001',
+    sku: 'pack_small',
+    tokens: 50,
+    price_amount: 19,
+    price_currency: 'AED',
+    stripe_price_id: null,
+    active: true,
+    sort_order: 1,
+  },
+  {
+    id: '30000000-0000-4000-8000-000000000002',
+    sku: 'pack_large',
+    tokens: 150,
+    price_amount: 49,
+    price_currency: 'AED',
+    stripe_price_id: null,
+    active: true,
+    sort_order: 2,
+  },
+];
+
+export const FIXTURE_LEDGER: TokenLedgerRow[] = [
+  {
+    id: '40000000-0000-4000-8000-000000000001',
+    user_id: OWNER,
+    delta: 50,
+    balance_after: 50,
+    reason: 'purchase',
+    ref_type: 'token_purchase',
+    ref_id: null,
+    idempotency_key: 'fix-evt-1',
+    source: 'purchased',
+    created_at: '2026-09-05T08:00:00.000Z',
+  },
+  {
+    id: '40000000-0000-4000-8000-000000000002',
+    user_id: OWNER,
+    delta: -20,
+    balance_after: 30,
+    reason: 'spend_listing_slot',
+    ref_type: null,
+    ref_id: null,
+    idempotency_key: null,
+    source: null,
+    created_at: '2026-09-10T08:00:00.000Z',
   },
 ];

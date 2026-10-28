@@ -77,6 +77,9 @@ export const profileCreateSchema = z
     handle: handleSchema.nullish(),
     countryCode: countryCodeSchema,
     city: z.string().trim().max(80).nullish(),
+    // MV-W01-08 (07 P8 / §10): adults only — the self-declaration is a hard gate, not a field.
+    ageConfirmed: z.literal(true, { message: 'You must be 18 or older to use Tiny Torque' }),
+    termsVersion: z.string().trim().min(1).max(20),
   })
   .refine((v) => v.accountType !== 'shop' || (v.storeName && v.storeName.length > 0), {
     message: 'Shops need a store name',
@@ -91,6 +94,11 @@ export const profilePatchSchema = z.object({
   mobile: z.string().trim().max(20).nullish(),
   photoMediaId: z.string().uuid().nullish(),
   handle: handleSchema.optional(),
+  bio: z.string().trim().max(280, 'Bio must be 280 characters or fewer').nullish(),
+  /** A `media` row id (kind 'banner'), D-010 — F-14 public-profile banner. */
+  bannerMediaId: z.string().uuid().nullish(),
+  /** True = stamp tutorial_dismissed_at now (F-01 onboarding tutorial, MV-S8-06). */
+  tutorialDismissed: z.boolean().optional(),
 });
 
 export type ProfileCreateParsed = z.infer<typeof profileCreateSchema>;

@@ -24,7 +24,37 @@ export const isHandleAvailable = repo.isHandleAvailable;
 export const getPublicProfile = repo.getPublicProfile;
 export const getPublicProfileById = repo.getPublicProfileById;
 export const listPublicProfilesByIds = repo.listPublicProfilesByIds;
+export const isFollowing = repo.isFollowing;
+export const countFollowers = repo.countFollowers;
 export { CITIES_BY_COUNTRY } from './cities';
+
+// ---------- Follow button (F-14 stretch, MV-S8-07) ----------
+/** Follow + emit `user.followed` (rule 9). Idempotent-ish: a duplicate insert is swallowed. */
+export async function followUser(supabase: Client, followerId: string, followeeId: string) {
+  if (followerId === followeeId) throw new Error('You cannot follow yourself.');
+  try {
+    await repo.followUser(supabase, followerId, followeeId);
+  } catch (e) {
+    if ((e as { code?: string } | null)?.code !== '23505') throw e; // already following
+    return;
+  }
+  await emitEvent(supabase, {
+    actorId: followerId,
+    type: 'user.followed',
+    entity: 'profile',
+    entityId: followeeId,
+  });
+}
+
+export async function unfollowUser(supabase: Client, followerId: string, followeeId: string) {
+  await repo.unfollowUser(supabase, followerId, followeeId);
+  await emitEvent(supabase, {
+    actorId: followerId,
+    type: 'user.unfollowed',
+    entity: 'profile',
+    entityId: followeeId,
+  });
+}
 
 /**
  * Onboarding's country prefill (F-01): match the signed-in phone's E.164 dial code against the
@@ -94,6 +124,7 @@ export async function createProfile(supabase: Client, userId: string, input: Pro
     handle = await suggestAvailableHandle(supabase, v.displayName);
   }
 
+  const now = new Date().toISOString();
   await repo.insertProfile(supabase, {
     id: userId,
     display_name: v.displayName,
@@ -105,7 +136,9 @@ export async function createProfile(supabase: Client, userId: string, input: Pro
     handle,
     country_code: v.countryCode,
     city: v.city ?? null,
-    onboarding_completed_at: new Date().toISOString(),
+    onboarding_completed_at: now,
+    age_confirmed_at: now,
+    terms_version: v.termsVersion,
   });
 
   await emitEvent(supabase, {
@@ -114,6 +147,38 @@ export async function createProfile(supabase: Client, userId: string, input: Pro
     entity: 'profile',
     entityId: userId,
   });
+  // The consent record counsel can audit (07 §10 "consent capture recorded as an event").
+  await emitEvent(supabase, {
+    actorId: userId,
+    type: 'user.accepted_terms',
+    entity: 'profile',
+    entityId: userId,
+    payload: { version: v.termsVersion, age_confirmed: true, at: 'onboarding' },
+  });
+}
+
+/**
+ * Sign-in acceptance (MV-W01-08, 07 §11 "terms version accepted at sign-in recorded as
+ * `user.accepted_terms`"): when the stored version differs from `version` (a bump, or a profile
+ * from before versions existed), stamps the new version and logs the event. Returns whether
+ * anything was recorded. No profile yet = onboarding will record it; nothing to do here.
+ */
+export async function recordTermsAcceptance(
+  supabase: Client,
+  userId: string,
+  version: string
+): Promise<boolean> {
+  const profile = await repo.getProfile(supabase, userId);
+  if (!profile || profile.terms_version === version) return false;
+  await repo.updateProfile(supabase, userId, { terms_version: version });
+  await emitEvent(supabase, {
+    actorId: userId,
+    type: 'user.accepted_terms',
+    entity: 'profile',
+    entityId: userId,
+    payload: { version, previous: profile.terms_version, at: 'sign_in' },
+  });
+  return true;
 }
 
 /** Profile edit with PATCH semantics — untouched fields are never nulled (MV-S0-09). */
@@ -126,6 +191,9 @@ export async function patchProfile(supabase: Client, userId: string, patch: Prof
   if (v.location !== undefined) row.location = v.location;
   if (v.mobile !== undefined) row.mobile = v.mobile;
   if (v.photoMediaId !== undefined) row.photo_url = v.photoMediaId;
+  if (v.bio !== undefined) row.bio = v.bio;
+  if (v.bannerMediaId !== undefined) row.banner_media_id = v.bannerMediaId;
+  if (v.tutorialDismissed) row.tutorial_dismissed_at = new Date().toISOString();
 
   if (v.handle !== undefined) {
     const current = await repo.getProfile(supabase, userId);
@@ -155,11 +223,12 @@ export async function patchProfile(supabase: Client, userId: string, patch: Prof
 // ---------- Account: delete + export (F-14, MV-S1-08) ----------
 
 /**
- * The columns a delete overwrites. Soft-delete via `deleted_at` (public_profiles filters it
- * out, so the profile vanishes from every other user immediately) plus anonymising the PII and
- * personal free-text (rule 15 / D-015: `mobile` above all). `handle` is kept — it is NOT NULL +
- * unique-constrained and isn't PII — and `country_code` is kept (also NOT NULL). Full erasure of
- * the auth user, storage objects, and owned rows is finalised in S8; this is the stub.
+ * The columns a delete overwrites — the TS mirror of what the `delete_account()` RPC (0020) writes
+ * to the profile row, kept so the anonymisation contract stays unit-tested here. Soft-delete via
+ * `deleted_at` (public_profiles filters it out, so the profile vanishes from every other user
+ * immediately) plus anonymising the PII and personal free-text (rule 15 / D-015: `mobile` above
+ * all). `handle` is kept — it is NOT NULL + unique-constrained and isn't PII — and `country_code`
+ * is kept (also NOT NULL).
  */
 export function anonymisedProfileFields(now: Date = new Date()): TablesUpdate<'profiles'> {
   return {
@@ -171,18 +240,19 @@ export function anonymisedProfileFields(now: Date = new Date()): TablesUpdate<'p
     location: null,
     store_name: null,
     photo_url: null,
+    banner_media_id: null,
   };
 }
 
-/** Anonymise + soft-delete the caller's own profile, then emit `user.deleted` (D-009). */
-export async function deleteAccount(supabase: Client, userId: string) {
-  await repo.updateProfile(supabase, userId, anonymisedProfileFields());
-  await emitEvent(supabase, {
-    actorId: userId,
-    type: 'user.deleted',
-    entity: 'profile',
-    entityId: userId,
-  });
+/**
+ * Full account deletion (F-01/F-14, MV-S8-05): the `delete_account()` RPC anonymises the profile
+ * (the fields above), settles open offers through transition_offer, removes listings, soft-deletes
+ * items, marks media removed, drops wishlist/favourites/follows/blocks/notifications and emits
+ * `user.deleted` — atomically, as the caller (auth.uid()). Ledger rows stay (finance). The
+ * auth.users row + storage objects need the service role and are purged by the S9 jobs function.
+ */
+export async function deleteAccount(supabase: Client) {
+  await repo.deleteAccount(supabase);
 }
 
 /** Shape the caller's own data (their profile + every collection item) for a JSON download. */

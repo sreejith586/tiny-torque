@@ -47,7 +47,8 @@ export async function uploadProfileMedia(
   supabase: Client,
   userId: string,
   blob: Blob,
-  meta: UploadMeta = {}
+  meta: UploadMeta = {},
+  kind: 'avatar' | 'banner' = 'avatar'
 ): Promise<MediaRow> {
   const path = `${userId}/${crypto.randomUUID()}.jpg`;
   const { error: upErr } = await supabase.storage
@@ -57,7 +58,7 @@ export async function uploadProfileMedia(
 
   const row: TablesInsert<'media'> = {
     owner_id: userId,
-    kind: 'avatar',
+    kind,
     entity_id: userId,
     bucket: PROFILE_MEDIA_BUCKET,
     path,
