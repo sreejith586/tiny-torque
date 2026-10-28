@@ -169,6 +169,120 @@ PostHog events mirroring key domain events (client-side identify with `user_id`,
 
 Runbook (incidents, rollback, restore from PITR, rotating keys), backups verified by restore drill in Sprint 10, status page (Vercel + Supabase status links in-app footer), Sentry alert routing to your email/Slack, cost alerts (Anthropic spend, Supabase usage).
 
+## Collectors World (H3) — F-20…F-28
+
+> Added by MV-W01-01 (D-066). Source: `07-collectors-world.md` §2 (pillars), §3 (economy), §6 (architecture) and `08-collectors-world-sprint-plan.md`'s feature table. Everything below ships **dark** behind its flag (D-077) and is turned on per cohort/country by flag audience. Common rules for every F-2x: one identity/garage/ledger (D-068), closed-loop credits (D-069), server authority (D-071), 18+ (D-073), design-pack sign-off per screen (D-074), events on every mutation (D-009), blocks enforced everywhere, no PII ever (rule 15).
+
+## F-20 Garage — the space
+
+**Rules**
+
+- A `world_garages` row is created lazily, 1:1 with `profiles`, by `ensure_world_garage()` on first World visit; name defaults to "{display name}'s Garage" (≤ 40 chars, rename costs credits after the first free one).
+- **Levels** 1–5 (`world_levels`, seeded; placeholder names Shed → Garage → Showroom → Warehouse → Vault, Varun's call). A level sets display slots, decor slots, visitor cap and host cap. Bought one step at a time via `buy_world_level()`: credits (`spend_garage_level`, placeholder 40/90/180/350) **and** an XP tier gate (`min_xp_level` vs `profiles.level`, F-13) — money alone cannot skip progression. Level 1 is free.
+- **Display slots** hold the owner's real `collection_items`; only `is_public` items may be displayed. A **featured car** (`featured_item_id`) renders large on the garage page and in share images.
+- **Layout** is a zod-validated document (`world_garages.layout`, `{version:1, slots:[{slot,itemId}], decor:[{slot,itemId}]}`): slots ≤ level capacity, no duplicate slot or item, cars public + owned, decor owned (`world_inventory`). Saved by a server action; a malformed stored document renders empty rather than erroring.
+- **Themes/decor** come from `world_items` (reference, platform art only — no user uploads); placement is layout; ownership is `world_inventory`.
+- **Score** = f(items displayed, rarity mix, decor, kudos, visits, trophies), computed by an event consumer (replayable like XP, W05). `level` and `score` can only change inside the RPCs/consumers (guard trigger, D-071).
+- **Marketplace bridge** (W02): a displayed car that is also listed shows the listing badge; `offer.completed` removes the car from the seller's slots/featured (consumer) and prompts the buyer to "park it".
+  **AC**
+- Direct `UPDATE world_garages SET level/score` as `authenticated` is rejected (pgTAP); `INSERT` is impossible outside the RPC.
+- `buy_world_level()` with XP tier below `min_xp_level` → `xp_level_too_low` before any balance check; with a short balance → `insufficient_balance` and the level/balance are unchanged; at level 5 → `max_level`. Idempotent on user+target level.
+- A layout with more slots than the level allows, an out-of-range slot, a duplicate, a private car or an un-owned decor item is rejected and nothing is written (Vitest).
+  **Events** `world.garage_created`, `world.garage_updated`, `world.layout_saved`, `world.level_up`, `world.score_updated`
+  **Flags** `world` (master; nothing World-facing renders while OFF)
+
+## F-21 Visits & social
+
+**Rules**
+
+- **Open house** modes on the garage: `public` (anyone, anon share links included), `followers` (viewer must follow the owner, reuses `follows`), `invite` (owner-only until `world_invites` lands in W03: expiring share tokens + direct invites by handle). Blocks hide a garage both ways. Enforced in RLS (`world_garages` select policy) and mirrored in the service.
+- **Visit** = page view recorded in `world_visits`, one per visitor per garage per day → "recent visitors" (handles only) and counts. **Kudos** = one per visitor per garage per day. **Guestbook** = ≤ 140-char messages, host-moderated (hide), clean-language validator (MV-S6-04 becomes mandatory here). Rate limits as triggers.
+- **Presence** ("who is here now") is deferred (D-017), later via Realtime Presence behind `world_presence`.
+- **Leaderboards** (W11): garage score, race wins, meetup attendance; per country and global, per season; labelled; no paid ranking.
+  **AC**
+- RLS matrix (pgTAP): anon sees public garages only; a follower sees a followers-only garage, a stranger doesn't; a blocked viewer sees nothing of the blocker and vice versa; admin sees all. `/api/v1/world/garages/{handle}` returns 404 for anything not visible.
+- A second visit/kudos the same day is a no-op (unique per day), never an error the user sees.
+  **Events** `world.visited`, `world.kudos_given`, `world.guestbook_posted`
+  **Flags** `world`, `world_presence`
+
+## F-22 Clubs
+
+**Rules**
+
+- `clubs` (slug, name, owner, join mode open/apply/invite, optional country) with `club_members` roles owner/admin/member and status active/pending/banned. A **clubhouse** page shows members' featured cars + a club feed. Clubs can host meetups and club races; club leagues = season points per club (W09).
+- Host/owner eligibility and suspension follow F-28's rules; reports and blocks apply inside clubs.
+  **AC** Only members read a non-open club's feed; owner/admin can remove members; a banned member cannot rejoin (pgTAP).
+  **Events** `club.created`, `club.joined`, `club.left`, `club.role_changed`
+  **Flags** `world_clubs`
+
+## F-23 Virtual meetups
+
+**Rules**
+
+- A `meetups` row (kind `virtual`) hosted at a garage or clubhouse: title, theme, start/end, capacity (by host garage level `host_cap`), visibility (public/followers/club/invite), showcase (each attendee brings ≤ N public cars), live room (Realtime chat, deal-chat pattern), reactions, best-in-show vote (one per attendee, frozen at end), photo wall (`media` rows), reminders (notifications + Resend).
+- Lifecycle only via `transition_meetup(id, action)`: draft → scheduled → live → ended → cancelled (D-021 pattern). **Hosting fee** in credits scaled by capacity (`spend_meetup_host`, placeholder 5/10/20) is a platform fee, refunded on cancel ≥ 24 h before start; attending is free. Co-hosts allowed. Recurring club nights spawn instances via the jobs runner.
+  **AC** `rsvp_meetup` past capacity fails; a non-attendee cannot read the room; best-in-show result cannot change after `ended`; cancel < 24 h keeps the fee (pgTAP).
+  **Events** `meetup.created`, `meetup.scheduled`, `meetup.started`, `meetup.ended`, `meetup.cancelled`, `meetup.rsvp`, `meetup.best_in_show`
+  **Flags** `world_meetups`
+
+## F-24 In-person meetups
+
+**Rules**
+
+- `meetups` kind `in_person`: city + **approximate** area in the public listing; exact venue (`venue_private`) readable only by confirmed RSVPs and only if the host opts in; date, capacity, RSVP, host rules text, host check-in (confirms attendance → XP/earn). Mandatory safety banner, public-venue recommendation, 18+ only, **no money collection via the platform**, "TinyTorque is not the organiser" disclaimer (D-076).
+- Reportable; hosts with upheld reports lose hosting rights (F-28). Opens UAE-first by country audience, India after the IT-Rules/grievance review.
+  **AC** `venue_private` is never present in a response to a non-confirmed attendee (RLS test); listing a meetup without the disclaimer acknowledged is impossible from the UI.
+  **Events** `meetup.created`, `meetup.rsvp`, `meetup.checked_in`, `meetup.cancelled`
+  **Flags** `world_meetups_irl`
+
+## F-25 Racing
+
+**Rules**
+
+- **Stats model** in code (`domain/races/stats.ts`, versioned, `race_stats_versions`): archetype from the canonical model's segment (neutral when unmatched), scale, condition, rarity bonus, owned tunes (total ≤ 10 %), driver level (≤ 10 %), seeded luck. A test asserts the combined paid/level cap (D-075).
+- **Formats**: time trial (solo vs ghost), challenge (head-to-head to a handle/club), event (8/16-car bracket at a garage), season league (monthly points).
+- **Execution**: `enter_race` RPC (ownership, item public, one entry per user, fee via `spend_tokens` `spend_race_entry` for bracket events only — platform fee); `lock_race` sets the seed; Edge job `run-race` writes `race_results` once (immutable); replay renders from seed + stats version; disputes = re-run the seed.
+- **Prizes**: XP, trophy items (earned-only), titles, badge progress, season points. **Never credits.** Free-entry community races may award small earn-budget bonuses (`earn_race_participation`, capped) — the rules engine keeps "paid entry → credit reward" impossible.
+  **AC** Re-running a race with the same seed + stats version yields identical results (determinism test); `race_results` has no update/delete policy; a paid-entry race cannot carry a credit reward (test on the rules table).
+  **Events** `race.created`, `race.entered`, `race.locked`, `race.completed`, `race.cancelled`
+  **Flags** `world_races`
+
+## F-26 Progression, quests & earning
+
+**Rules**
+
+- Reuses F-13 XP/levels; new XP rules for World actions (visit, kudos given/received, host, attend, race, win, quest).
+- **Quests** from a rules table (`quests`: 3 daily + 3 weekly), progress by event consumer (`quest_progress`), rewards = XP + small credits + occasionally an earned-only item. Daily login streak (+1/day, +5 at 7 days).
+- **Earn engine**: never a client call. Consumer on `domain_events` calls `earn_tokens(user, reason, amount, key)` (service-role/trigger only) with the **daily ceiling (placeholder 15)** and idempotency (rule + user + period) inside. Earned credits are `source = earned`, expire after 180 days (jobs runner posts `expire_earned` rows), spent FIFO before purchased (D-070). Admin "earn freeze" per user.
+- **Seasons** (`seasons`, `season_points`): 6–8 weeks, free pass track, seasonal decor, leaderboard reset, end-of-season trophies. **Achievements**: World badges added to `achievements`.
+  **AC** XP, quest progress and season points are replayable from `domain_events` (same values after drop + replay); the daily ceiling is enforced in the RPC (pgTAP); `earn_tokens` is not executable by `authenticated`.
+  **Events** `quest.progressed`, `quest.completed`, `quest.reset`, `tokens.earned`, `tokens.expired`, `season.started`, `season.ended`, `xp.granted`, `badge.unlocked`
+  **Flags** `world_earn`
+
+## F-27 Shop & economy surfaces
+
+**Rules**
+
+- `/world/shop`: garage levels, decor, themes, tunes, consumables (Spotlight = 24 h placement on "Open garages", labelled). Prices are data (`world_levels.price`, `world_items.price`, D-070); earned-only items (`price IS NULL`) are visible, never purchasable; `min_level` gates items; season-limited items carry `season_id`.
+- `buy_world_item(item_id, key)`: active item, not earned-only, garage level ≥ `min_level`, durable kinds (everything but `consumable`) one-per-user and idempotent on user+item, consumables idempotent on the caller's key; spend via `spend_tokens` (`spend_world_item`) with an `entitlement_grants` receipt of kind `world_item` (levels: `world_level`); inventory row carries `ledger_id`, `durable`, `acquired_via`.
+- `/tokens` gains "What credits buy in the World"; `/tokens/history` shows World reasons (labels shipped in W01). `<Paywall>` → `/tokens` when short.
+- Refunds/chargebacks per 07 §3.3: negative balance locks spending + banner; durable items revoked only on a second chargeback.
+  **AC** earned-only → `earned_only`; inactive → `item_not_found`; below `min_level` → `level_too_low`; second durable purchase → `already_owned`; short balance → `insufficient_balance` with nothing written; each paid purchase emits `world.item_bought` with the price paid (pgTAP). Balance = Σ ledger (property test, F-11) still holds.
+  **Events** `world.item_bought`, `world.item_granted`, `world.level_up`, `tokens.spent`
+  **Flags** `world_shop` (`world_shop` + `world_earn` = economy freeze)
+
+## F-28 World trust, admin & ops
+
+**Rules**
+
+- Report on every World entity (`reports.target_type` extended), block hides both ways everywhere, host mute/kick/ban in rooms and meetups, clean-language validator on names/titles/guestbook/room messages, platform art only.
+- Host eligibility ≥ Level 2 and no upheld report in 90 days; two upheld reports = automatic hosting suspension. Audit trail = `domain_events`.
+- `/admin`: World group in the flags editor (toggle + country/cohort audience helpers — W01), World report queues, economy dashboard (07 §3.4 weekly metrics: sinks ÷ sources, earned vs purchased, cap hit rate, breakage), earn freeze, revoke item, re-run race from seed, cancel meetup with refund, cost guards/alerts (Realtime connections, Edge invocations, PostHog volume).
+- Runbook entries: "earn exploit", "race ran twice", "meetup room abuse" (06 §5 placeholders).
+  **AC** Flag edits are admin-only (RLS) and logged as `flag.updated`; economy dashboard numbers are SQL over the ledger `source`/`reason` columns, no second balance.
+  **Events** `flag.updated`, `report.created`, `report.resolved`, `user.suspended`
+  **Flags** all `world*`
+
 ## Stretch register (pull in only when a sprint has slack)
 
 Daily quest · Trending sort · Pro profile flair · Follow button + follower counts · Wishlist match notifications · Email notifications via Resend · Seller reply to review · Visual search (camera → candidates → catalogue match → listings) · Undo-toast for delete · Photo URL column in CSV import.

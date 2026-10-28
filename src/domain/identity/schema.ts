@@ -77,6 +77,9 @@ export const profileCreateSchema = z
     handle: handleSchema.nullish(),
     countryCode: countryCodeSchema,
     city: z.string().trim().max(80).nullish(),
+    // MV-W01-08 (07 P8 / §10): adults only — the self-declaration is a hard gate, not a field.
+    ageConfirmed: z.literal(true, { message: 'You must be 18 or older to use Tiny Torque' }),
+    termsVersion: z.string().trim().min(1).max(20),
   })
   .refine((v) => v.accountType !== 'shop' || (v.storeName && v.storeName.length > 0), {
     message: 'Shops need a store name',

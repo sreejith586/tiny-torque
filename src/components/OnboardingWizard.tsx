@@ -13,6 +13,7 @@ import {
 } from '@/domain/identity';
 import { uploadProfileMedia } from '@/domain/media';
 import { compressImage } from '@/lib/image';
+import { CURRENT_TERMS_VERSION } from '@/lib/legal';
 import type { AccountType, CountryRow } from '@/types/database';
 import { ImageIcon, MarketIcon, ProfileIcon } from './icons';
 import { LoaderDots } from './Loaders';
@@ -72,6 +73,11 @@ export default function OnboardingWizard({
 
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
+  // MV-W01-08 (07 P8): adults only. A required checkbox on the final step — not a new step
+  // (D-042's five-step structure stands) — stored to profiles.age_confirmed_at with the terms
+  // version accepted, and logged as a user.accepted_terms event by createProfile.
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -167,6 +173,10 @@ export default function OnboardingWizard({
 
   async function finishOnboarding(photo: File | null) {
     setError(null);
+    if (!ageConfirmed) {
+      setError('Please confirm you are 18 or older to continue.');
+      return;
+    }
     setLoading(true);
     try {
       await createProfile(supabase, userId, {
@@ -177,6 +187,8 @@ export default function OnboardingWizard({
         handle: handle.trim() || null,
         countryCode,
         city: city.trim() || null,
+        ageConfirmed: true,
+        termsVersion: CURRENT_TERMS_VERSION,
       });
       if (photo) {
         // Best-effort (prototype's own copy: "totally optional") — a failed upload shouldn't
@@ -453,6 +465,19 @@ export default function OnboardingWizard({
           >
             Skip for now
           </button>
+
+          <label className="toggle-row" style={{ marginTop: 16 }}>
+            <span style={{ fontSize: 13 }}>
+              I confirm I am 18 or older and accept the Terms of Service and Privacy Policy.
+            </span>
+            <input
+              type="checkbox"
+              checked={ageConfirmed}
+              onChange={(e) => setAgeConfirmed(e.target.checked)}
+              aria-label="I confirm I am 18 or older and accept the Terms of Service and Privacy Policy"
+              required
+            />
+          </label>
 
           {error && <p className="field-error">{error}</p>}
           <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>

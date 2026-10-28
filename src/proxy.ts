@@ -21,6 +21,9 @@ function isPublicPath(pathname: string) {
   if (pathname.startsWith('/market/')) return true;
   if (pathname.startsWith('/u/')) return true;
   if (pathname.startsWith('/legal/')) return true;
+  // /api/v1/* (MV-W01-07, ADR-05 future-client seam): JSON handlers do their own auth and answer
+  // 401/404 — a redirect to /login is meaningless to a non-browser client.
+  if (pathname.startsWith('/api/v1/')) return true;
   return false;
 }
 

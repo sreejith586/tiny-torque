@@ -76,6 +76,7 @@ Naming: tables/columns `snake_case`; TS `camelCase`; enums as Postgres enums mir
 - **Rollback:** Vercel promote previous deployment (seconds). DB: forward-fix migration preferred; destructive changes only after the two-release rule, so previous app version keeps working.
 - **Kill switches:** `ai_scan`, `offers`, `deal_chat`, `token_purchase`, `csv_import`, `marketplace_publish`, `invite_only` — documented in admin Flags with owner and effect.
 - **Secrets:** Vercel + Supabase secrets only; rotation procedure in runbook; service-role key never in Next.js runtime.
+- **World kill switches (D-077):** `world` (master), `world_shop` + `world_earn` (= economy freeze), `world_meetups`, `world_meetups_irl`, `world_races`, `world_clubs`, `world_presence` — `/admin/flags` World group. **Runbook placeholders (MV-W01-10, filled when each feature ships):** _earn exploit_ → `world_earn` OFF, per-user earn freeze, reverse via `admin_adjust_tokens`, audit `domain_events` (W05) · _race ran twice_ → `race_results` is write-once; verify the seed/stats version, re-run from seed only via the admin tool (W08) · _meetup room abuse_ → host mute/kick, then `world_meetups` OFF for the audience, report queue (W06).
 
 ## 6. Observability
 

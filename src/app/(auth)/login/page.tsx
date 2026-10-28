@@ -11,7 +11,9 @@ import {
   getProfile,
   listEnabledCountries,
   type CountryRow,
+  recordTermsAcceptance,
 } from '@/domain/identity';
+import { CURRENT_TERMS_VERSION } from '@/lib/legal';
 import { Spinner, StatusRow } from '@/components/Loaders';
 import OtpInput from '@/components/OtpInput';
 
@@ -132,6 +134,16 @@ function LoginForm() {
         );
         return;
       }
+      if (hasProfile) {
+        // MV-W01-08: "By continuing you accept the Terms" (shown on the sign-in form) — stamp the
+        // current version + log user.accepted_terms when it changed. Best-effort: never blocks
+        // sign-in; a miss is caught on the next sign-in.
+        try {
+          await recordTermsAcceptance(supabase, user.id, CURRENT_TERMS_VERSION);
+        } catch {
+          // see above
+        }
+      }
       router.push(hasProfile ? '/garage' : '/onboarding');
       router.refresh();
     } catch (err) {
@@ -227,6 +239,9 @@ function LoginForm() {
           >
             {method === 'email' ? 'Use mobile number instead' : 'Use email instead'}
           </button>
+          <p className="muted" style={{ fontSize: 12, marginTop: 12 }}>
+            By continuing you accept the Terms of Service and Privacy Policy.
+          </p>
         </form>
       )}
 
