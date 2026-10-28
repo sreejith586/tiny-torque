@@ -13,6 +13,7 @@ import {
   buyItemSchema,
   handleParamSchema,
   parseStoredLayout,
+  renameGarageSchema,
   updateGarageSchema,
   validateLayout,
 } from './schema';
@@ -62,6 +63,7 @@ export async function getOwnGarage(supabase: Client): Promise<OwnGarage> {
     garage,
     level,
     nextLevel: levels.find((l) => l.level === garage.level + 1) ?? null,
+    displayCapacity: level.display_slots + garage.extra_slots,
     inventory,
     layout: parseStoredLayout(garage.layout),
   };
@@ -104,7 +106,8 @@ export async function getGarageForVisitor(
   };
 }
 
-/** Owner edits name / open house mode / featured car. Level and score are RPC-only. */
+/** Owner edits open house mode / featured car / theme. Name, level, score and the purchase
+ *  bookkeeping columns are RPC-only (world_garages_guard). */
 export async function updateGarageSettings(
   supabase: Client,
   userId: string,
@@ -112,12 +115,17 @@ export async function updateGarageSettings(
 ): Promise<WorldGarageRow> {
   const v = updateGarageSchema.parse(input);
   const patch: Parameters<typeof repo.updateGarage>[2] = {};
-  if (v.name !== undefined) patch.name = v.name;
   if (v.openMode !== undefined) patch.open_mode = v.openMode;
   if (v.featuredItemId !== undefined) patch.featured_item_id = v.featuredItemId;
+  if (v.themeItemId !== undefined) patch.theme_item_id = v.themeItemId;
 
   await ensureGarage(supabase);
-  const row = await repo.updateGarage(supabase, userId, patch);
+  let row: WorldGarageRow;
+  try {
+    row = await repo.updateGarage(supabase, userId, patch);
+  } catch (e) {
+    rethrowAsWorldError(e); // theme_not_owned from the guard trigger
+  }
   await emitEvent(supabase, {
     actorId: userId,
     type: 'world.garage_updated',
@@ -128,7 +136,19 @@ export async function updateGarageSettings(
   return row;
 }
 
-/** Saves the layout document after checking slots ≤ level capacity, items public + owned (07 §6.2). */
+/** Renames the garage via rename_world_garage: first one free, then the `garage_rename` price
+ *  (spend_tokens, D-021). The RPC emits world.garage_updated. */
+export async function renameGarage(supabase: Client, input: unknown): Promise<WorldGarageRow> {
+  const v = renameGarageSchema.parse(input);
+  try {
+    return await repo.renameGarage(supabase, v.name);
+  } catch (e) {
+    rethrowAsWorldError(e);
+  }
+}
+
+/** Saves the layout document after checking slots ≤ capacity (level + bought extra slots), items
+ *  public + owned (07 §6.2). */
 export async function saveLayout(
   supabase: Client,
   userId: string,
@@ -137,7 +157,7 @@ export async function saveLayout(
   const own = await getOwnGarage(supabase);
   const publicItems = await listPublicCollectionItems(supabase, userId);
   const layout = validateLayout(input, {
-    displaySlots: own.level.display_slots,
+    displaySlots: own.displayCapacity,
     decorSlots: own.level.decor_slots,
     publicItemIds: new Set(publicItems.map((i) => i.id)),
     ownedWorldItemIds: new Set(own.inventory.map((i) => i.item_id)),
@@ -202,7 +222,14 @@ export {
   parseStoredLayout,
   validateLayout,
   updateGarageSchema,
+  renameGarageSchema,
   buyItemSchema,
   handleParamSchema,
 } from './schema';
-export type { GarageLayout, UpdateGarageInput, BuyItemInput, LayoutContext } from './schema';
+export type {
+  GarageLayout,
+  UpdateGarageInput,
+  RenameGarageInput,
+  BuyItemInput,
+  LayoutContext,
+} from './schema';

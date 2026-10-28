@@ -897,13 +897,13 @@ isOneToOne: false
                   ]
                 },"world_garages": {
                   Row: {
-                    "created_at": string,"featured_item_id": string | null,"layout": NonNullable<Json>,"level": number,"name": string,"open_mode": Database["public"]['Enums']["world_open_mode"],"score": number,"theme_item_id": string | null,"updated_at": string,"user_id": string
+                    "created_at": string,"extra_slots": number,"featured_item_id": string | null,"layout": NonNullable<Json>,"level": number,"name": string,"open_mode": Database["public"]['Enums']["world_open_mode"],"rename_count": number,"score": number,"theme_item_id": string | null,"updated_at": string,"user_id": string
                   }
                   Insert: {
-                    "created_at"?: string,"featured_item_id"?: string | null,"layout"?: NonNullable<Json>,"level"?: number,"name": string,"open_mode"?: Database["public"]['Enums']["world_open_mode"],"score"?: number,"theme_item_id"?: string | null,"updated_at"?: string,"user_id": string
+                    "created_at"?: string,"extra_slots"?: number,"featured_item_id"?: string | null,"layout"?: NonNullable<Json>,"level"?: number,"name": string,"open_mode"?: Database["public"]['Enums']["world_open_mode"],"rename_count"?: number,"score"?: number,"theme_item_id"?: string | null,"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "created_at"?: string,"featured_item_id"?: string | null,"layout"?: NonNullable<Json>,"level"?: number,"name"?: string,"open_mode"?: Database["public"]['Enums']["world_open_mode"],"score"?: number,"theme_item_id"?: string | null,"updated_at"?: string,"user_id"?: string
+                    "created_at"?: string,"extra_slots"?: number,"featured_item_id"?: string | null,"layout"?: NonNullable<Json>,"level"?: number,"name"?: string,"open_mode"?: Database["public"]['Enums']["world_open_mode"],"rename_count"?: number,"score"?: number,"theme_item_id"?: string | null,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -1002,13 +1002,13 @@ isOneToOne: false
                   ]
                 },"world_levels": {
                   Row: {
-                    "decor_slots": number,"display_slots": number,"host_cap": number,"level": number,"min_xp_level": number,"name": string,"price": number,"visitor_cap": number
+                    "decor_slots": number,"display_slots": number,"host_cap": number,"level": number,"max_extra_slots": number,"min_xp_level": number,"name": string,"price": number,"visitor_cap": number
                   }
                   Insert: {
-                    "decor_slots": number,"display_slots": number,"host_cap": number,"level": number,"min_xp_level"?: number,"name": string,"price": number,"visitor_cap": number
+                    "decor_slots": number,"display_slots": number,"host_cap": number,"level": number,"max_extra_slots"?: number,"min_xp_level"?: number,"name": string,"price": number,"visitor_cap": number
                   }
                   Update: {
-                    "decor_slots"?: number,"display_slots"?: number,"host_cap"?: number,"level"?: number,"min_xp_level"?: number,"name"?: string,"price"?: number,"visitor_cap"?: number
+                    "decor_slots"?: number,"display_slots"?: number,"host_cap"?: number,"level"?: number,"max_extra_slots"?: number,"min_xp_level"?: number,"name"?: string,"price"?: number,"visitor_cap"?: number
                   }
                   Relationships: [
                     
@@ -1221,11 +1221,13 @@ isOneToOne: false
 "buy_world_level":
 { Args: Record<PropertyKey, never>; Returns: {
               "created_at": string,
+"extra_slots": number,
 "featured_item_id": string | null,
 "layout": NonNullable<Json>,
 "level": number,
 "name": string,
 "open_mode": Database["public"]['Enums']["world_open_mode"],
+"rename_count": number,
 "score": number,
 "theme_item_id": string | null,
 "updated_at": string,
@@ -1315,11 +1317,13 @@ isOneToOne: false
 "ensure_world_garage":
 { Args: Record<PropertyKey, never>; Returns: {
               "created_at": string,
+"extra_slots": number,
 "featured_item_id": string | null,
 "layout": NonNullable<Json>,
 "level": number,
 "name": string,
 "open_mode": Database["public"]['Enums']["world_open_mode"],
+"rename_count": number,
 "score": number,
 "theme_item_id": string | null,
 "updated_at": string,
@@ -1377,6 +1381,27 @@ isOneToOne: false
 "redeem_invite":
 { Args: { "p_code": string }; Returns: undefined
                            },
+"rename_world_garage":
+{ Args: { "p_name": string }; Returns: {
+              "created_at": string,
+"extra_slots": number,
+"featured_item_id": string | null,
+"layout": NonNullable<Json>,
+"level": number,
+"name": string,
+"open_mode": Database["public"]['Enums']["world_open_mode"],
+"rename_count": number,
+"score": number,
+"theme_item_id": string | null,
+"updated_at": string,
+"user_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "world_garages"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "resolve_report":
 { Args: { "p_action": string,"p_report_id": string,"p_resolution_note"?: string }; Returns: {
               "created_at": string,

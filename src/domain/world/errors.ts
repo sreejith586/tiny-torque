@@ -1,5 +1,6 @@
 /** Error codes the World service raises. The RPC-originated ones are the exact `raise exception`
- *  messages from 0013_world_rpcs / spend_tokens, so the UI can map them to copy. */
+ *  messages from the world_rpcs / world_slots migrations and spend_tokens, so the UI can map them
+ *  to copy. */
 export type WorldErrorCode =
   | 'not_authorized'
   | 'garage_not_found'
@@ -10,6 +11,9 @@ export type WorldErrorCode =
   | 'earned_only'
   | 'level_too_low'
   | 'already_owned'
+  | 'slot_cap_reached'
+  | 'invalid_name'
+  | 'theme_not_owned'
   | 'layout_invalid'
   | 'too_many_slots'
   | 'too_many_decor'
@@ -37,6 +41,9 @@ const RPC_CODES: WorldErrorCode[] = [
   'earned_only',
   'level_too_low',
   'already_owned',
+  'slot_cap_reached',
+  'invalid_name',
+  'theme_not_owned',
 ];
 
 /** Maps a PostgREST/Postgres error whose message is one of the RPCs' `raise exception` codes to a
