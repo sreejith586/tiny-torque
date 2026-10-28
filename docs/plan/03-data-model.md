@@ -121,17 +121,17 @@ Feeds quota (count of `done` jobs this period), cost dashboard, and the scan-acc
 
 ### 2.23 `invites` (new, pilot gating) `code text pk, created_by, max_uses int, used_count int, expires_at, cohort text`. Onboarding requires a valid code while flag `invite_only` is on.
 
-### 2.24 `world_levels` (new, reference) — F-20, 0012
+### 2.24 `world_levels` (new, reference) — F-20, 0012 (+ 0013a)
 
-`level int pk (1–5), name unique, display_slots, decor_slots, visitor_cap, host_cap, price int, min_xp_level int`. Seeded 5 rows (placeholder names/prices, D-070/D-064 status). Public read; no write policies (levels change by migration).
+`level int pk (1–5), name unique, display_slots, decor_slots, visitor_cap, host_cap, price int, min_xp_level int, max_extra_slots int` (0013a: how many extra display slots a garage at this level may buy). Seeded 5 rows (placeholder names/prices, D-070/D-064 status). Public read; no write policies (levels change by migration).
 
-### 2.25 `world_garages` (new) — F-20/F-21, 0012
+### 2.25 `world_garages` (new) — F-20/F-21, 0012 (+ 0013a)
 
-`user_id pk → profiles, level → world_levels default 1, name (1–40), open_mode enum public/followers/invite, featured_item_id → collection_items null, theme_item_id → world_items null, layout jsonb (zod document, default empty v1), score int, created_at, updated_at`. 1:1, created lazily by `ensure_world_garage()` (no insert policy). Select policy = owner ∨ admin ∨ (not blocked ∧ (public ∨ (followers ∧ viewer follows owner))); `invite` is owner-only until `world_invites` (0013_world_social). Owner update policy for name/open_mode/featured/theme/layout; `world_garages_guard` trigger rejects `level`/`score` changes outside the RPCs (GUC `mv.world_rpc`).
+`user_id pk → profiles, level → world_levels default 1, name (1–40), open_mode enum public/followers/invite, featured_item_id → collection_items null, theme_item_id → world_items null, layout jsonb (zod document, default empty v1), score int, extra_slots int, rename_count int, created_at, updated_at`. Display capacity = `display_slots + extra_slots`. 1:1, created lazily by `ensure_world_garage()` (no insert policy). Select policy = owner ∨ admin ∨ (not blocked ∧ (public ∨ (followers ∧ viewer follows owner))); `invite` is owner-only until `world_invites` (0013_world_social). Owner update policy for name/open_mode/featured/theme/layout; `world_garages_guard` trigger (0013a version) rejects `level` / `score` / `extra_slots` / `rename_count` / `name` changes outside the RPCs (GUC `mv.world_rpc`) and a `theme_item_id` that is not a `theme` in the owner's `world_inventory` (`theme_not_owned`).
 
 ### 2.26 `world_items` (new, reference) — F-27, 0012
 
-`id, sku unique, kind enum decor/theme/tune/trophy/consumable/signage, name, description, price int null (null = earned-only), min_level → world_levels, season_id uuid null (FK in 0014), active, art_path, effect jsonb, sort_order, created_at`. Read `active or is_admin()`; no write policies. Not seeded in W01 — the launch catalogue is the design-pack deliverable, added as data rows.
+`id, sku unique, kind enum decor/theme/tune/trophy/consumable/signage, name, description, price int null (null = earned-only), min_level → world_levels, season_id uuid null (FK in 0014), active, art_path, effect jsonb, sort_order, created_at`. Read `active or is_admin()`; no write policies. Not seeded in W01 — the launch catalogue is the design-pack deliverable, added as data rows. 0013a seeds two **mechanic** rows (not art): `extra_display_slot` (consumable, 15, `effect.grants = display_slot`) and `garage_rename` (inactive, 5, read by `rename_world_garage()`).
 
 ### 2.27 `world_inventory` (new) — F-27, 0012
 
@@ -174,6 +174,9 @@ Feeds quota (count of `done` jobs this period), cost dashboard, and the scan-acc
 | `buy_world_level()` | RPC SECURITY DEFINER | next level: XP gate (`min_xp_level`), `spend_tokens('spend_garage_level', …, 'world_level')`, guard-GUC update, emits `world.level_up` |
 | `buy_world_item(item_id, key)` | RPC SECURITY DEFINER | active / not earned-only / `min_level` / durable uniqueness, `spend_tokens('spend_world_item', …, 'world_item')`, inventory row, emits `world.item_bought` |
 | `world_garages_guard()` | trigger | rejects `level`/`score` updates unless `mv.world_rpc = on` (set only inside the RPCs) |
+| `rename_world_garage(name)` | RPC SECURITY DEFINER | first rename free, then `spend_tokens('spend_rename', <garage_rename price>, 'world_item')`; emits `world.garage_updated` (0013a) |
+| `emit_item_visibility_events()` | trigger on collection_items (update/delete) | `item.deleted` (soft `hard=false` / hard `hard=true`), `item.restored`, `item.made_public`, `item.made_private` — rule-9 gap closed in 0013a |
+| `world_slot_integrity()` / `world_remove_item_from_garage(user, item)` | trigger on domain_events + SQL fn | `item.deleted` / `item.made_private` / `offer.completed` (seller side) drop the item from slots + featured and log `world.garage_updated` (reason `slot_integrity`); the buyer gets a `system` notification `kind=world_park_it` only if they already have a garage (0013a) |
 | `set_token_ledger_source()` / `token_ledger_source_for(reason)` | trigger + SQL fn | derives `token_ledger.source` from the reason when the writer leaves it null |
 | `earn_tokens()`, `transition_meetup()`, `rsvp_meetup()`, `check_in_meetup()`, `enter_race()`, `lock_race()`; Edge `run-race` | planned (W04–W10) | 07 §7 |
 
@@ -197,6 +200,7 @@ File names follow the Supabase CLI convention `<YYYYMMDDHHMMSS>_<name>.sql` (req
 | 0011 | `jobs.sql` — pg_cron schedules | 9 |
 | 0012 | `20261020071121_world_core.sql` — world_levels (seed), world_garages, world_items, world_inventory, token_ledger.source + reasons, profiles 18+/terms, eight `world*` flags OFF | W01 |
 | 0013 | `20261020071122_world_rpcs.sql` — ensure_world_garage, buy_world_level, buy_world_item | W01 |
+| 0013a | `20261028171827_world_slots.sql` — extra display slots + caps, paid rename, theme ownership guard, item visibility events, slot-integrity consumer | W02 |
 | 0014–0018 | `world_social`, `quests_seasons`, `clubs_meetups`, `races`, `meetups_irl`, `world_ops` — see §2.31 | W03–W11 |
 
 ## 5. RLS test matrix (run in CI from Sprint 0)

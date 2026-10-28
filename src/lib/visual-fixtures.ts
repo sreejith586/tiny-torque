@@ -3,6 +3,13 @@ import type { GarageItem } from '@/domain/garage';
 import type { Badge } from '@/domain/gamification/types';
 import type { Listing } from '@/domain/marketplace';
 import type { TokenPackRow, TokenLedgerRow } from '@/domain/tokens';
+import type {
+  OwnGarage,
+  WorldGarageRow,
+  WorldInventoryRow,
+  WorldItemRow,
+  WorldLevelRow,
+} from '@/domain/world/types';
 
 // D-027 / D-041 visual-baseline harness. `?__visual=1` makes the signed-in pages (garage, car
 // detail, profile; add/scan/offers need no data) render this deterministic fixture data with no
@@ -366,3 +373,206 @@ export const FIXTURE_LEDGER: TokenLedgerRow[] = [
     created_at: '2026-09-10T08:00:00.000Z',
   },
 ];
+
+// ---------- Collectors World (MV-W02, F-20/F-27) — dark until the world* flags turn on ----------
+export const FIXTURE_WORLD_LEVELS: WorldLevelRow[] = [
+  {
+    level: 1,
+    name: 'Shed',
+    display_slots: 4,
+    decor_slots: 2,
+    visitor_cap: 10,
+    host_cap: 0,
+    price: 0,
+    min_xp_level: 1,
+    max_extra_slots: 2,
+  },
+  {
+    level: 2,
+    name: 'Garage',
+    display_slots: 8,
+    decor_slots: 4,
+    visitor_cap: 25,
+    host_cap: 10,
+    price: 40,
+    min_xp_level: 2,
+    max_extra_slots: 3,
+  },
+  {
+    level: 3,
+    name: 'Showroom',
+    display_slots: 12,
+    decor_slots: 6,
+    visitor_cap: 50,
+    host_cap: 25,
+    price: 90,
+    min_xp_level: 3,
+    max_extra_slots: 4,
+  },
+  {
+    level: 4,
+    name: 'Warehouse',
+    display_slots: 20,
+    decor_slots: 8,
+    visitor_cap: 100,
+    host_cap: 50,
+    price: 180,
+    min_xp_level: 4,
+    max_extra_slots: 5,
+  },
+  {
+    level: 5,
+    name: 'Vault',
+    display_slots: 30,
+    decor_slots: 12,
+    visitor_cap: 200,
+    host_cap: 100,
+    price: 350,
+    min_xp_level: 5,
+    max_extra_slots: 6,
+  },
+];
+
+const WI = (n: number) => `50000000-0000-4000-8000-00000000000${n}`;
+const worldItemBase = {
+  description: null,
+  season_id: null,
+  active: true,
+  art_path: null,
+  effect: {} as Record<string, string>,
+  sort_order: 0,
+  created_at: '2026-10-20T00:00:00.000Z',
+};
+export const FIXTURE_WORLD_ITEMS: WorldItemRow[] = [
+  {
+    ...worldItemBase,
+    id: WI(1),
+    sku: 'theme_neon_workshop',
+    kind: 'theme',
+    name: 'Neon Workshop',
+    price: 25,
+    min_level: 1,
+    sort_order: 10,
+  },
+  {
+    ...worldItemBase,
+    id: WI(2),
+    sku: 'theme_showroom_white',
+    kind: 'theme',
+    name: 'Showroom White',
+    price: 25,
+    min_level: 3,
+    sort_order: 11,
+  },
+  {
+    ...worldItemBase,
+    id: WI(3),
+    sku: 'decor_neon_sign',
+    kind: 'decor',
+    name: 'Neon sign',
+    price: 10,
+    min_level: 1,
+    sort_order: 20,
+  },
+  {
+    ...worldItemBase,
+    id: WI(4),
+    sku: 'signage_welcome',
+    kind: 'signage',
+    name: 'Welcome board',
+    price: 0,
+    min_level: 1,
+    sort_order: 30,
+  },
+  {
+    ...worldItemBase,
+    id: WI(5),
+    sku: 'trophy_first_meetup',
+    kind: 'trophy',
+    name: 'First meetup',
+    price: null,
+    min_level: 1,
+    sort_order: 40,
+  },
+  {
+    ...worldItemBase,
+    id: WI(6),
+    sku: 'extra_display_slot',
+    kind: 'consumable',
+    name: 'Extra display slot',
+    price: 15,
+    min_level: 1,
+    effect: { grants: 'display_slot' },
+    sort_order: 1000,
+  },
+  {
+    ...worldItemBase,
+    id: WI(7),
+    sku: 'garage_rename',
+    kind: 'consumable',
+    name: 'Garage rename',
+    price: 5,
+    min_level: 1,
+    effect: { grants: 'rename' },
+    sort_order: 1001,
+  },
+];
+
+export const FIXTURE_WORLD_INVENTORY: WorldInventoryRow[] = [
+  {
+    id: '51000000-0000-4000-8000-000000000001',
+    user_id: OWNER,
+    item_id: WI(3),
+    acquired_via: 'purchase',
+    ledger_id: null,
+    durable: true,
+    created_at: '2026-10-21T08:00:00.000Z',
+  },
+  {
+    id: '51000000-0000-4000-8000-000000000002',
+    user_id: OWNER,
+    item_id: WI(1),
+    acquired_via: 'purchase',
+    ledger_id: null,
+    durable: true,
+    created_at: '2026-10-22T08:00:00.000Z',
+  },
+];
+
+export const FIXTURE_WORLD_GARAGE: WorldGarageRow = {
+  user_id: OWNER,
+  level: 2,
+  name: "Varun's Garage",
+  open_mode: 'public',
+  featured_item_id: FIXTURE_ITEMS[0]!.id,
+  theme_item_id: WI(1),
+  layout: {
+    version: 1,
+    slots: [
+      { slot: 0, itemId: FIXTURE_ITEMS[1]!.id },
+      { slot: 1, itemId: FIXTURE_ITEMS[3]!.id },
+    ],
+    decor: [],
+  },
+  score: 120,
+  extra_slots: 1,
+  rename_count: 1,
+  created_at: '2026-10-20T00:00:00.000Z',
+  updated_at: '2026-10-22T08:00:00.000Z',
+};
+
+export const FIXTURE_WORLD_OWN: OwnGarage = {
+  garage: FIXTURE_WORLD_GARAGE,
+  level: FIXTURE_WORLD_LEVELS[1]!,
+  nextLevel: FIXTURE_WORLD_LEVELS[2]!,
+  displayCapacity: FIXTURE_WORLD_LEVELS[1]!.display_slots + FIXTURE_WORLD_GARAGE.extra_slots,
+  inventory: FIXTURE_WORLD_INVENTORY,
+  layout: {
+    version: 1,
+    slots: [
+      { slot: 0, itemId: FIXTURE_ITEMS[1]!.id },
+      { slot: 1, itemId: FIXTURE_ITEMS[3]!.id },
+    ],
+    decor: [],
+  },
+};

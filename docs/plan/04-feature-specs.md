@@ -179,15 +179,17 @@ Runbook (incidents, rollback, restore from PITR, rotating keys), backups verifie
 
 - A `world_garages` row is created lazily, 1:1 with `profiles`, by `ensure_world_garage()` on first World visit; name defaults to "{display name}'s Garage" (≤ 40 chars, rename costs credits after the first free one).
 - **Levels** 1–5 (`world_levels`, seeded; placeholder names Shed → Garage → Showroom → Warehouse → Vault, Varun's call). A level sets display slots, decor slots, visitor cap and host cap. Bought one step at a time via `buy_world_level()`: credits (`spend_garage_level`, placeholder 40/90/180/350) **and** an XP tier gate (`min_xp_level` vs `profiles.level`, F-13) — money alone cannot skip progression. Level 1 is free.
-- **Display slots** hold the owner's real `collection_items`; only `is_public` items may be displayed. A **featured car** (`featured_item_id`) renders large on the garage page and in share images.
+- **Display slots** hold the owner's real `collection_items`; only `is_public` items may be displayed. A **featured car** (`featured_item_id`) renders large on the garage page and in share images. Capacity = the level's `display_slots` + bought **extra slots** (`extra_display_slot` consumable, placeholder 15 credits, capped per level by `world_levels.max_extra_slots`).
 - **Layout** is a zod-validated document (`world_garages.layout`, `{version:1, slots:[{slot,itemId}], decor:[{slot,itemId}]}`): slots ≤ level capacity, no duplicate slot or item, cars public + owned, decor owned (`world_inventory`). Saved by a server action; a malformed stored document renders empty rather than erroring.
-- **Themes/decor** come from `world_items` (reference, platform art only — no user uploads); placement is layout; ownership is `world_inventory`.
+- **Themes/decor** come from `world_items` (reference, platform art only — no user uploads); placement is layout; ownership is `world_inventory`. The garage's `theme_item_id` must be a `theme` the owner holds (DB guard `theme_not_owned`).
+- **Rename**: the first rename is free, later ones cost the `garage_rename` price (placeholder 5) via `rename_world_garage()`; `name` is never written directly.
 - **Score** = f(items displayed, rarity mix, decor, kudos, visits, trophies), computed by an event consumer (replayable like XP, W05). `level` and `score` can only change inside the RPCs/consumers (guard trigger, D-071).
-- **Marketplace bridge** (W02): a displayed car that is also listed shows the listing badge; `offer.completed` removes the car from the seller's slots/featured (consumer) and prompts the buyer to "park it".
+- **Marketplace bridge**: a displayed car that is also listed shows the listing badge (W02 UI); the **slot-integrity consumer** (`world_slot_integrity`, 0013a) removes a car from the owner's slots and featured spot on `item.deleted`, `item.made_private` and `offer.completed` (seller side), and gives the buyer a "park it" `system` notification — only when the buyer already has a garage, so nothing surfaces while dark. The consumer only removes; the owner re-places cars.
   **AC**
 - Direct `UPDATE world_garages SET level/score` as `authenticated` is rejected (pgTAP); `INSERT` is impossible outside the RPC.
 - `buy_world_level()` with XP tier below `min_xp_level` → `xp_level_too_low` before any balance check; with a short balance → `insufficient_balance` and the level/balance are unchanged; at level 5 → `max_level`. Idempotent on user+target level.
-- A layout with more slots than the level allows, an out-of-range slot, a duplicate, a private car or an un-owned decor item is rejected and nothing is written (Vitest).
+- A layout with more slots than the capacity allows, an out-of-range slot, a duplicate, a private car or an un-owned decor item is rejected and nothing is written (Vitest).
+- Making a displayed car private, soft- or hard-deleting it, or completing its sale removes it from slots + featured (pgTAP); restoring or re-publishing does not re-place it. Buying an extra slot past the level cap → `slot_cap_reached`; a direct `name` write → rejected; a theme not owned → `theme_not_owned` (pgTAP).
   **Events** `world.garage_created`, `world.garage_updated`, `world.layout_saved`, `world.level_up`, `world.score_updated`
   **Flags** `world` (master; nothing World-facing renders while OFF)
 

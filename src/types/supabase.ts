@@ -897,13 +897,13 @@ isOneToOne: false
                   ]
                 },"world_garages": {
                   Row: {
-                    "created_at": string,"featured_item_id": string | null,"layout": NonNullable<Json>,"level": number,"name": string,"open_mode": Database["public"]['Enums']["world_open_mode"],"score": number,"theme_item_id": string | null,"updated_at": string,"user_id": string
+                    "created_at": string,"extra_slots": number,"featured_item_id": string | null,"layout": NonNullable<Json>,"level": number,"name": string,"open_mode": Database["public"]['Enums']["world_open_mode"],"rename_count": number,"score": number,"theme_item_id": string | null,"updated_at": string,"user_id": string
                   }
                   Insert: {
-                    "created_at"?: string,"featured_item_id"?: string | null,"layout"?: NonNullable<Json>,"level"?: number,"name": string,"open_mode"?: Database["public"]['Enums']["world_open_mode"],"score"?: number,"theme_item_id"?: string | null,"updated_at"?: string,"user_id": string
+                    "created_at"?: string,"extra_slots"?: number,"featured_item_id"?: string | null,"layout"?: NonNullable<Json>,"level"?: number,"name": string,"open_mode"?: Database["public"]['Enums']["world_open_mode"],"rename_count"?: number,"score"?: number,"theme_item_id"?: string | null,"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "created_at"?: string,"featured_item_id"?: string | null,"layout"?: NonNullable<Json>,"level"?: number,"name"?: string,"open_mode"?: Database["public"]['Enums']["world_open_mode"],"score"?: number,"theme_item_id"?: string | null,"updated_at"?: string,"user_id"?: string
+                    "created_at"?: string,"extra_slots"?: number,"featured_item_id"?: string | null,"layout"?: NonNullable<Json>,"level"?: number,"name"?: string,"open_mode"?: Database["public"]['Enums']["world_open_mode"],"rename_count"?: number,"score"?: number,"theme_item_id"?: string | null,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -1002,13 +1002,13 @@ isOneToOne: false
                   ]
                 },"world_levels": {
                   Row: {
-                    "decor_slots": number,"display_slots": number,"host_cap": number,"level": number,"min_xp_level": number,"name": string,"price": number,"visitor_cap": number
+                    "decor_slots": number,"display_slots": number,"host_cap": number,"level": number,"max_extra_slots": number,"min_xp_level": number,"name": string,"price": number,"visitor_cap": number
                   }
                   Insert: {
-                    "decor_slots": number,"display_slots": number,"host_cap": number,"level": number,"min_xp_level"?: number,"name": string,"price": number,"visitor_cap": number
+                    "decor_slots": number,"display_slots": number,"host_cap": number,"level": number,"max_extra_slots"?: number,"min_xp_level"?: number,"name": string,"price": number,"visitor_cap": number
                   }
                   Update: {
-                    "decor_slots"?: number,"display_slots"?: number,"host_cap"?: number,"level"?: number,"min_xp_level"?: number,"name"?: string,"price"?: number,"visitor_cap"?: number
+                    "decor_slots"?: number,"display_slots"?: number,"host_cap"?: number,"level"?: number,"max_extra_slots"?: number,"min_xp_level"?: number,"name"?: string,"price"?: number,"visitor_cap"?: number
                   }
                   Relationships: [
                     
@@ -1221,11 +1221,13 @@ isOneToOne: false
 "buy_world_level":
 { Args: Record<PropertyKey, never>; Returns: {
               "created_at": string,
+"extra_slots": number,
 "featured_item_id": string | null,
 "layout": NonNullable<Json>,
 "level": number,
 "name": string,
 "open_mode": Database["public"]['Enums']["world_open_mode"],
+"rename_count": number,
 "score": number,
 "theme_item_id": string | null,
 "updated_at": string,
@@ -1315,11 +1317,13 @@ isOneToOne: false
 "ensure_world_garage":
 { Args: Record<PropertyKey, never>; Returns: {
               "created_at": string,
+"extra_slots": number,
 "featured_item_id": string | null,
 "layout": NonNullable<Json>,
 "level": number,
 "name": string,
 "open_mode": Database["public"]['Enums']["world_open_mode"],
+"rename_count": number,
 "score": number,
 "theme_item_id": string | null,
 "updated_at": string,
@@ -1377,6 +1381,27 @@ isOneToOne: false
 "redeem_invite":
 { Args: { "p_code": string }; Returns: undefined
                            },
+"rename_world_garage":
+{ Args: { "p_name": string }; Returns: {
+              "created_at": string,
+"extra_slots": number,
+"featured_item_id": string | null,
+"layout": NonNullable<Json>,
+"level": number,
+"name": string,
+"open_mode": Database["public"]['Enums']["world_open_mode"],
+"rename_count": number,
+"score": number,
+"theme_item_id": string | null,
+"updated_at": string,
+"user_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "world_garages"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "resolve_report":
 { Args: { "p_action": string,"p_report_id": string,"p_resolution_note"?: string }; Returns: {
               "created_at": string,
@@ -1448,7 +1473,10 @@ isOneToOne: false
         to: "offers"
         isOneToOne: true
         isSetofReturn: false
-      } }
+      } },
+"world_remove_item_from_garage":
+{ Args: { "p_item": string,"p_user": string }; Returns: boolean
+                           }
           }
           Enums: {
             "account_type": "individual"|"shop","catalog_status": "proposed"|"verified","entitlement_grant_kind": "listing_slot"|"scan_pack"|"pro_30d"|"world_level"|"world_item","feedback_kind": "bug"|"idea"|"other","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed"|"reserved","listing_type": "sale"|"trade"|"both","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","model_status": "proposed"|"verified"|"merged","notification_type": "offer_received"|"offer_accepted"|"offer_declined"|"message"|"listing_sold"|"review_received"|"badge_unlocked"|"wishlist_match"|"system","offer_status": "pending"|"accepted"|"declined"|"withdrawn"|"expired"|"completed"|"cancelled","offer_type": "cash"|"buy_now"|"trade","plan_tier": "free"|"pro","report_status": "open"|"reviewed"|"dismissed","scan_kind": "single"|"group"|"visual_search","scan_status": "queued"|"running"|"done"|"failed","token_ledger_reason": "purchase"|"spend_listing_slot"|"spend_scan_pack"|"spend_pro_30d"|"refund"|"admin_adjust"|"promo"|"earn_quest"|"earn_daily"|"earn_race_participation"|"earn_host"|"earn_attend"|"earn_achievement"|"earn_referral"|"earn_season"|"expire_earned"|"spend_garage_level"|"spend_world_item"|"spend_meetup_host"|"spend_race_entry"|"spend_spotlight"|"spend_rename","token_ledger_source": "purchased"|"earned"|"promo"|"adjust","token_purchase_provider": "stripe"|"razorpay","token_purchase_status": "created"|"paid"|"failed"|"refunded","user_role": "user"|"admin","world_acquired_via": "purchase"|"earn"|"promo","world_item_kind": "decor"|"theme"|"tune"|"trophy"|"consumable"|"signage","world_open_mode": "public"|"followers"|"invite"

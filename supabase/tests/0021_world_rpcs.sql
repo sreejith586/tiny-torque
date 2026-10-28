@@ -12,10 +12,11 @@ select plan(29);
 insert into auth.users (id) values
   ('71000000-0000-0000-0000-00000000000a'),
   ('71000000-0000-0000-0000-00000000000b');
--- A: XP level 0, no tokens.  B: XP level 4, rich.
+-- A: XP tier 1 (Rookie), no tokens.  B: XP tier 5 (Legend), rich. Tiers are 1-based (S8, D-079):
+-- garage level n needs XP tier n (0013a re-aligned 0012's seed).
 insert into public.profiles (id, display_name, account_type, handle, plan, role, tokens, level) values
-  ('71000000-0000-0000-0000-00000000000a', 'Rookie', 'individual', 'r_rookie', 'free', 'user', 0, 0),
-  ('71000000-0000-0000-0000-00000000000b', 'Curator', 'individual', 'r_curator', 'free', 'user', 0, 4);
+  ('71000000-0000-0000-0000-00000000000a', 'Rookie', 'individual', 'r_rookie', 'free', 'user', 0, 1),
+  ('71000000-0000-0000-0000-00000000000b', 'Legend', 'individual', 'r_legend', 'free', 'user', 0, 5);
 insert into public.world_items (id, sku, kind, name, price, min_level, active) values
   ('71000000-0000-0000-0000-0000000000f0', 'r_lamp',     'decor',      'Lamp',      10,   1, true),
   ('71000000-0000-0000-0000-0000000000f1', 'r_trophy',   'trophy',     'Trophy',    null, 1, true),
@@ -70,14 +71,14 @@ select is(
 -- ---------- buy_world_level: XP gate before money ----------
 select tests.authenticate_as('71000000-0000-0000-0000-00000000000a');
 select throws_ok($$select public.buy_world_level()$$, 'P0001', 'xp_level_too_low',
-  'level 2 needs XP tier 1 — a rookie is refused even before the balance is checked');
+  'level 2 needs XP tier 2 (Collector) — a rookie is refused even before the balance is checked');
 
--- give A tier 1 but no tokens → insufficient_balance; balance untouched.
+-- give A tier 2 but no tokens → insufficient_balance; balance untouched.
 -- profiles.xp/level are consumer-maintained (S8 guard trigger, D-079): a fixture write has to set
 -- the same transaction-local flag apply_gamification() uses, exactly like the gamification tests.
 select tests.clear_authentication();
 select set_config('mv.gamification_write', '1', true);
-update public.profiles set level = 1 where id = '71000000-0000-0000-0000-00000000000a';
+update public.profiles set level = 2 where id = '71000000-0000-0000-0000-00000000000a';
 select set_config('mv.gamification_write', '', true);
 select tests.authenticate_as('71000000-0000-0000-0000-00000000000a');
 select throws_ok($$select public.buy_world_level()$$, 'P0001', 'insufficient_balance',
@@ -110,17 +111,17 @@ select is(
   '2', 'world.level_up is emitted with the target level'
 );
 
--- level 3 needs tier 2 → gated again (money alone cannot skip progression)
+-- level 3 needs tier 3 → gated again (money alone cannot skip progression)
 select tests.authenticate_as('71000000-0000-0000-0000-00000000000a');
 select throws_ok($$select public.buy_world_level()$$, 'P0001', 'xp_level_too_low',
-  'level 3 needs XP tier 2 — money alone cannot skip progression');
+  'level 3 needs XP tier 3 — money alone cannot skip progression');
 
 -- ---------- buy_world_level: climb to the top, then max_level ----------
 select tests.clear_authentication();
 select public.credit_tokens('71000000-0000-0000-0000-00000000000b', 1000, 'purchase', 'token_purchase', null, 'r_evt_2');
 select tests.authenticate_as('71000000-0000-0000-0000-00000000000b');
 select public.buy_world_level(); select public.buy_world_level(); select public.buy_world_level();
-select is((select level from public.buy_world_level()), 5, 'four purchases take a tier-4 collector to level 5');
+select is((select level from public.buy_world_level()), 5, 'four purchases take a tier-5 collector to level 5');
 select throws_ok($$select public.buy_world_level()$$, 'P0001', 'max_level', 'level 5 is the top');
 select tests.clear_authentication();
 select is((select tokens from public.profiles where id = '71000000-0000-0000-0000-00000000000b'),
