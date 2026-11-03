@@ -239,12 +239,13 @@ Runbook (incidents, rollback, restore from PITR, rotating keys), backups verifie
 
 **Rules**
 
-- **Stats model** in code (`domain/races/stats.ts`, versioned, `race_stats_versions`): archetype from the canonical model's segment (neutral when unmatched), scale, condition, rarity bonus, owned tunes (total ≤ 10 %), driver level (≤ 10 %), seeded luck. A test asserts the combined paid/level cap (D-075).
+- **Stats model** in code (`domain/races/stats.ts`, versioned, `race_stats_versions`): **base stats from the canonical model's real-car specs** (`catalog_models.specs`, formula v1 documented in the file: 0–100 km/h → acceleration, top speed or an aero estimate from power + drag → top speed, weight/drag/drivetrain → handling), falling back per stat to the segment archetype (neutral when unmatched or fantasy), then scale, condition, rarity bonus, owned tunes (≤ 5 %), driver level (≤ 5 %), combined ≤ 10 %, seeded luck. A test asserts the combined paid/level cap (D-075). Only **verified** specs race — a pending proposal counts as `{}`.
+- **Catalogue specs (MV-W08-prep, D-008 pattern)**: a member or the AI scan proposes via `propose_catalog_specs(model, specs, source)` (zod `carSpecsSchema` ↔ SQL `catalog_specs_valid`; `{}`/unknown keys/out-of-range rejected; refused once verified), an admin verifies via `verify_catalog_specs` from `/admin/catalogue` (native-input editor, D-027). Specs columns are RPC-only (guard trigger).
 - **Formats**: time trial (solo vs ghost), challenge (head-to-head to a handle/club), event (8/16-car bracket at a garage), season league (monthly points).
 - **Execution**: `enter_race` RPC (ownership, item public, one entry per user, fee via `spend_tokens` `spend_race_entry` for bracket events only — platform fee); `lock_race` sets the seed; Edge job `run-race` writes `race_results` once (immutable); replay renders from seed + stats version; disputes = re-run the seed.
 - **Prizes**: XP, trophy items (earned-only), titles, badge progress, season points. **Never credits.** Free-entry community races may award small earn-budget bonuses (`earn_race_participation`, capped) — the rules engine keeps "paid entry → credit reward" impossible.
   **AC** Re-running a race with the same seed + stats version yields identical results (determinism test); `race_results` has no update/delete policy; a paid-entry race cannot carry a credit reward (test on the rules table).
-  **Events** `race.created`, `race.entered`, `race.locked`, `race.completed`, `race.cancelled`
+  **Events** `catalog.specs_proposed`, `catalog.specs_verified`, `race.created`, `race.entered`, `race.locked`, `race.completed`, `race.cancelled`
   **Flags** `world_races`
 
 ## F-26 Progression, quests & earning

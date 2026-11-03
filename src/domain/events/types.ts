@@ -61,6 +61,9 @@ export const EVENT_TYPES = [
   'invite.redeemed',
   'feedback.created',
   'flag.updated',
+  // catalogue car specs (F-25 racing input, MV-W08-prep): member/AI proposal → admin verification
+  'catalog.specs_proposed',
+  'catalog.specs_verified',
   // ---- Collectors World (07 §2, §6.2) ----
   'world.garage_created',
   'world.garage_updated',
@@ -111,6 +114,7 @@ export type EventEntity =
   | 'review'
   | 'invite'
   | 'flag'
+  | 'catalog_model'
   | 'garage'
   | 'world_item'
   | 'meetup'

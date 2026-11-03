@@ -119,13 +119,13 @@ isOneToOne: false
                   ]
                 },"catalog_models": {
                   Row: {
-                    "brand_id": string,"casting_code": string | null,"color_variants": NonNullable<Json>,"created_at": string,"id": string,"merged_into_id": string | null,"name": string,"proposed_by": string | null,"scale": string | null,"search": unknown,"series": string | null,"status": Database["public"]['Enums']["model_status"],"verified_by": string | null,"year": number | null
+                    "brand_id": string,"casting_code": string | null,"color_variants": NonNullable<Json>,"created_at": string,"id": string,"merged_into_id": string | null,"name": string,"proposed_by": string | null,"scale": string | null,"search": unknown,"series": string | null,"specs": NonNullable<Json>,"specs_proposed_by": string | null,"specs_source": string | null,"specs_verified_at": string | null,"specs_verified_by": string | null,"status": Database["public"]['Enums']["model_status"],"verified_by": string | null,"year": number | null
                   }
                   Insert: {
-                    "brand_id": string,"casting_code"?: string | null,"color_variants"?: NonNullable<Json>,"created_at"?: string,"id"?: string,"merged_into_id"?: string | null,"name": string,"proposed_by"?: string | null,"scale"?: string | null,"search"?: never,"series"?: string | null,"status"?: Database["public"]['Enums']["model_status"],"verified_by"?: string | null,"year"?: number | null
+                    "brand_id": string,"casting_code"?: string | null,"color_variants"?: NonNullable<Json>,"created_at"?: string,"id"?: string,"merged_into_id"?: string | null,"name": string,"proposed_by"?: string | null,"scale"?: string | null,"search"?: never,"series"?: string | null,"specs"?: NonNullable<Json>,"specs_proposed_by"?: string | null,"specs_source"?: string | null,"specs_verified_at"?: string | null,"specs_verified_by"?: string | null,"status"?: Database["public"]['Enums']["model_status"],"verified_by"?: string | null,"year"?: number | null
                   }
                   Update: {
-                    "brand_id"?: string,"casting_code"?: string | null,"color_variants"?: NonNullable<Json>,"created_at"?: string,"id"?: string,"merged_into_id"?: string | null,"name"?: string,"proposed_by"?: string | null,"scale"?: string | null,"search"?: never,"series"?: string | null,"status"?: Database["public"]['Enums']["model_status"],"verified_by"?: string | null,"year"?: number | null
+                    "brand_id"?: string,"casting_code"?: string | null,"color_variants"?: NonNullable<Json>,"created_at"?: string,"id"?: string,"merged_into_id"?: string | null,"name"?: string,"proposed_by"?: string | null,"scale"?: string | null,"search"?: never,"series"?: string | null,"specs"?: NonNullable<Json>,"specs_proposed_by"?: string | null,"specs_source"?: string | null,"specs_verified_at"?: string | null,"specs_verified_by"?: string | null,"status"?: Database["public"]['Enums']["model_status"],"verified_by"?: string | null,"year"?: number | null
                   }
                   Relationships: [
                     {
@@ -149,6 +149,30 @@ isOneToOne: false
     },{
       foreignKeyName: "catalog_models_proposed_by_fkey"
       columns: ["proposed_by"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "catalog_models_specs_proposed_by_fkey"
+      columns: ["specs_proposed_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "catalog_models_specs_proposed_by_fkey"
+      columns: ["specs_proposed_by"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "catalog_models_specs_verified_by_fkey"
+      columns: ["specs_verified_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "catalog_models_specs_verified_by_fkey"
+      columns: ["specs_verified_by"]
 isOneToOne: false
       referencedRelation: "public_profiles"
       referencedColumns: ["id"]
@@ -1237,6 +1261,8 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"catalog_specs_valid":
+{ Args: { "p": Json }; Returns: boolean },
 "create_offer":
 { Args: { "p_amount"?: number,"p_listing_id": string,"p_message"?: string,"p_trade_item_ids"?: (string)[],"p_type": Database["public"]['Enums']["offer_type"] }; Returns: {
               "amount": number | null,
@@ -1374,6 +1400,34 @@ isOneToOne: false
 "pgp_armor_headers":
 { Args: { "": string }; Returns: Record<string, unknown>[]
                            },
+"propose_catalog_specs":
+{ Args: { "p_model_id": string,"p_specs": Json,"p_source"?: string }; Returns: {
+              "brand_id": string,
+"casting_code": string | null,
+"color_variants": NonNullable<Json>,
+"created_at": string,
+"id": string,
+"merged_into_id": string | null,
+"name": string,
+"proposed_by": string | null,
+"scale": string | null,
+"search": unknown,
+"series": string | null,
+"specs": NonNullable<Json>,
+"specs_proposed_by": string | null,
+"specs_source": string | null,
+"specs_verified_at": string | null,
+"specs_verified_by": string | null,
+"status": Database["public"]['Enums']["model_status"],
+"verified_by": string | null,
+"year": number | null
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "catalog_models"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "redeem_invite":
 { Args: { "p_code": string }; Returns: undefined
                            },
@@ -1446,6 +1500,34 @@ isOneToOne: false
                           SetofOptions: {
         from: "*"
         to: "offers"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"verify_catalog_specs":
+{ Args: { "p_model_id": string,"p_specs": Json,"p_source"?: string }; Returns: {
+              "brand_id": string,
+"casting_code": string | null,
+"color_variants": NonNullable<Json>,
+"created_at": string,
+"id": string,
+"merged_into_id": string | null,
+"name": string,
+"proposed_by": string | null,
+"scale": string | null,
+"search": unknown,
+"series": string | null,
+"specs": NonNullable<Json>,
+"specs_proposed_by": string | null,
+"specs_source": string | null,
+"specs_verified_at": string | null,
+"specs_verified_by": string | null,
+"status": Database["public"]['Enums']["model_status"],
+"verified_by": string | null,
+"year": number | null
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "catalog_models"
         isOneToOne: true
         isSetofReturn: false
       } }
