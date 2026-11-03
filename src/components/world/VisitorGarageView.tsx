@@ -108,7 +108,10 @@ export default function VisitorGarageView({
         name={garage.garage.name}
         level={garage.level}
         score={garage.garage.score}
-        capacity={garage.level.display_slots + garage.layout.slots.length}
+        capacity={Math.max(
+          garage.level.display_slots,
+          ...garage.layout.slots.map((slot) => slot.slot + 1)
+        )}
         layout={garage.layout}
         items={items}
         featuredItemId={garage.garage.featured_item_id}
