@@ -24,7 +24,37 @@ export const isHandleAvailable = repo.isHandleAvailable;
 export const getPublicProfile = repo.getPublicProfile;
 export const getPublicProfileById = repo.getPublicProfileById;
 export const listPublicProfilesByIds = repo.listPublicProfilesByIds;
+export const isFollowing = repo.isFollowing;
+export const countFollowers = repo.countFollowers;
 export { CITIES_BY_COUNTRY } from './cities';
+
+// ---------- Follow button (F-14 stretch, MV-S8-07) ----------
+/** Follow + emit `user.followed` (rule 9). Idempotent-ish: a duplicate insert is swallowed. */
+export async function followUser(supabase: Client, followerId: string, followeeId: string) {
+  if (followerId === followeeId) throw new Error('You cannot follow yourself.');
+  try {
+    await repo.followUser(supabase, followerId, followeeId);
+  } catch (e) {
+    if ((e as { code?: string } | null)?.code !== '23505') throw e; // already following
+    return;
+  }
+  await emitEvent(supabase, {
+    actorId: followerId,
+    type: 'user.followed',
+    entity: 'profile',
+    entityId: followeeId,
+  });
+}
+
+export async function unfollowUser(supabase: Client, followerId: string, followeeId: string) {
+  await repo.unfollowUser(supabase, followerId, followeeId);
+  await emitEvent(supabase, {
+    actorId: followerId,
+    type: 'user.unfollowed',
+    entity: 'profile',
+    entityId: followeeId,
+  });
+}
 
 /**
  * Onboarding's country prefill (F-01): match the signed-in phone's E.164 dial code against the

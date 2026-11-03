@@ -11,6 +11,7 @@ import ListingCard from './ListingCard';
 import MediaImage from './MediaImage';
 import ReportPrompt from './ReportPrompt';
 import BlockUserButton from './BlockUserButton';
+import FollowButton from './FollowButton';
 import ShareProfileButton from './ShareProfileButton';
 import StarRating from './StarRating';
 import { TrophyIcon } from './icons';
@@ -22,7 +23,8 @@ type Tab = 'collection' | 'listings' | 'reviews';
 // F-14 v2 (MV-S8-04): banner, avatar, name/handle/shop badge, country/city, level/tier, rating,
 // member since, share sheet, and the three tabs (public collection · listings · reviews) — composed
 // from the existing panel / tab-chip / CarCard / ListingCard / review-card pieces (D-027). Reads
-// only `public_profiles` fields (rule 15). Follow button stays stretch (MV-S8-07).
+// only `public_profiles` fields (rule 15). Follow button + follower count and the Pro flair are
+// the MV-S8-07 stretch.
 export default function PublicProfileView({
   profile,
   items,
@@ -31,6 +33,8 @@ export default function PublicProfileView({
   tier,
   viewerId,
   shareUrl,
+  followerCount = 0,
+  viewerFollows = false,
 }: {
   profile: PublicProfileRow;
   items: GarageItem[];
@@ -39,8 +43,11 @@ export default function PublicProfileView({
   tier: string;
   viewerId?: string;
   shareUrl: string;
+  followerCount?: number;
+  viewerFollows?: boolean;
 }) {
   const [tab, setTab] = useState<Tab>('collection');
+  const [followers, setFollowers] = useState(followerCount);
   const isOwnProfile = !!viewerId && viewerId === profile.id;
   const memberSince = profile.created_at
     ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -67,7 +74,10 @@ export default function PublicProfileView({
       </div>
 
       <div className="panel" style={{ marginBottom: 16, paddingTop: 0 }}>
-        <div className="profile-avatar-btn profile-hero-avatar" aria-hidden>
+        <div
+          className={`profile-avatar-btn profile-hero-avatar ${profile.is_pro ? 'pro' : ''}`}
+          aria-hidden
+        >
           {profile.avatar_media_id ? (
             <MediaImage
               mediaId={profile.avatar_media_id}
@@ -86,7 +96,8 @@ export default function PublicProfileView({
         <div style={{ textAlign: 'center' }}>
           <h1 style={{ fontSize: 22 }}>{name}</h1>
           <p className="muted" style={{ fontSize: 13 }}>
-            @{profile.handle}
+            @{profile.handle} · {followers.toLocaleString('en-US')}{' '}
+            {followers === 1 ? 'follower' : 'followers'}
           </p>
           <div
             style={{
@@ -102,7 +113,7 @@ export default function PublicProfileView({
               Level {Math.max(1, profile.level ?? 1)} · {tier}
             </span>
             {profile.account_type === 'shop' && <span className="level-pill">Shop</span>}
-            {profile.is_pro && <span className="level-pill">Pro</span>}
+            {profile.is_pro && <span className="level-pill pro-pill">Pro</span>}
           </div>
           {profile.bio && (
             <p style={{ fontSize: 14, lineHeight: 1.5, marginTop: 10 }}>{profile.bio}</p>
@@ -155,6 +166,12 @@ export default function PublicProfileView({
           )}
           {viewerId && !isOwnProfile && profile.id && (
             <>
+              <FollowButton
+                viewerId={viewerId}
+                targetId={profile.id}
+                initialFollowing={viewerFollows}
+                onCountChange={(delta) => setFollowers((n) => Math.max(0, n + delta))}
+              />
               <ReportPrompt
                 targetType="user"
                 targetId={profile.id}

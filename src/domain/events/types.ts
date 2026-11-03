@@ -13,6 +13,8 @@ export const EVENT_TYPES = [
   'user.deleted',
   'user.blocked',
   'user.unblocked',
+  'user.followed',
+  'user.unfollowed',
   'user.opened',
   'user.suspended',
   'user.unsuspended',

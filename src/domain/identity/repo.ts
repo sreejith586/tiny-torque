@@ -117,6 +117,47 @@ export async function getPublicProfileById(supabase: Client, id: string) {
   return data;
 }
 
+// ---------- follows (F-14 follow button, MV-S8-07) — RLS: public read, owner insert/delete (0002) ----------
+export async function followUser(supabase: Client, followerId: string, followeeId: string) {
+  const { error } = await supabase
+    .from('follows')
+    .insert({ follower_id: followerId, followee_id: followeeId });
+  if (error) throw error;
+}
+
+export async function unfollowUser(supabase: Client, followerId: string, followeeId: string) {
+  const { error } = await supabase
+    .from('follows')
+    .delete()
+    .eq('follower_id', followerId)
+    .eq('followee_id', followeeId);
+  if (error) throw error;
+}
+
+export async function isFollowing(
+  supabase: Client,
+  followerId: string,
+  followeeId: string
+): Promise<boolean> {
+  const { count, error } = await supabase
+    .from('follows')
+    .select('follower_id', { count: 'exact', head: true })
+    .eq('follower_id', followerId)
+    .eq('followee_id', followeeId);
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
+/** Public follower count (03 §2.12 "public read count"). */
+export async function countFollowers(supabase: Client, userId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('follows')
+    .select('follower_id', { count: 'exact', head: true })
+    .eq('followee_id', userId);
+  if (error) throw error;
+  return count ?? 0;
+}
+
 /** Batch version of getPublicProfileById — one round trip for a list of counterparties (e.g. the
  * distinct buyers/sellers across an offers inbox) instead of N. */
 export async function listPublicProfilesByIds(supabase: Client, ids: string[]) {

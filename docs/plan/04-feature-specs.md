@@ -145,7 +145,7 @@ XP rules (code): add item +10 (cap 50/day), first photo on item +5, publish list
 ## F-14 Profile & public page
 
 `/u/{handle}`: banner, avatar, name, handle, shop badge, country/city, level/tier, rating, member since, follow button (stretch), tabs: Public collection · Listings · Reviews. Share sheet (Web Share API) with OG image. Settings: edit profile, switch account type, theme (6, per-device), export/backup, tokens history, blocked users, delete account, T&Cs/privacy, feedback/bug report.
-**AC** Public page renders for anon with only `public_profiles` fields; private items absent. ✅ MV-S8-04 — `e2e/profile-settings.spec.ts` (public profile v2: tabs, level pill, share; mobile absent), `supabase/tests/0020_gamification.sql` (public_profiles avatar/banner columns). Settings list ✅ MV-S8-05 (`/settings`, D-080). Follow button = stretch (MV-S8-07, not built).
+**AC** Public page renders for anon with only `public_profiles` fields; private items absent. ✅ MV-S8-04 — `e2e/profile-settings.spec.ts` (public profile v2: tabs, level pill, share; mobile absent), `supabase/tests/0020_gamification.sql` (public_profiles avatar/banner columns). Settings list ✅ MV-S8-05 (`/settings`, D-080). Follow button + follower count ✅ MV-S8-07 (`FollowButton`, `domain/identity` follow/unfollow). Daily quest ✅ MV-S8-07 (`rules.questForDay`, `DailyQuestCard`).
 
 ## F-15 Trust & safety
 

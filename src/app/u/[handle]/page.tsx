@@ -2,7 +2,12 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { getPublicProfile, listPublicProfilesByIds } from '@/domain/identity';
+import {
+  countFollowers,
+  getPublicProfile,
+  isFollowing,
+  listPublicProfilesByIds,
+} from '@/domain/identity';
 import { listPublicCollectionItems } from '@/domain/garage';
 import { listMyListings, type Listing } from '@/domain/marketplace';
 import { listReviewsForSeller } from '@/domain/reviews';
@@ -26,18 +31,28 @@ async function loadProfile(
       items: FIXTURE_ITEMS.filter((i) => i.is_public),
       listings: FIXTURE_LISTINGS.slice(0, 2),
       reviews: [] as ProfileReview[],
+      followerCount: 12,
+      viewerFollows: false,
     };
   }
   const supabase = await createClient();
   const profile = await getPublicProfile(supabase, handle);
   if (!profile) return null;
   const sellerId = profile.id!;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   // Only public rows reach anon here: public items (RLS), active listings (the public SELECT
-  // policy), and reviews (publicly readable). Nothing from the base `profiles` table (rule 15).
-  const [items, listings, reviewRows] = await Promise.all([
+  // policy), reviews and the follower count (both publicly readable). Nothing from the base
+  // `profiles` table (rule 15).
+  const [items, listings, reviewRows, followerCount, viewerFollows] = await Promise.all([
     listPublicCollectionItems(supabase, sellerId),
     listMyListings(supabase, sellerId, 'active').catch((): Listing[] => []),
     listReviewsForSeller(supabase, sellerId),
+    countFollowers(supabase, sellerId).catch(() => 0),
+    user && user.id !== sellerId
+      ? isFollowing(supabase, user.id, sellerId).catch(() => false)
+      : Promise.resolve(false),
   ]);
   const buyerIds = [...new Set(reviewRows.map((r) => r.buyer_id).filter(Boolean))] as string[];
   const buyers = buyerIds.length ? await listPublicProfilesByIds(supabase, buyerIds) : [];
@@ -48,7 +63,7 @@ async function loadProfile(
     comment: r.comment,
     buyerName: (r.buyer_id && nameByBuyerId.get(r.buyer_id)) || 'Buyer',
   }));
-  return { profile, items, listings, reviews };
+  return { profile, items, listings, reviews, followerCount, viewerFollows };
 }
 
 export async function generateMetadata({
@@ -117,6 +132,8 @@ export default async function PublicProfilePage({
         tier={levelForXp(result.profile.xp ?? 0).tier}
         viewerId={viewerId}
         shareUrl={shareUrl}
+        followerCount={result.followerCount}
+        viewerFollows={result.viewerFollows}
       />
     </main>
   );

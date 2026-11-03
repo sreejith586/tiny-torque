@@ -5,6 +5,8 @@ import {
   evaluateBadges,
   levelForXp,
   levelProgress,
+  questForDay,
+  questStatus,
   LEVELS,
   XP_RULES,
   type GamificationEvent,
@@ -66,7 +68,11 @@ describe('XP rules (F-13)', () => {
     expect(breakdown.firstPhoto).toBe(5);
     expect(breakdown.listingPublished).toBe(15);
     expect(breakdown.dailyFirstOpen).toBe(10);
-    expect(xp).toBe(30);
+    // The 20th has a photo and a listing, so its quest is done unless it rotated to "add a car";
+    // the 21st only has an open, which no quest asks for.
+    const questXp = questForDay('2026-10-20').event === 'item.created' ? 0 : XP_RULES.dailyQuest;
+    expect(breakdown.dailyQuest).toBe(questXp);
+    expect(xp).toBe(30 + questXp);
   });
 
   it('pays a completed deal to BOTH sides, once per offer', () => {
@@ -109,6 +115,34 @@ describe('XP rules (F-13)', () => {
   });
 });
 
+describe('daily quest (F-13 stretch, MV-S8-07)', () => {
+  it('rotates through the three quests by UTC day and is stable for a given day', () => {
+    const keys = ['2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04'].map(
+      (d) => questForDay(d).key
+    );
+    expect(new Set(keys.slice(0, 3)).size).toBe(3); // three consecutive days, three quests
+    expect(keys[3]).toBe(keys[0]); // period 3
+    expect(questForDay('2026-10-20')).toEqual(questForDay('2026-10-20'));
+  });
+
+  it('is done only when that day has the quest event for this user, and pays +15 once per day', () => {
+    const day = '2026-10-20';
+    const quest = questForDay(day);
+    expect(questStatus(ME, [], day).done).toBe(false);
+    const done = [
+      ev(quest.event, `${day}T09:00:00.000Z`, { entity_id: 'q-1' }),
+      ev(quest.event, `${day}T10:00:00.000Z`, { entity_id: 'q-2' }),
+    ];
+    expect(questStatus(ME, done, day).done).toBe(true);
+    expect(computeXp(ME, done).breakdown.dailyQuest).toBe(XP_RULES.dailyQuest);
+    // the other user's event doesn't complete my quest; yesterday's event doesn't count today
+    expect(
+      questStatus(ME, [ev(quest.event, `${day}T09:00:00.000Z`, { actor_id: OTHER })], day).done
+    ).toBe(false);
+    expect(questStatus(ME, [ev(quest.event, '2026-10-19T23:00:00.000Z')], day).done).toBe(false);
+  });
+});
+
 describe('levels / tiers (F-13)', () => {
   it('maps the 0/100/300/700/1500/3000 thresholds to six tiers', () => {
     expect(LEVELS.map((l) => l.minXp)).toEqual([0, 100, 300, 700, 1500, 3000]);
@@ -124,7 +158,12 @@ describe('levels / tiers (F-13)', () => {
   });
 
   it('reports progress towards the next level and 100% at the top', () => {
-    expect(levelProgress(150)).toMatchObject({ level: 2, currentMin: 100, nextMin: 300, percent: 25 });
+    expect(levelProgress(150)).toMatchObject({
+      level: 2,
+      currentMin: 100,
+      nextMin: 300,
+      percent: 25,
+    });
     expect(levelProgress(5000)).toMatchObject({ level: 6, nextMin: null, percent: 100 });
   });
 });
@@ -168,8 +207,13 @@ describe('replay determinism (F-13 AC)', () => {
   const events: GamificationEvent[] = [];
   for (let d = 1; d <= 9; d++) {
     for (let i = 0; i < (d % 3) + 4; i++) {
-      events.push(ev('item.created', `2026-10-0${d}T1${i}:00:00.000Z`, { entity_id: `i-${d}-${i}` }));
-      if (i === 0) events.push(ev('item.photo_added', `2026-10-0${d}T12:00:00.000Z`, { entity_id: `i-${d}-0` }));
+      events.push(
+        ev('item.created', `2026-10-0${d}T1${i}:00:00.000Z`, { entity_id: `i-${d}-${i}` })
+      );
+      if (i === 0)
+        events.push(
+          ev('item.photo_added', `2026-10-0${d}T12:00:00.000Z`, { entity_id: `i-${d}-0` })
+        );
     }
     events.push(ev('user.opened', `2026-10-0${d}T08:00:00.000Z`, { entity: 'profile' }));
   }
@@ -198,11 +242,26 @@ describe('replay determinism (F-13 AC)', () => {
     // so a replay is literally the same call on the same log.
     const replayed = computeGamification(ME, events, stats, ACHIEVEMENTS);
     expect(replayed).toEqual(first);
+    // Daily quest (MV-S8-07): every day has an add and a first photo, only day 5 has a listing,
+    // so a day's quest is done unless it rotated to "list a car" on a day other than the 5th.
+    const questDays = Array.from({ length: 9 }, (_, i) => `2026-10-0${i + 1}`).filter((day) => {
+      const q = questForDay(day);
+      return q.event !== 'listing.published' || day === '2026-10-05';
+    }).length;
     expect(first.xp).toBe(
       // 9 days × min(adds×10, 50): adds per day are 5,6,4,5,6,4,5,6,4 → 50,50,40,50,50,40,50,50,40
-      50 + 50 + 40 + 50 + 50 + 40 + 50 + 50 + 40 +
+      50 +
+        50 +
+        40 +
+        50 +
+        50 +
+        40 +
+        50 +
+        50 +
+        40 +
         9 * XP_RULES.firstPhoto +
         9 * XP_RULES.dailyFirstOpen +
+        questDays * XP_RULES.dailyQuest +
         XP_RULES.listingPublished +
         XP_RULES.dealCompleted +
         XP_RULES.fiveStarReview

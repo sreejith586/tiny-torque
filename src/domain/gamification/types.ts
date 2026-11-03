@@ -1,5 +1,5 @@
 import type { Tables, Enums } from '@/lib/supabase/types';
-import type { BadgeState, LevelProgress } from './rules';
+import type { BadgeState, DailyQuestStatus, LevelProgress } from './rules';
 
 export type AchievementRow = Tables<'achievements'>;
 export type UserAchievementRow = Tables<'user_achievements'>;
@@ -17,6 +17,8 @@ export interface Badge extends BadgeState {
 export interface GamificationSummary {
   level: LevelProgress;
   badges: Badge[];
+  /** Today's rotating quest and whether it is already done (MV-S8-07). */
+  quest: DailyQuestStatus;
   /** Badge keys unlocked by THIS sync — drives the unlock toast. */
   newlyUnlocked: string[];
   xpDelta: number;
@@ -26,6 +28,8 @@ export type {
   AchievementDef,
   BadgeState,
   CollectionStats,
+  DailyQuest,
+  DailyQuestStatus,
   GamificationEvent,
   GamificationState,
   LevelDef,

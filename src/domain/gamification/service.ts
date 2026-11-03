@@ -11,7 +11,13 @@ import { emitEvent } from '@/domain/events';
 import { getGarageStats } from '@/domain/garage';
 import * as repo from './repo';
 import { feedbackSchema } from './schema';
-import { computeGamification, levelProgress, utcDay, type GamificationEvent } from './rules';
+import {
+  computeGamification,
+  levelProgress,
+  questStatus,
+  utcDay,
+  type GamificationEvent,
+} from './rules';
 import type { Badge, GamificationSummary } from './types';
 
 export {
@@ -23,6 +29,9 @@ export {
   evaluateBadges,
   computeGamification,
   utcDay,
+  DAILY_QUESTS,
+  questForDay,
+  questStatus,
 } from './rules';
 export const listAchievements = repo.listAchievements;
 
@@ -89,6 +98,7 @@ export async function syncGamification(
   return {
     level: levelProgress(state.xp),
     badges,
+    quest: questStatus(userId, events, utcDay(now.toISOString())),
     newlyUnlocked: applied.newly_unlocked,
     xpDelta: applied.xp_delta,
   };
@@ -109,6 +119,8 @@ export type {
   Badge,
   GamificationSummary,
   BadgeState,
+  DailyQuest,
+  DailyQuestStatus,
   LevelProgress,
   GamificationEvent,
   CollectionStats,

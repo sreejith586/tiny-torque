@@ -4,10 +4,11 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { listGarage } from '@/domain/garage';
 import { getProfile } from '@/domain/identity';
-import { syncGamification, type Badge } from '@/domain/gamification';
+import { syncGamification, type Badge, type DailyQuestStatus } from '@/domain/gamification';
 import GarageView from '@/components/GarageView';
 import FirstRunTour from '@/components/FirstRunTour';
 import BadgeUnlockToast from '@/components/BadgeUnlockToast';
+import DailyQuestCard from '@/components/DailyQuestCard';
 import { dismissTutorialAction } from '@/app/profile/actions';
 import { FIXTURE_ITEMS, isVisualHarness } from '@/lib/visual-fixtures';
 
@@ -18,7 +19,13 @@ export const metadata: Metadata = {
 async function loadFirstPage(searchParams: Record<string, string | string[] | undefined>) {
   // D-041 baseline harness (non-production only): one page of fixtures, no cursor.
   if (isVisualHarness(searchParams)) {
-    return { items: FIXTURE_ITEMS, cursor: null, showTour: false, unlocked: [] as Badge[] };
+    return {
+      items: FIXTURE_ITEMS,
+      cursor: null,
+      showTour: false,
+      unlocked: [] as Badge[],
+      quest: null as DailyQuestStatus | null,
+    };
   }
   const supabase = await createClient();
   const {
@@ -32,17 +39,19 @@ async function loadFirstPage(searchParams: Record<string, string | string[] | un
   // The gamification consumer runs here too (D-079) so XP/badges catch up right after an add, and
   // the unlock toast shows where the collector actually is. Never let it take the garage down.
   let unlocked: Badge[] = [];
+  let quest: DailyQuestStatus | null = null;
   try {
     const summary = await syncGamification(supabase, user.id);
     unlocked = summary.newlyUnlocked
       .map((key) => summary.badges.find((b) => b.key === key))
       .filter((b): b is Badge => !!b);
+    quest = summary.quest;
   } catch {
     // RPCs missing on this environment (migration not yet applied) — stats page shows the fallback
   }
   // MV-S8-06: the first-run tour shows once, until dismissed (tutorial_dismissed_at).
   const showTour = !!profile && profile.tutorial_dismissed_at === null;
-  return { items, cursor: nextCursor, showTour, unlocked };
+  return { items, cursor: nextCursor, showTour, unlocked, quest };
 }
 
 export default async function GaragePage({
@@ -50,7 +59,7 @@ export default async function GaragePage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { items, cursor, showTour, unlocked } = await loadFirstPage(await searchParams);
+  const { items, cursor, showTour, unlocked, quest } = await loadFirstPage(await searchParams);
 
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
@@ -61,6 +70,7 @@ export default async function GaragePage({
         </Link>
       </div>
       <p className="page-sub">Everything you own, in one place.</p>
+      {quest && items.length > 0 && <DailyQuestCard quest={quest} />}
       <GarageView initialItems={items} initialCursor={cursor} />
       {showTour && <FirstRunTour onDismiss={dismissTutorialAction} />}
       {unlocked.length > 0 && (
