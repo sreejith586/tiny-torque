@@ -1251,6 +1251,12 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "profiles_country_code_fkey"
+      columns: ["country_code"]
+isOneToOne: false
+      referencedRelation: "countries"
+      referencedColumns: ["code"]
+    },{
       foreignKeyName: "world_garages_featured_item_id_fkey"
       columns: ["featured_item_id"]
 isOneToOne: false
@@ -1262,6 +1268,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "collection_items_v1"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "world_garages_level_fkey"
+      columns: ["level"]
+isOneToOne: false
+      referencedRelation: "world_levels"
+      referencedColumns: ["level"]
     },{
       foreignKeyName: "world_garages_user_id_fkey"
       columns: ["user_id"]
