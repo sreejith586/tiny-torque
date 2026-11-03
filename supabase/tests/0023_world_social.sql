@@ -141,19 +141,21 @@ select tests.authenticate_as('73000000-0000-0000-0000-00000000000b');
 select is((select count(*)::int from public.world_garages where user_id = '73000000-0000-0000-0000-00000000000e'),
   1, 'a direct invitee sees the invite-only garage');
 select tests.clear_authentication();
+-- RLS lets only the host/invitee read world_invites, so a non-invitee's accept has to get the
+-- token out-of-band (exactly like a shared link): stash it as superuser in a transaction GUC.
+select set_config('tests.share_token',
+  (select token from public.world_invites where garage_user_id = '73000000-0000-0000-0000-00000000000e' and invitee_id is null), true);
 select tests.authenticate_as('73000000-0000-0000-0000-00000000000c');
 select is((select count(*)::int from public.world_garages where user_id = '73000000-0000-0000-0000-00000000000e'),
   0, 'without an invite the garage stays hidden');
 -- C accepts the share link → visible; a second user cannot reuse a 1-use token
-select is((select used_count from public.accept_world_invite(
-  (select token from public.world_invites where garage_user_id = '73000000-0000-0000-0000-00000000000e' and invitee_id is null))),
+select is((select used_count from public.accept_world_invite(current_setting('tests.share_token'))),
   1, 'accepting a share link counts a use');
 select is((select count(*)::int from public.world_garages where user_id = '73000000-0000-0000-0000-00000000000e'),
   1, 'after accepting, the garage is visible');
 select tests.clear_authentication();
 select tests.authenticate_as('73000000-0000-0000-0000-00000000000d');
-select throws_ok($$select public.accept_world_invite(
-  (select token from public.world_invites where garage_user_id = '73000000-0000-0000-0000-00000000000e' and invitee_id is null))$$,
+select throws_ok($$select public.accept_world_invite(current_setting('tests.share_token'))$$,
   'P0001', 'invite_invalid', 'a used-up share link is refused');
 select throws_ok($$select public.accept_world_invite('nope')$$, 'P0001', 'invite_invalid', 'an unknown token is refused');
 -- revoke the direct invite → B loses access
