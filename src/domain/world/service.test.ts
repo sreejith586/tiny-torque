@@ -32,6 +32,7 @@ const repo = vi.hoisted(() => ({
   renameGarage: vi.fn(),
   // module-level aliases in service.ts read these at import time
   listInvites: vi.fn(),
+  listGuestbookByIds: vi.fn(),
 }));
 vi.mock('./repo', () => repo);
 vi.mock('@/domain/events', () => ({ emitEvent: vi.fn() }));

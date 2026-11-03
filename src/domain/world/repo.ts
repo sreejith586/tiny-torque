@@ -238,3 +238,14 @@ export async function listOpenGarages(
   if (error) throw error;
   return data ?? [];
 }
+
+/** Admin preview for the reports queue: guestbook rows by id (RLS: admin sees hidden lines too). */
+export async function listGuestbookByIds(
+  supabase: Client,
+  ids: string[]
+): Promise<WorldGuestbookRow[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from('world_guestbook').select('*').in('id', ids);
+  if (error) throw error;
+  return data ?? [];
+}

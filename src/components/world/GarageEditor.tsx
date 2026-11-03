@@ -9,7 +9,9 @@ import type { GarageItem } from '@/domain/garage';
 import type { GarageLayout, OwnGarage, WorldItemRow, WorldOpenMode } from '@/domain/world';
 import { WORLD_OPEN_MODES } from '@/domain/world';
 import {
+  createInviteAction,
   renameGarageAction,
+  revokeInviteAction,
   saveLayoutAction,
   updateGarageSettingsAction,
 } from '@/app/world/actions';
@@ -18,18 +20,33 @@ import { placeInSlot, slotCells } from './scene';
 import { OPEN_MODE_LABEL } from './copy';
 import styles from './World.module.css';
 
+/** An open invite as the editor lists it (MV-W03-04): share link (token) or direct (handle). */
+export interface InviteSummary {
+  id: string;
+  token: string;
+  inviteeHandle: string | null;
+  expiresAt: string;
+  maxUses: number;
+  usedCount: number;
+}
+
 export default function GarageEditor({
   own,
   items,
   themes,
   renamePrice,
+  invites: initialInvites,
 }: {
   own: OwnGarage;
   items: GarageItem[];
   /** Themes the owner holds in inventory — the only ones the guard lets them apply. */
   themes: WorldItemRow[];
   renamePrice: number | null;
+  invites: InviteSummary[];
 }) {
+  const [invites, setInvites] = useState(initialInvites);
+  const [inviteHandle, setInviteHandle] = useState('');
+  const [copied, setCopied] = useState<string | null>(null);
   const [saved, setSaved] = useState({
     layout: own.layout,
     featured: own.garage.featured_item_id,
@@ -89,6 +106,54 @@ export default function GarageEditor({
       }
       flash('Settings saved.');
     });
+  }
+
+  function createInvite(inviteeHandle?: string) {
+    setError(null);
+    startTransition(async () => {
+      const r = await createInviteAction(
+        inviteeHandle ? { inviteeHandle, hours: 168 } : { hours: 168, maxUses: 10 }
+      );
+      if (!r.ok) {
+        setError(r.error);
+        return;
+      }
+      setInvites((list) => [
+        {
+          id: r.data.id,
+          token: r.data.token,
+          inviteeHandle: inviteeHandle ?? null,
+          expiresAt: r.data.expiresAt,
+          maxUses: r.data.maxUses,
+          usedCount: 0,
+        },
+        ...list,
+      ]);
+      setInviteHandle('');
+      flash(inviteeHandle ? `Invited @${inviteeHandle}.` : 'Share link created.');
+    });
+  }
+
+  function revoke(id: string) {
+    setError(null);
+    startTransition(async () => {
+      const r = await revokeInviteAction(id);
+      if (!r.ok) {
+        setError(r.error);
+        return;
+      }
+      setInvites((list) => list.filter((i) => i.id !== id));
+    });
+  }
+
+  async function copyLink(invite: InviteSummary) {
+    const url = `${window.location.origin}/world/invite/${invite.token}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(invite.id);
+    } catch {
+      window.prompt('Copy this invite link', url);
+    }
   }
 
   function rename() {
@@ -262,6 +327,86 @@ export default function GarageEditor({
         >
           Rename
         </button>
+      </div>
+
+      <div className="section-title">Invites</div>
+      <div className="panel">
+        <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>
+          Invites open your garage to someone even when it is followers-only or invite-only. Share
+          links last 7 days and can be used up to 10 times; a direct invite is for one collector.
+        </p>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <button
+            type="button"
+            className="btn-secondary"
+            style={{ width: 'auto', padding: '8px 14px' }}
+            disabled={pending}
+            onClick={() => createInvite()}
+          >
+            Create share link
+          </button>
+          <div style={{ flex: 1, minWidth: 180 }}>
+            <label htmlFor="invite-handle">Invite by handle</label>
+            <input
+              id="invite-handle"
+              value={inviteHandle}
+              onChange={(e) => setInviteHandle(e.target.value.trim().toLowerCase())}
+              placeholder="e.g. varun"
+              style={{ marginBottom: 0 }}
+            />
+          </div>
+          <button
+            type="button"
+            className="btn-secondary"
+            style={{ width: 'auto', padding: '8px 14px' }}
+            disabled={pending || !inviteHandle}
+            onClick={() => createInvite(inviteHandle)}
+          >
+            Invite
+          </button>
+        </div>
+        {invites.length === 0 ? (
+          <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
+            No open invites.
+          </p>
+        ) : (
+          <div style={{ marginTop: 10 }}>
+            {invites.map((inv) => (
+              <div key={inv.id} className={styles.shopRow}>
+                <div style={{ minWidth: 0 }}>
+                  <div className={styles.shopName}>
+                    {inv.inviteeHandle ? `@${inv.inviteeHandle}` : 'Share link'}
+                  </div>
+                  <div className={styles.shopMeta}>
+                    {inv.usedCount}/{inv.maxUses} used · until{' '}
+                    {new Date(inv.expiresAt).toLocaleDateString()}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {!inv.inviteeHandle && (
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      style={{ width: 'auto', padding: '6px 10px', fontSize: 12 }}
+                      onClick={() => copyLink(inv)}
+                    >
+                      {copied === inv.id ? 'Copied' : 'Copy link'}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="btn-danger"
+                    style={{ width: 'auto', padding: '6px 10px', fontSize: 12 }}
+                    disabled={pending}
+                    onClick={() => revoke(inv.id)}
+                  >
+                    Revoke
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
