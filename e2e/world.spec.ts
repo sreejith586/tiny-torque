@@ -9,6 +9,7 @@ test('world is guarded for anon and the API seam stays dark (D-028)', async ({ p
   await page.goto('/world');
   await expect(page).toHaveURL(/\/login\?next=%2Fworld/);
   expect((await request.get('/api/v1/world/me')).status()).toBe(401);
+  expect((await request.get('/api/v1/world/open')).status()).toBe(404);
 });
 
 test('world home renders the garage card (F-20, fixture harness)', async ({ page }) => {

@@ -149,9 +149,29 @@ Feeds quota (count of `done` jobs this period), cost dashboard, and the scan-acc
 
 `world, world_shop, world_earn, world_meetups, world_meetups_irl, world_races, world_clubs, world_presence`, all `enabled = false` (D-077).
 
-### 2.31 Later World tables (planned, per sprint — see 07 §7 for columns)
+### 2.31 `world_visits` (new) — F-21, 0013b
 
-0013 `world_social` (W03): `world_visits`, `world_kudos`, `world_guestbook`, `world_invites`; `reports.target_type` + garage/guestbook; `notifications.type` + visit/kudos. 0014 `quests_seasons` (W04): `quests`, `quest_progress`, `seasons`, `season_points`, `earn_tokens()`, `expire_earned_tokens()`. 0015 `clubs_meetups` (W06): `clubs`, `club_members`, `meetups`, `meetup_rsvps`, `meetup_showcase`, `transition_meetup()`, `rsvp_meetup()`. 0016 `races` (W08): `race_stats_versions`, `races`, `race_entries`, `race_results` (immutable), `enter_race()`, `lock_race()`. 0017 `meetups_irl` (W10): `venue_private`, `check_in_meetup()`. 0018 `world_ops` (W11): leaderboard views, cost-guard tables.
+`id, garage_user_id → profiles, visitor_id → profiles, visited_on date default current_date, created_at`; unique `(garage_user_id, visitor_id, visited_on)`, `check (garage_user_id <> visitor_id)`. Read: owner, visitor, admin. Insert only via `record_world_visit()` (visibility-checked; owner views are not visits); 60 visits/hour/visitor trigger. Bumps `world_garages.visit_count`, emits `world.visited`, notifies the host (`world_visit`).
+
+### 2.32 `world_kudos` (new) — F-21, 0013b
+
+`(garage_user_id, giver_id, given_on) pk, created_at`. One per giver per garage per day via `give_world_kudos()`; bumps `kudos_count`, emits `world.kudos_given`, notifies (`world_kudos`).
+
+### 2.33 `world_guestbook` (new) — F-21, 0013b
+
+`id, garage_user_id, author_id, body (1–140), hidden_by_host bool, hidden_at, created_at`. Read where the garage is visible; a hidden line only for the host/admin. Writes via `post_world_guestbook()` (5/hour/garage/author, 30/day/author trigger; clean-language check in the service, D-085) and `hide_world_guestbook()` (host or admin, audited `world.guestbook_hidden`).
+
+### 2.34 `world_invites` + `world_invite_uses` (new) — F-21, 0013b
+
+`world_invites`: `id, garage_user_id, token text unique (two uuids, no pgcrypto), invitee_id null (direct invite), expires_at (default 7 d, ≤ 30 d), max_uses 1–50 (direct = 1), used_count, revoked_at, created_at`. `world_invite_uses (invite_id, user_id) pk`. Read: host, invitee, admin. `create_world_invite(handle?, hours, max_uses)` (≤ 20 live per garage; direct invites notify `world_invite`), `accept_world_invite(token)`, `revoke_world_invite(id)`. A live invite (not revoked, not expired, addressed to or used by the viewer) opens any non-public garage.
+
+### 2.35 Visibility + counters (0013b)
+
+`world_garage_visible(garage, viewer)` is the single visibility rule (owner ∨ admin ∨ not blocked ∧ (public ∨ followers-and-follows ∨ live invite)) used by the `world_garages` and `world_guestbook` SELECT policies and by every social RPC. `world_garages` gains `visit_count`, `kudos_count` (guard-protected, RPC-maintained). View `world_open_garages` (public garages × `public_profiles`, blocks applied per caller) backs the "Open garages" page. `notification_type` gains `world_visit`, `world_kudos`, `world_guestbook`, `world_invite`.
+
+### 2.36 Later World tables (planned, per sprint — see 07 §7 for columns)
+
+0014 `quests_seasons` (W04): `quests`, `quest_progress`, `seasons`, `season_points`, `earn_tokens()`, `expire_earned_tokens()`. 0015 `clubs_meetups` (W06): `clubs`, `club_members`, `meetups`, `meetup_rsvps`, `meetup_showcase`, `transition_meetup()`, `rsvp_meetup()`. 0016 `races` (W08): `race_stats_versions`, `races`, `race_entries`, `race_results` (immutable), `enter_race()`, `lock_race()`. 0017 `meetups_irl` (W10): `venue_private`, `check_in_meetup()`. 0018 `world_ops` (W11): leaderboard views, cost-guard tables.
 
 ## 3. Functions / triggers / jobs
 
@@ -178,6 +198,9 @@ Feeds quota (count of `done` jobs this period), cost dashboard, and the scan-acc
 | `emit_item_visibility_events()` | trigger on collection_items (update/delete) | `item.deleted` (soft `hard=false` / hard `hard=true`), `item.restored`, `item.made_public`, `item.made_private` — rule-9 gap closed in 0013a |
 | `world_slot_integrity()` / `world_remove_item_from_garage(user, item)` | trigger on domain_events + SQL fn | `item.deleted` / `item.made_private` / `offer.completed` (seller side) drop the item from slots + featured and log `world.garage_updated` (reason `slot_integrity`); the buyer gets a `system` notification `kind=world_park_it` only if they already have a garage (0013a) |
 | `set_token_ledger_source()` / `token_ledger_source_for(reason)` | trigger + SQL fn | derives `token_ledger.source` from the reason when the writer leaves it null |
+| `world_garage_visible(garage, viewer)` / `world_has_invite(garage, viewer)` | SQL fn (definer, stable) | the one open-house + blocks + invites rule, used by policies and RPCs (0013b) |
+| `record_world_visit(garage)`, `give_world_kudos(garage)`, `post_world_guestbook(garage, body)`, `hide_world_guestbook(id, hidden)`, `create_world_invite(handle?, hours, max_uses)`, `accept_world_invite(token)`, `revoke_world_invite(id)` | RPC SECURITY DEFINER | W03 social writes; each emits its `world.*` event and the host notification (0013b) |
+| `check_world_visit_rate_limit()`, `check_world_guestbook_rate_limit()` | triggers | 60 visits/h/visitor; 5 lines/h/garage/author + 30/day/author (0013b) |
 | `earn_tokens()`, `transition_meetup()`, `rsvp_meetup()`, `check_in_meetup()`, `enter_race()`, `lock_race()`; Edge `run-race` | planned (W04–W10) | 07 §7 |
 
 ## 4. Migration plan (files)
@@ -201,6 +224,7 @@ File names follow the Supabase CLI convention `<YYYYMMDDHHMMSS>_<name>.sql` (req
 | 0012 | `20261020071121_world_core.sql` — world_levels (seed), world_garages, world_items, world_inventory, token_ledger.source + reasons, profiles 18+/terms, eight `world*` flags OFF | W01 |
 | 0013 | `20261020071122_world_rpcs.sql` — ensure_world_garage, buy_world_level, buy_world_item | W01 |
 | 0013a | `20261028171827_world_slots.sql` — extra display slots + caps, paid rename, theme ownership guard, item visibility events, slot-integrity consumer | W02 |
+| 0013b | `20261103112349_world_social.sql` — visits, kudos, guestbook, invites, `world_garage_visible()`, counters, `world_open_garages` view, notification kinds, rate-limit triggers | W03 |
 | 0014–0018 | `world_social`, `quests_seasons`, `clubs_meetups`, `races`, `meetups_irl`, `world_ops` — see §2.31 | W03–W11 |
 
 ## 5. RLS test matrix (run in CI from Sprint 0)
