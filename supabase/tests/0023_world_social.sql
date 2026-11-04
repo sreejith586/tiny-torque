@@ -186,14 +186,18 @@ select is((select count(*)::int from public.world_open_garages where handle = 'v
   0, 'a blocked user does not see the blocker''s garage in the list');
 
 -- ---------- direct writes stay closed ----------
+-- C gets a garage of their own here so the counter update reaches a row (an update that RLS
+-- filters to 0 rows raises nothing — the guard trigger only fires on a row the owner can touch).
 select tests.clear_authentication();
+insert into public.world_garages (user_id, level, name, open_mode) values
+  ('73000000-0000-0000-0000-00000000000c', 1, 'Stranger garage', 'public');
 select tests.authenticate_as('73000000-0000-0000-0000-00000000000c');
 select throws_ok(
   $$insert into public.world_kudos (garage_user_id, giver_id) values ('73000000-0000-0000-0000-00000000000a', '73000000-0000-0000-0000-00000000000c')$$,
   '42501', null, 'authenticated cannot insert kudos directly');
 select throws_ok(
   $$update public.world_garages set visit_count = 999 where user_id = '73000000-0000-0000-0000-00000000000c'$$,
-  '42501', null, 'counters are RPC-only (guard) or invisible (RLS)');
+  '42501', 'rpc_only_column', 'counters are RPC-only (guard trigger)');
 
 select * from finish();
 rollback;
