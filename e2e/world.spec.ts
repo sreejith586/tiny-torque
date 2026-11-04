@@ -32,7 +32,9 @@ test('garage scene + editor: slots, featured, open house, rename (F-20, fixture 
   await expect(page.getByRole('list', { name: 'Display slots' }).getByRole('listitem')).toHaveCount(
     9
   );
-  await expect(page.getByText('Slot 3', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('list', { name: 'Display slots' }).getByText('Slot 3', { exact: true })
+  ).toBeVisible();
   await expect(page.getByLabel('Featured')).toHaveValue(/./);
   await expect(page.getByLabel('Who can visit')).toBeVisible();
   await expect(page.getByLabel('Theme')).toBeVisible();
@@ -52,7 +54,7 @@ test('shop lists the next level, items by kind and inventory (F-27, fixture harn
   await expect(page.getByRole('heading', { name: 'World shop' })).toBeVisible();
   await expect(page.getByText('Next: Level 3 · Showroom')).toBeVisible();
   await expect(page.getByText('90 tokens')).toBeVisible();
-  await expect(page.getByText('Themes')).toBeVisible();
+  await expect(page.getByText('Themes', { exact: true }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Owned' })).toHaveCount(2);
   await expect(page.getByRole('button', { name: 'Earned only' })).toBeVisible();
   await expect(page.getByRole('button', { name: /Buy \(1\/3\)/ })).toBeVisible();
