@@ -63,6 +63,11 @@ export default async function WorldHomePage({
     : null;
   const placed = own.layout.slots.length;
   const openList = social.open.filter((g) => g.user_id !== own.garage.user_id);
+  // keep the fixture harness on when toggling the country chips (preview review, Playwright)
+  const chipHref = (all: boolean) =>
+    `/world?${[all ? 'country=all' : '', isVisualHarness(sp) ? '__visual=1' : '']
+      .filter(Boolean)
+      .join('&')}`.replace(/\?$/, '');
 
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
@@ -141,14 +146,14 @@ export default async function WorldHomePage({
       <div className="section-title">Open garages</div>
       <div className="tab-row">
         <Link
-          href="/world"
+          href={chipHref(false)}
           className={`tab-chip ${social.showingAll ? '' : 'active'}`}
           aria-current={social.showingAll ? undefined : 'page'}
         >
           {social.country ? `Near you (${social.country})` : 'Near you'}
         </Link>
         <Link
-          href="/world?country=all"
+          href={chipHref(true)}
           className={`tab-chip ${social.showingAll ? 'active' : ''}`}
           aria-current={social.showingAll ? 'page' : undefined}
         >
