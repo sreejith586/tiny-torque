@@ -1262,7 +1262,8 @@ isOneToOne: false
         isSetofReturn: false
       } },
 "catalog_specs_valid":
-{ Args: { "p": Json }; Returns: boolean },
+{ Args: { "p": Json }; Returns: boolean
+                           },
 "create_offer":
 { Args: { "p_amount"?: number,"p_listing_id": string,"p_message"?: string,"p_trade_item_ids"?: (string)[],"p_type": Database["public"]['Enums']["offer_type"] }; Returns: {
               "amount": number | null,
@@ -1401,7 +1402,7 @@ isOneToOne: false
 { Args: { "": string }; Returns: Record<string, unknown>[]
                            },
 "propose_catalog_specs":
-{ Args: { "p_model_id": string,"p_specs": Json,"p_source"?: string }; Returns: {
+{ Args: { "p_model_id": string,"p_source"?: string,"p_specs": Json }; Returns: {
               "brand_id": string,
 "casting_code": string | null,
 "color_variants": NonNullable<Json>,
@@ -1504,7 +1505,7 @@ isOneToOne: false
         isSetofReturn: false
       } },
 "verify_catalog_specs":
-{ Args: { "p_model_id": string,"p_specs": Json,"p_source"?: string }; Returns: {
+{ Args: { "p_model_id": string,"p_source"?: string,"p_specs": Json }; Returns: {
               "brand_id": string,
 "casting_code": string | null,
 "color_variants": NonNullable<Json>,
