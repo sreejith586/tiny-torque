@@ -290,17 +290,8 @@ export default function GarageEditor({
             ))}
             <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
               {own.level.decor_slots} decor slot{own.level.decor_slots === 1 ? '' : 's'} at level{' '}
-              {own.level.level}. Saved with the garage.
+              {own.level.level}. Saved with the garage (the Save button above).
             </p>
-            <button
-              type="button"
-              className="btn-primary"
-              style={{ marginTop: 12 }}
-              disabled={pending || !dirty}
-              onClick={saveLayout}
-            >
-              {pending ? 'Saving…' : 'Save garage'}
-            </button>
           </>
         )}
       </div>

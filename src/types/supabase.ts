@@ -822,13 +822,13 @@ isOneToOne: false
                   ]
                 },"seasons": {
                   Row: {
-                    "announced_at": string | null,"closed_at": string | null,"created_at": string,"ends_at": string,"id": string,"name": string,"starts_at": string,"theme": string | null,"track": Json
+                    "announced_at": string | null,"closed_at": string | null,"created_at": string,"ends_at": string,"id": string,"name": string,"starts_at": string,"theme": string | null,"track": NonNullable<Json>
                   }
                   Insert: {
-                    "announced_at"?: string | null,"closed_at"?: string | null,"created_at"?: string,"ends_at": string,"id"?: string,"name": string,"starts_at": string,"theme"?: string | null,"track"?: Json
+                    "announced_at"?: string | null,"closed_at"?: string | null,"created_at"?: string,"ends_at": string,"id"?: string,"name": string,"starts_at": string,"theme"?: string | null,"track"?: NonNullable<Json>
                   }
                   Update: {
-                    "announced_at"?: string | null,"closed_at"?: string | null,"created_at"?: string,"ends_at"?: string,"id"?: string,"name"?: string,"starts_at"?: string,"theme"?: string | null,"track"?: Json
+                    "announced_at"?: string | null,"closed_at"?: string | null,"created_at"?: string,"ends_at"?: string,"id"?: string,"name"?: string,"starts_at"?: string,"theme"?: string | null,"track"?: NonNullable<Json>
                   }
                   Relationships: [
                     

@@ -55,8 +55,9 @@ test('shop lists the next level, items by kind and inventory (F-27, fixture harn
   await expect(page.getByText('Next: Level 3 · Showroom')).toBeVisible();
   await expect(page.getByText('90 tokens')).toBeVisible();
   await expect(page.getByText('Themes', { exact: true }).first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Owned' })).toHaveCount(2);
-  await expect(page.getByRole('button', { name: 'Earned only' })).toBeVisible();
+  // theme + decor + the season trophy the fixture owns (W05)
+  await expect(page.getByRole('button', { name: 'Owned' })).toHaveCount(3);
+  await expect(page.getByRole('button', { name: 'Earned only' }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: /Buy \(1\/3\)/ })).toBeVisible();
   await expect(page.getByText('Your inventory', { exact: true })).toBeVisible();
 });
@@ -143,7 +144,8 @@ test('shop sells every kind with season, Spotlight and earned-only labels (F-27,
 }) => {
   const res = await page.goto('/world/shop?__visual=1');
   test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
-  await expect(page.getByText('Spotlight (24 h)', { exact: true })).toBeVisible();
+  // listed in the catalogue and again in the inventory
+  await expect(page.getByText('Spotlight (24 h)', { exact: true })).toHaveCount(2);
   await expect(page.getByText(/24 h · labelled "Spotlight"/)).toBeVisible();
   // the Spotlight bought in the fixture is still running → the shop refuses a second one
   await expect(page.getByRole('button', { name: /^On until/ })).toBeVisible();
@@ -152,7 +154,8 @@ test('shop sells every kind with season, Spotlight and earned-only labels (F-27,
   await expect(page.getByText(/Racing arrives in a later update/)).toBeVisible();
   await expect(page.getByText('Trophies', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Earned only' })).toHaveCount(2);
-  await expect(page.getByRole('button', { name: 'Level 2+' })).toBeVisible();
+  // the fixture garage is level 2, so only the level-3 item is XP-gated
+  await expect(page.getByRole('button', { name: 'Level 3+' })).toBeVisible();
   // inventory: durable rows get Place / Apply, the active Spotlight is labelled with its expiry
   await expect(page.getByRole('link', { name: 'Place' })).toHaveCount(2);
   await expect(page.getByText(/Spotlight until/)).toBeVisible();
@@ -170,7 +173,7 @@ test('garage editor exposes decor slots and the scene lists placed decor (F-20/F
   await expect(page.getByRole('list', { name: 'Decor' }).getByRole('listitem')).toHaveText([
     'Neon sign',
   ]);
-  const save = page.getByRole('button', { name: 'Save garage' }).first();
+  const save = page.getByRole('button', { name: 'Save garage' });
   await expect(save).toBeDisabled();
   await page.getByLabel('Decor 2').selectOption({ label: 'Tool wall' });
   await expect(save).toBeEnabled();
