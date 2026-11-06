@@ -830,7 +830,9 @@ isOneToOne: false
                   Update: {
                     "created_at"?: string,"ends_at"?: string,"id"?: string,"name"?: string,"starts_at"?: string,"theme"?: string | null
                   }
-                  Relationships: []
+                  Relationships: [
+                    
+                  ]
                 },"seller_reviews": {
                   Row: {
                     "buyer_id": string | null,"comment": string | null,"created_at": string,"deleted_at": string | null,"id": string,"offer_id": string,"rating": number,"seller_id": string,"updated_at": string
@@ -1702,6 +1704,9 @@ isOneToOne: true
 "dearmor":
 { Args: { "": string }; Returns: string
                            },
+"delete_account":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "earn_tokens":
 { Args: { "p_amount": number,"p_key": string,"p_reason": Database["public"]['Enums']["token_ledger_reason"],"p_user": string }; Returns: {
               "balance_after": number,
@@ -1723,9 +1728,6 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
-"delete_account":
-{ Args: Record<PropertyKey, never>; Returns: undefined
-                           },
 "emit_event":
 { Args: { "p_actor_id": string,"p_entity": string,"p_entity_id"?: string,"p_payload"?: Json,"p_type": string }; Returns: undefined
                            },
@@ -1827,9 +1829,6 @@ isOneToOne: true
 "mv_is_backend_caller":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
-"pgp_armor_headers":
-{ Args: { "": string }; Returns: Record<string, unknown>[]
-                           },
 "mv_stable_bucket":
 { Args: { "p_input": string }; Returns: number
                            },
@@ -1838,6 +1837,9 @@ isOneToOne: true
                            },
 "mv_utc_day_start":
 { Args: { "p_day": string }; Returns: string
+                           },
+"pgp_armor_headers":
+{ Args: { "": string }; Returns: Record<string, unknown>[]
                            },
 "post_world_guestbook":
 { Args: { "p_body": string,"p_garage": string }; Returns: {
@@ -1894,6 +1896,9 @@ isOneToOne: true
                            },
 "quest_progress_value":
 { Args: { "p_end": string,"p_rule": Json,"p_start": string,"p_user": string }; Returns: number
+                           },
+"quest_set_index":
+{ Args: { "p_cadence": Database["public"]['Enums']["quest_cadence"],"p_start": string }; Returns: number
                            },
 "record_world_visit":
 { Args: { "p_garage": string }; Returns: {
