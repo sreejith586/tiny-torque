@@ -10,9 +10,11 @@ export interface BlockedUser {
   created_at: string;
 }
 
-export type ReportTargetType = 'listing' | 'user' | 'message';
+/** `garage` → target_id is the owner's user id; `guestbook` → the world_guestbook row (W03, F-28). */
+export type ReportTargetType = 'listing' | 'user' | 'message' | 'garage' | 'guestbook';
 
-export type AdminReportAction = 'dismiss' | 'remove_listing' | 'warn' | 'suspend';
+export type AdminReportAction =
+  'dismiss' | 'remove_listing' | 'warn' | 'suspend' | 'hide_guestbook';
 
 export const REPORT_REASONS = [
   'scam_or_fraud',

@@ -26,6 +26,7 @@ const repo = vi.hoisted(() => ({
   listOpenGarages: vi.fn(),
   // module-level aliases in service.ts read these at import time
   listLevels: vi.fn(),
+  listGuestbookByIds: vi.fn(),
 }));
 vi.mock('./repo', () => repo);
 vi.mock('@/domain/identity', () => ({

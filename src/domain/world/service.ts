@@ -373,6 +373,9 @@ export async function revokeInvite(supabase: Client, inviteId: string): Promise<
 
 export const listInvites = repo.listInvites;
 
+/** /admin reports queue preview of reported guestbook lines (MV-W03-08). */
+export const listGuestbookByIds = repo.listGuestbookByIds;
+
 /** Public garages for the "Open garages" page: viewer's country by default, 'all' to widen. */
 export async function listOpenGarages(
   supabase: Client,
