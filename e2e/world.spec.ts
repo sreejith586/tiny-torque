@@ -135,3 +135,75 @@ test('tokens page carries the earned-credit expiry note (F-26/D-070, fixture har
   await expect(page.getByText('12 earned')).toBeVisible();
   await expect(page.getByText(/Earned tokens expire 180 days/)).toBeVisible();
 });
+
+// ---- W05 (MV-W05-01/03): shop complete, decor slots, season page (D-092 / D-093 proposed) ----
+
+test('shop sells every kind with season, Spotlight and earned-only labels (F-27, fixture harness)', async ({
+  page,
+}) => {
+  const res = await page.goto('/world/shop?__visual=1');
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByText('Spotlight (24 h)', { exact: true })).toBeVisible();
+  await expect(page.getByText(/24 h · labelled "Spotlight"/)).toBeVisible();
+  // the Spotlight bought in the fixture is still running → the shop refuses a second one
+  await expect(page.getByRole('button', { name: /^On until/ })).toBeVisible();
+  await expect(page.getByText("Founders' Season", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText('Tunes', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Racing arrives in a later update/)).toBeVisible();
+  await expect(page.getByText('Trophies', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Earned only' })).toHaveCount(2);
+  await expect(page.getByRole('button', { name: 'Level 2+' })).toBeVisible();
+  // inventory: durable rows get Place / Apply, the active Spotlight is labelled with its expiry
+  await expect(page.getByRole('link', { name: 'Place' })).toHaveCount(2);
+  await expect(page.getByText(/Spotlight until/)).toBeVisible();
+});
+
+test('garage editor exposes decor slots and the scene lists placed decor (F-20/F-27, fixture harness)', async ({
+  page,
+}) => {
+  const res = await page.goto('/world/garage?__visual=1');
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByText('Decor slots', { exact: true })).toBeVisible();
+  // level 2 = 4 decor slots; slot 1 holds the fixture's neon sign
+  await expect(page.getByLabel('Decor 4')).toBeVisible();
+  await expect(page.getByLabel('Decor 1')).toHaveValue(/./);
+  await expect(page.getByRole('list', { name: 'Decor' }).getByRole('listitem')).toHaveText([
+    'Neon sign',
+  ]);
+  const save = page.getByRole('button', { name: 'Save garage' }).first();
+  await expect(save).toBeDisabled();
+  await page.getByLabel('Decor 2').selectOption({ label: 'Tool wall' });
+  await expect(save).toBeEnabled();
+  await expect(page.getByRole('list', { name: 'Decor' }).getByRole('listitem')).toHaveCount(2);
+});
+
+test('season page shows the free track with paid / reached / to-go milestones (F-26, fixture harness)', async ({
+  page,
+}) => {
+  const res = await page.goto('/world/season?__visual=1');
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByRole('heading', { name: 'Season', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: "Founders' Season" })).toBeVisible();
+  await expect(page.getByText('120 season points')).toBeVisible();
+  await expect(page.getByRole('progressbar', { name: 'Season track' })).toHaveAttribute(
+    'aria-valuenow',
+    '70'
+  );
+  await expect(page.getByText('Paid', { exact: true })).toHaveCount(1);
+  await expect(page.getByText('30 to go')).toBeVisible();
+  await expect(page.getByText(/Season finisher/).first()).toBeVisible();
+});
+
+test('quests panel links to the season page; season 404s while dark (F-26, D-028)', async ({
+  page,
+}) => {
+  const dark = await page.goto('/world/season');
+  await expect(page).toHaveURL(/\/login\?next=%2Fworld%2Fseason/);
+  expect(dark?.status()).not.toBe(500);
+  const res = await page.goto('/world?__visual=1');
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByRole('link', { name: /Founders' Season · ends/ })).toHaveAttribute(
+    'href',
+    '/world/season'
+  );
+});

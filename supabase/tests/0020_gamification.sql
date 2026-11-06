@@ -26,7 +26,7 @@ grant usage on schema tests to anon, authenticated;
 grant execute on all functions in schema tests to anon, authenticated;
 
 -- ---------- reference seed ----------
-select is((select count(*)::int from public.achievements), 5, 'the five badges are seeded (03 §2.18)');
+select is((select count(*)::int from public.achievements where key not like 'world\_%'), 5, 'the five badges are seeded (03 §2.18; World badges from 0014c excluded)');
 
 -- ---------- item.created / item.photo_added triggers (rule 9) ----------
 select tests.authenticate_as('83000000-0000-0000-0000-00000000000a');

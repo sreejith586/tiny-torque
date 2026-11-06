@@ -7,7 +7,7 @@
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import type { GarageItem } from '@/domain/garage';
-import type { GuestbookEntry, VisitorGarage } from '@/domain/world';
+import type { GuestbookEntry, VisitorGarage, WorldItemRow } from '@/domain/world';
 import FollowButton from '@/components/FollowButton';
 import ReportPrompt from '@/components/ReportPrompt';
 import BlockUserButton from '@/components/BlockUserButton';
@@ -20,6 +20,7 @@ const BODY_MAX = 140;
 export default function VisitorGarageView({
   garage,
   items,
+  decorItems = [],
   listingByItem,
   guestbook: initialGuestbook,
   viewerId,
@@ -29,6 +30,8 @@ export default function VisitorGarageView({
 }: {
   garage: VisitorGarage;
   items: GarageItem[];
+  /** Public catalogue rows for the placed decor (W05) — names only. */
+  decorItems?: WorldItemRow[];
   /** collection item id → active listing id (marketplace bridge). */
   listingByItem: Record<string, string>;
   guestbook: GuestbookEntry[];
@@ -116,6 +119,7 @@ export default function VisitorGarageView({
         items={items}
         featuredItemId={garage.garage.featured_item_id}
         themeSku={null}
+        decorItems={decorItems}
         subtitle={
           <>
             <Link href={`/u/${garage.owner.handle}`}>@{garage.owner.handle}</Link> ·{' '}

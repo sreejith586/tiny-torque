@@ -1,54 +1,124 @@
 'use client';
 
-// World shop v1 + inventory (MV-W02-05, D-083 proposed). Prices come from data rows; the XP gate
-// and caps are enforced in the RPCs — this view only explains them. A short balance shows the
-// existing <Paywall> (→ /tokens); receipts already appear in /tokens/history (S7).
+// World shop + inventory (MV-W02-05 → D-083; completed in MV-W05-01, D-092 proposed). Prices,
+// gates and caps are enforced in buy_world_item / buy_world_level (07 P4) — this view only explains
+// them: every kind (themes / decor / signage / extras / tunes / trophies), level-locked and
+// season-limited labels, earned-only rows that are visible but never buyable, Spotlight as a
+// labelled 24 h consumable with its expiry, a receipt line after each purchase. Prototype pieces
+// only (D-027 rule 12 / D-086): panel, section-title, btn-*, status-pill, muted, Paywall.
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import Paywall from '@/components/Paywall';
 import { LEVELS } from '@/domain/gamification/rules';
-import type { OwnGarage, WorldItemKind, WorldItemRow, WorldShop as Shop } from '@/domain/world';
+import type {
+  OwnGarage,
+  WorldInventoryRow,
+  WorldItemKind,
+  WorldItemRow,
+  WorldShop as Shop,
+} from '@/domain/world';
+import type { SeasonRow } from '@/domain/quests';
 import { buyItemAction, buyLevelAction } from '@/app/world/actions';
 import { ITEM_KIND_LABEL } from './copy';
 import styles from './World.module.css';
 
 const KIND_ORDER: WorldItemKind[] = ['theme', 'decor', 'signage', 'consumable', 'tune', 'trophy'];
 
+const KIND_NOTE: Partial<Record<WorldItemKind, string>> = {
+  tune: 'Tunes apply to races. Racing arrives in a later update — buying now is fine, nothing is lost.',
+  trophy: 'Trophies are earned, never bought: finish a season track or win an event.',
+  consumable:
+    'Extras are used up: Spotlight puts your garage at the top of Open garages for 24 hours, labelled.',
+};
+
+type Effect = { grants?: string; hours?: number | string } | null;
+
+function effectOf(item: WorldItemRow): Effect {
+  return item.effect as Effect;
+}
+
 function tierName(xpLevel: number): string {
   return LEVELS.find((l) => l.level === xpLevel)?.tier ?? `tier ${xpLevel}`;
+}
+
+function shortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+}
+
+function shortTime(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 export default function WorldShop({
   own,
   shop,
+  seasons,
   balance: initialBalance,
   xpLevel,
 }: {
   own: OwnGarage;
   shop: Shop;
+  /** Every season row (public read) — for the season-limited labels. */
+  seasons: SeasonRow[];
   balance: number;
   xpLevel: number;
 }) {
   const [balance, setBalance] = useState(initialBalance);
   const [level, setLevel] = useState(own.garage.level);
   const [extraSlots, setExtraSlots] = useState(own.garage.extra_slots);
-  const [owned, setOwned] = useState(() => new Set(own.inventory.map((i) => i.item_id)));
+  const [inventory, setInventory] = useState<WorldInventoryRow[]>(own.inventory);
   const [error, setError] = useState<string | null>(null);
+  const [receipt, setReceipt] = useState<string | null>(null);
   const [short, setShort] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
+  // the clock the labels compare against: fixed per mount (purity), refreshed by a purchase
+  const [now] = useState(() => Date.now());
   const current = shop.levels.find((l) => l.level === level) ?? own.level;
   const next = shop.levels.find((l) => l.level === level + 1) ?? null;
   const gated = !!next && xpLevel < next.min_xp_level;
-  const items = shop.items.filter(
-    (i) => (i.effect as { grants?: string } | null)?.grants !== 'rename'
+  const items = shop.items.filter((i) => effectOf(i)?.grants !== 'rename');
+  const itemById = new Map(shop.items.map((i) => [i.id, i]));
+  const seasonById = new Map(seasons.map((s) => [s.id, s]));
+
+  const ownedDurable = new Set(inventory.filter((r) => r.durable).map((r) => r.item_id));
+  const activeConsumables = inventory.filter(
+    (r) => !r.durable && r.expires_at && new Date(r.expires_at).getTime() > now
   );
-  const inventoryItems = shop.items.filter((i) => owned.has(i.id));
+  const spotlightUntil =
+    activeConsumables
+      .filter(
+        (r) => effectOf(itemById.get(r.item_id) ?? ({} as WorldItemRow))?.grants === 'spotlight'
+      )
+      .map((r) => r.expires_at!)
+      .sort()
+      .at(-1) ?? null;
+
+  function seasonState(item: WorldItemRow): { label: string; open: boolean } | null {
+    if (!item.season_id) return null;
+    const s = seasonById.get(item.season_id);
+    if (!s) return { label: 'Season-limited', open: false };
+    const running = now >= new Date(s.starts_at).getTime() && now < new Date(s.ends_at).getTime();
+    if (running) return { label: `${s.name} only · until ${shortDate(s.ends_at)}`, open: true };
+    return {
+      label:
+        now < new Date(s.starts_at).getTime()
+          ? `${s.name} · from ${shortDate(s.starts_at)}`
+          : `${s.name} · over`,
+      open: false,
+    };
+  }
 
   function run(key: string, fn: () => Promise<void>) {
     setError(null);
     setShort(false);
+    setReceipt(null);
     setBusy(key);
     startTransition(async () => {
       try {
@@ -71,6 +141,7 @@ export default function WorldShop({
       }
       setLevel(r.data.level);
       setBalance((b) => b - price);
+      setReceipt(`Level ${r.data.level} · ${next.name} for ${price} tokens.`);
     });
   }
 
@@ -82,28 +153,54 @@ export default function WorldShop({
         else setError(r.error);
         return;
       }
-      setBalance((b) => b - (item.price ?? 0));
-      if ((item.effect as { grants?: string } | null)?.grants === 'display_slot') {
-        setExtraSlots((n) => n + 1);
-      } else if (item.kind !== 'consumable') {
-        setOwned((s) => new Set(s).add(item.id));
-      }
+      const price = item.price ?? 0;
+      setBalance((b) => b - price);
+      const grants = effectOf(item)?.grants;
+      if (grants === 'display_slot') setExtraSlots((n) => n + 1);
+      const row: WorldInventoryRow = {
+        id: r.data.inventoryId,
+        user_id: own.garage.user_id,
+        item_id: item.id,
+        acquired_via: 'purchase',
+        ledger_id: null,
+        durable: item.kind !== 'consumable',
+        expires_at: r.data.expiresAt,
+        created_at: new Date().toISOString(),
+      };
+      setInventory((list) => [row, ...list]);
+      setReceipt(
+        `${item.name} for ${price === 0 ? 'free' : `${price} tokens`}${
+          r.data.expiresAt ? ` · Spotlight until ${shortTime(r.data.expiresAt)}` : ''
+        }.`
+      );
     });
   }
 
   function itemState(item: WorldItemRow): { label: string; disabled: boolean; owned: boolean } {
     if (item.price === null) return { label: 'Earned only', disabled: true, owned: false };
-    if (item.kind !== 'consumable' && owned.has(item.id))
+    if (item.kind !== 'consumable' && ownedDurable.has(item.id))
       return { label: 'Owned', disabled: true, owned: true };
     if (level < item.min_level)
       return { label: `Level ${item.min_level}+`, disabled: true, owned: false };
-    if ((item.effect as { grants?: string } | null)?.grants === 'display_slot') {
+    const season = seasonState(item);
+    if (season && !season.open) return { label: 'Not on sale', disabled: true, owned: false };
+    const grants = effectOf(item)?.grants;
+    if (grants === 'display_slot') {
       const cap = current.max_extra_slots;
       if (extraSlots >= cap) return { label: `${cap}/${cap} bought`, disabled: true, owned: false };
       return { label: `Buy (${extraSlots}/${cap})`, disabled: false, owned: false };
     }
+    if (grants === 'spotlight' && spotlightUntil)
+      return { label: `On until ${shortTime(spotlightUntil)}`, disabled: true, owned: false };
     return { label: item.price === 0 ? 'Claim' : 'Buy', disabled: false, owned: false };
   }
+
+  const inventoryRows = [...inventory.filter((r) => r.durable), ...activeConsumables].flatMap(
+    (r) => {
+      const item = itemById.get(r.item_id);
+      return item ? [{ row: r, item }] : [];
+    }
+  );
 
   return (
     <div>
@@ -127,6 +224,11 @@ export default function WorldShop({
       {error && (
         <p className="field-error" style={{ marginBottom: 10 }}>
           {error}
+        </p>
+      )}
+      {receipt && !error && (
+        <p className="muted" style={{ fontSize: 13, marginBottom: 10 }} role="status">
+          Bought: {receipt} Receipt in <Link href="/tokens/history">token history</Link>.
         </p>
       )}
 
@@ -161,7 +263,7 @@ export default function WorldShop({
               {gated && (
                 <div className={styles.shopMeta}>
                   Needs collector tier {next.min_xp_level} ({tierName(next.min_xp_level)}) — you are{' '}
-                  {tierName(xpLevel)}. Earn XP in your garage first.
+                  {tierName(xpLevel)}. Earn XP in your garage first; tokens alone cannot skip it.
                 </div>
               )}
             </div>
@@ -192,8 +294,15 @@ export default function WorldShop({
           <div key={kind}>
             <div className="section-title">{ITEM_KIND_LABEL[kind]}</div>
             <div className="panel">
+              {KIND_NOTE[kind] && (
+                <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>
+                  {KIND_NOTE[kind]}
+                </p>
+              )}
               {group.map((item) => {
                 const st = itemState(item);
+                const season = seasonState(item);
+                const grants = effectOf(item)?.grants;
                 return (
                   <div className={styles.shopRow} key={item.id}>
                     <div>
@@ -201,9 +310,18 @@ export default function WorldShop({
                       {item.description && (
                         <div className={styles.shopMeta}>{item.description}</div>
                       )}
-                      {item.min_level > 1 && (
-                        <div className={styles.shopMeta}>Level {item.min_level}+</div>
-                      )}
+                      <div className={styles.shopMeta}>
+                        {[
+                          item.min_level > 1 ? `Level ${item.min_level}+` : null,
+                          season?.label ?? null,
+                          grants === 'spotlight'
+                            ? `${effectOf(item)?.hours ?? 24} h · labelled "Spotlight"`
+                            : null,
+                          item.price === null ? 'Earned only' : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div className={styles.price}>
@@ -232,17 +350,21 @@ export default function WorldShop({
       })}
 
       <div className="section-title">Your inventory</div>
-      {inventoryItems.length === 0 ? (
+      {inventoryRows.length === 0 ? (
         <div className="empty-state">
-          <p>Nothing bought yet. Themes and decor you own show up here.</p>
+          <p>Nothing bought yet. Themes, decor and extras you own show up here.</p>
         </div>
       ) : (
         <div className="panel">
-          {inventoryItems.map((item) => (
-            <div className={styles.shopRow} key={item.id}>
+          {inventoryRows.map(({ row, item }) => (
+            <div className={styles.shopRow} key={row.id}>
               <div>
                 <div className={styles.shopName}>{item.name}</div>
-                <div className={styles.shopMeta}>{ITEM_KIND_LABEL[item.kind]}</div>
+                <div className={styles.shopMeta}>
+                  {ITEM_KIND_LABEL[item.kind]}
+                  {row.acquired_via === 'earn' ? ' · earned' : ''}
+                  {row.expires_at ? ` · Spotlight until ${shortTime(row.expires_at)}` : ''}
+                </div>
               </div>
               {item.kind === 'theme' && (
                 <Link
@@ -253,13 +375,23 @@ export default function WorldShop({
                   Apply
                 </Link>
               )}
+              {(item.kind === 'decor' || item.kind === 'signage' || item.kind === 'trophy') && (
+                <Link
+                  href="/world/garage"
+                  className="btn-secondary"
+                  style={{ padding: '8px 14px' }}
+                >
+                  Place
+                </Link>
+              )}
+              {row.expires_at && <span className="status-pill status-completed">Spotlight</span>}
             </div>
           ))}
         </div>
       )}
       <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
         Every purchase is a token spend — receipts are in{' '}
-        <Link href="/tokens/history">token history</Link>.
+        <Link href="/tokens/history">token history</Link>. Earned tokens are spent first.
       </p>
     </div>
   );

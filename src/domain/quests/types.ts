@@ -1,6 +1,7 @@
 // Quests, seasons & earning (F-26, MV-W04-02) — row/enum aliases derived from the GENERATED
 // src/types/supabase.ts (D-006) plus the shapes the /world quests panel renders.
 import type { Database, Enums, Tables } from '@/lib/supabase/types';
+import type { MilestoneStatus } from './season';
 
 export type QuestRow = Tables<'quests'>;
 export type QuestProgressRow = Tables<'quest_progress'>;
@@ -44,6 +45,21 @@ export interface SeasonSummary {
   endsAt: string;
   /** The caller's running total (Σ reward_xp of quests completed inside the season). */
   points: number;
+}
+
+/** The /world/season page: the running season, the caller's points and every track milestone
+ *  with its reached / paid state (MV-W05-03). */
+export interface SeasonTrackView {
+  season: SeasonSummary;
+  milestones: MilestoneStatus[];
+  /** Null once the track is finished. */
+  next: MilestoneStatus | null;
+  /** 0–100 towards the next milestone (100 when finished). */
+  percent: number;
+  /** Whole UTC days left. */
+  daysLeft: number;
+  /** Trophy / earned-only item the last milestone grants, by sku (null when none). */
+  finisherItemSku: string | null;
 }
 
 /** Everything the /world "Today's quests" panel needs, for the caller. */

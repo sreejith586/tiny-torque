@@ -8,9 +8,11 @@ import { isFlagEnabled } from '@/domain/flags';
 import { getOwnGarage, listShop, type OwnGarage, type WorldShop } from '@/domain/world';
 import { listPublicCollectionItems, type GarageItem } from '@/domain/garage';
 import { getProfile } from '@/domain/identity';
+import { listSeasons, type SeasonRow } from '@/domain/quests';
 import {
   FIXTURE_ITEMS,
   FIXTURE_PROFILE,
+  FIXTURE_SEASONS,
   FIXTURE_WORLD_ITEMS,
   FIXTURE_WORLD_LEVELS,
   FIXTURE_WORLD_OWN,
@@ -24,6 +26,8 @@ export interface WorldPageData {
   /** The owner's public, non-deleted cars — the only ones a slot may hold. */
   items: GarageItem[];
   shop: WorldShop;
+  /** Every season row (public read) — season-limited shop labels (W05). */
+  seasons: SeasonRow[];
   balance: number;
   /** F-13 XP tier (profiles.level, 1-based) — the level-up gate compares against it. */
   xpLevel: number;
@@ -38,6 +42,7 @@ export async function loadWorldPage(
       own: FIXTURE_WORLD_OWN,
       items: FIXTURE_ITEMS.filter((i) => i.is_public),
       shop: { levels: FIXTURE_WORLD_LEVELS, items: FIXTURE_WORLD_ITEMS },
+      seasons: FIXTURE_SEASONS,
       balance: FIXTURE_PROFILE.tokens,
       xpLevel: FIXTURE_PROFILE.level,
     };
@@ -57,11 +62,19 @@ export async function loadWorldPage(
 }
 
 async function load(supabase: Client, userId: string): Promise<WorldPageData> {
-  const [own, items, shop, profile] = await Promise.all([
+  const [own, items, shop, profile, seasons] = await Promise.all([
     getOwnGarage(supabase),
     listPublicCollectionItems(supabase, userId),
     listShop(supabase),
     getProfile(supabase, userId),
+    listSeasons(supabase).catch((): SeasonRow[] => []),
   ]);
-  return { own, items, shop, balance: profile?.tokens ?? 0, xpLevel: profile?.level ?? 0 };
+  return {
+    own,
+    items,
+    shop,
+    seasons,
+    balance: profile?.tokens ?? 0,
+    xpLevel: profile?.level ?? 0,
+  };
 }
