@@ -557,6 +557,8 @@ export const FIXTURE_WORLD_GARAGE: WorldGarageRow = {
   score: 120,
   extra_slots: 1,
   rename_count: 1,
+  visit_count: 37,
+  kudos_count: 12,
   created_at: '2026-10-20T00:00:00.000Z',
   updated_at: '2026-10-22T08:00:00.000Z',
 };

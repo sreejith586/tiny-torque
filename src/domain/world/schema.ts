@@ -104,3 +104,36 @@ function checkSlots(entries: GarageLayout['slots'], capacity: number) {
     seenItems.add(e.itemId);
   }
 }
+
+// ---- W03 social boundaries (MV-W03-02) ----
+export const guestbookBodySchema = z
+  .string()
+  .trim()
+  .min(1, 'Write something')
+  .max(140, 'Keep it to 140 characters');
+export const postGuestbookSchema = z.object({
+  garageUserId: z.string().uuid(),
+  body: guestbookBodySchema,
+});
+export type PostGuestbookInput = z.infer<typeof postGuestbookSchema>;
+
+export const createInviteSchema = z.object({
+  /** Direct invite by handle; omit for a share link. */
+  inviteeHandle: handleParamSchema.optional(),
+  hours: z.number().int().min(1).max(720).default(168),
+  /** Share links only; a direct invite is always single-use. */
+  maxUses: z.number().int().min(1).max(50).default(1),
+});
+export type CreateInviteInput = z.infer<typeof createInviteSchema>;
+
+export const inviteTokenSchema = z
+  .string()
+  .trim()
+  .regex(/^[a-f0-9]{64}$/, 'Not an invite token');
+
+export const openGaragesQuerySchema = z.object({
+  /** ISO country or 'all'; the page defaults to the viewer's own country (07 §2.2). */
+  country: z.union([z.literal('all'), z.string().trim().toUpperCase().length(2)]).optional(),
+  limit: z.number().int().min(1).max(50).default(20),
+});
+export type OpenGaragesQuery = z.infer<typeof openGaragesQuerySchema>;

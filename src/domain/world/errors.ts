@@ -21,7 +21,18 @@ export type WorldErrorCode =
   | 'duplicate_slot'
   | 'duplicate_item'
   | 'item_not_public'
-  | 'item_not_owned';
+  | 'item_not_owned'
+  | 'language_not_allowed'
+  | 'own_garage'
+  | 'invalid_body'
+  | 'guestbook_rate_limit'
+  | 'visit_rate_limit'
+  | 'entry_not_found'
+  | 'invalid_invite'
+  | 'invitee_not_found'
+  | 'invite_limit'
+  | 'invite_invalid'
+  | 'invite_not_found';
 
 export class WorldError extends Error {
   readonly code: WorldErrorCode;
@@ -44,6 +55,17 @@ const RPC_CODES: WorldErrorCode[] = [
   'slot_cap_reached',
   'invalid_name',
   'theme_not_owned',
+  'garage_not_found',
+  'own_garage',
+  'invalid_body',
+  'guestbook_rate_limit',
+  'visit_rate_limit',
+  'entry_not_found',
+  'invalid_invite',
+  'invitee_not_found',
+  'invite_limit',
+  'invite_invalid',
+  'invite_not_found',
 ];
 
 /** Maps a PostgREST/Postgres error whose message is one of the RPCs' `raise exception` codes to a

@@ -24,6 +24,17 @@ export const WORLD_ERROR_COPY: Record<WorldErrorCode, string> = {
   duplicate_item: 'The same car is in two slots.',
   item_not_public: 'Only public cars can be displayed. Make it public in your garage first.',
   item_not_owned: 'You do not own that decor item.',
+  language_not_allowed: 'Please keep it friendly — that wording is not allowed here.',
+  own_garage: 'That is your own garage.',
+  invalid_body: 'Write something between 1 and 140 characters.',
+  guestbook_rate_limit: 'You are posting a little fast. Try again in a bit.',
+  visit_rate_limit: 'Slow down — too many garages in one hour.',
+  entry_not_found: 'That guestbook line is gone.',
+  invalid_invite: 'That invite could not be created.',
+  invitee_not_found: 'No collector with that handle.',
+  invite_limit: 'You have reached the limit of open invites. Revoke one first.',
+  invite_invalid: 'That invite link is not valid any more.',
+  invite_not_found: 'That invite is gone.',
 };
 
 export const OPEN_MODE_LABEL = {
