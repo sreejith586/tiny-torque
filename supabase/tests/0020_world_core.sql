@@ -88,7 +88,7 @@ select is(
 -- ---------- anon ----------
 select tests.authenticate_anon();
 select is((select count(*)::int from public.world_levels), 5, 'anon reads the level table');
-select is((select count(*)::int from public.world_items), 1, 'anon sees only active items');
+select is((select count(*)::int from public.world_items where sku like 't\_%'), 1, 'anon sees only active items (fixture rows; 0013a seeds mechanic rows too)');
 select is((select count(*)::int from public.world_garages), 2, 'anon sees exactly the public garages (A, E)');
 select is(tests.visible_inventory_rows(), 0, 'anon sees no inventory');
 
@@ -109,16 +109,17 @@ select throws_ok(
   '42501', null, 'authenticated cannot insert inventory directly (RPC/consumer only)'
 );
 select lives_ok(
-  $$update public.world_garages set name = 'A renamed', open_mode = 'followers' where user_id = '70000000-0000-0000-0000-00000000000a'$$,
-  'owner can edit name/open_mode'
+  $$update public.world_garages set open_mode = 'followers' where user_id = '70000000-0000-0000-0000-00000000000a'$$,
+  'owner can edit open_mode'
 );
+-- name joined the RPC-only columns in 0013a_world_slots (renames are priced after the first one)
 select throws_ok(
   $$update public.world_garages set level = 5 where user_id = '70000000-0000-0000-0000-00000000000a'$$,
-  '42501', 'level_or_score_rpc_only', 'owner cannot bump their own level directly (guard trigger)'
+  '42501', 'rpc_only_column', 'owner cannot bump their own level directly (guard trigger)'
 );
 select throws_ok(
   $$update public.world_garages set score = 999 where user_id = '70000000-0000-0000-0000-00000000000a'$$,
-  '42501', 'level_or_score_rpc_only', 'owner cannot set their own score directly (guard trigger)'
+  '42501', 'rpc_only_column', 'owner cannot set their own score directly (guard trigger)'
 );
 -- an update aimed at someone else's row silently affects 0 rows under RLS
 update public.world_garages set name = 'hacked' where user_id = '70000000-0000-0000-0000-00000000000b';
@@ -128,8 +129,8 @@ select is(
   'B garage', 'a user cannot rename another user''s garage'
 );
 select is(
-  (select name from public.world_garages where user_id = '70000000-0000-0000-0000-00000000000a'),
-  'A renamed', 'the owner''s own rename did land'
+  (select open_mode::text from public.world_garages where user_id = '70000000-0000-0000-0000-00000000000a'),
+  'followers', 'the owner''s own open_mode change did land'
 );
 -- restore A to public for the stranger checks below
 update public.world_garages set open_mode = 'public' where user_id = '70000000-0000-0000-0000-00000000000a';
@@ -138,7 +139,7 @@ update public.world_garages set open_mode = 'public' where user_id = '70000000-0
 select tests.authenticate_as('70000000-0000-0000-0000-00000000000c');
 select is(
   (select string_agg(name, ',' order by name) from public.world_garages),
-  'A renamed,C garage,E garage', 'a stranger sees public garages + their own, not a followers-only one'
+  'A garage,C garage,E garage', 'a stranger sees public garages + their own, not a followers-only one'
 );
 select is((select count(*)::int from public.world_inventory), 0, 'a stranger cannot read another user''s inventory');
 
@@ -154,7 +155,7 @@ select is(
 select tests.clear_authentication();
 select tests.authenticate_as('70000000-0000-0000-0000-00000000000d');
 select is((select count(*)::int from public.world_garages), 4, 'admin sees every garage');
-select is((select count(*)::int from public.world_items), 2, 'admin sees inactive items too');
+select is((select count(*)::int from public.world_items where sku like 't\_%'), 2, 'admin sees inactive items too');
 select is((select count(*)::int from public.world_inventory), 1, 'admin reads inventory');
 
 -- ---------- token_ledger.source is derived from the reason ----------

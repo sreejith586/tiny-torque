@@ -78,6 +78,13 @@ export async function buyLevel(supabase: Client): Promise<WorldGarageRow> {
   return data as unknown as WorldGarageRow;
 }
 
+/** First rename is free, later ones cost the `garage_rename` item's price (world_slots). */
+export async function renameGarage(supabase: Client, name: string): Promise<WorldGarageRow> {
+  const { data, error } = await supabase.rpc('rename_world_garage', { p_name: name });
+  if (error) throw error;
+  return data as unknown as WorldGarageRow;
+}
+
 export async function buyItem(
   supabase: Client,
   itemId: string,

@@ -7,6 +7,7 @@ import {
   WorldError,
   buyItem,
   buyLevel,
+  renameGarage,
   getGarageForVisitor,
   getOwnGarage,
   isGarageVisibleTo,
@@ -28,6 +29,7 @@ const repo = vi.hoisted(() => ({
   ensureGarage: vi.fn(),
   buyLevel: vi.fn(),
   buyItem: vi.fn(),
+  renameGarage: vi.fn(),
 }));
 vi.mock('./repo', () => repo);
 vi.mock('@/domain/events', () => ({ emitEvent: vi.fn() }));
@@ -51,6 +53,7 @@ const LEVELS: WorldLevelRow[] = [
     host_cap: 0,
     price: 0,
     min_xp_level: 0,
+    max_extra_slots: 2,
   },
   {
     level: 2,
@@ -61,6 +64,7 @@ const LEVELS: WorldLevelRow[] = [
     host_cap: 10,
     price: 40,
     min_xp_level: 1,
+    max_extra_slots: 3,
   },
 ];
 
@@ -74,6 +78,8 @@ function garage(over: Partial<WorldGarageRow> = {}): WorldGarageRow {
     theme_item_id: null,
     layout: { version: 1, slots: [], decor: [] },
     score: 0,
+    extra_slots: 0,
+    rename_count: 0,
     created_at: '2026-10-20T00:00:00.000Z',
     updated_at: '2026-10-20T00:00:00.000Z',
     ...over,
@@ -226,6 +232,11 @@ describe('world.getOwnGarage', () => {
     expect(repo.ensureGarage).toHaveBeenCalledWith(supabase);
     expect(own.level.level).toBe(1);
     expect(own.nextLevel?.level).toBe(2);
+    expect(own.displayCapacity).toBe(4);
+  });
+  it('bought extra slots raise the display capacity (world_slots)', async () => {
+    repo.ensureGarage.mockResolvedValue(garage({ extra_slots: 2 }));
+    expect((await getOwnGarage(supabase)).displayCapacity).toBe(6);
   });
   it('nextLevel is null at the top level', async () => {
     repo.ensureGarage.mockResolvedValue(garage({ level: 2 }));
@@ -267,24 +278,45 @@ describe('world.saveLayout', () => {
 describe('world.updateGarageSettings', () => {
   it('maps the input, ignores nothing silently (strict schema), and emits world.garage_updated', async () => {
     repo.ensureGarage.mockResolvedValue(garage());
-    repo.updateGarage.mockResolvedValue(garage({ name: 'Showcase', open_mode: 'followers' }));
-    await updateGarageSettings(supabase, OWNER, { name: ' Showcase ', openMode: 'followers' });
+    repo.updateGarage.mockResolvedValue(garage({ open_mode: 'followers', theme_item_id: LAMP }));
+    await updateGarageSettings(supabase, OWNER, { openMode: 'followers', themeItemId: LAMP });
     expect(repo.updateGarage).toHaveBeenCalledWith(supabase, OWNER, {
-      name: 'Showcase',
       open_mode: 'followers',
+      theme_item_id: LAMP,
     });
     expect(emitEvent).toHaveBeenCalledWith(
       supabase,
       expect.objectContaining({
         type: 'world.garage_updated',
-        payload: { fields: ['name', 'open_mode'] },
+        payload: { fields: ['open_mode', 'theme_item_id'] },
       })
     );
   });
 
-  it('refuses a level change from the client (server authority, 07 P4)', async () => {
+  it('refuses a level change or a direct rename from the client (server authority, 07 P4)', async () => {
     await expect(updateGarageSettings(supabase, OWNER, { level: 5 })).rejects.toThrow();
+    await expect(updateGarageSettings(supabase, OWNER, { name: 'x' })).rejects.toThrow();
     expect(repo.updateGarage).not.toHaveBeenCalled();
+  });
+
+  it('maps the theme ownership guard to WorldError', async () => {
+    repo.ensureGarage.mockResolvedValue(garage());
+    repo.updateGarage.mockRejectedValue({ message: 'theme_not_owned' });
+    await expect(updateGarageSettings(supabase, OWNER, { themeItemId: LAMP })).rejects.toThrow(
+      new WorldError('theme_not_owned')
+    );
+    expect(emitEvent).not.toHaveBeenCalled();
+  });
+
+  it('renameGarage validates and goes through the priced RPC', async () => {
+    await expect(renameGarage(supabase, { name: '   ' })).rejects.toThrow();
+    repo.renameGarage.mockResolvedValue(garage({ name: 'Showcase', rename_count: 1 }));
+    expect((await renameGarage(supabase, { name: ' Showcase ' })).rename_count).toBe(1);
+    expect(repo.renameGarage).toHaveBeenCalledWith(supabase, 'Showcase');
+    repo.renameGarage.mockRejectedValue({ message: 'insufficient_balance' });
+    await expect(renameGarage(supabase, { name: 'Again' })).rejects.toThrow(
+      new WorldError('insufficient_balance')
+    );
   });
 });
 

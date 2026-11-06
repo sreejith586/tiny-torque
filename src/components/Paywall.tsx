@@ -2,7 +2,7 @@
 // to the token store (S7) instead of a disabled "coming soon" button.
 import Link from 'next/link';
 
-type PaywallContext = 'scan' | 'photos' | 'listings';
+type PaywallContext = 'scan' | 'photos' | 'listings' | 'world';
 
 const COPY: Record<PaywallContext, { title: string; body: string; cta: string }> = {
   scan: {
@@ -19,6 +19,11 @@ const COPY: Record<PaywallContext, { title: string; body: string; cta: string }>
     title: 'Listing limit reached',
     body: 'Free members can keep 2 active listings. Buy an extra slot or upgrade to Pro for unlimited listings.',
     cta: 'Get more listing slots',
+  },
+  world: {
+    title: 'Not enough credits',
+    body: 'Garage upgrades and items are paid with the same tokens as everything else. Top up and come back.',
+    cta: 'Get tokens',
   },
 };
 

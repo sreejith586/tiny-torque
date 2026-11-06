@@ -41,14 +41,20 @@ export const handleParamSchema = z
   .toLowerCase()
   .regex(/^[a-z0-9_]{3,24}$/);
 
+/** Owner settings. `name` is deliberately absent: renames are priced after the first one, so they
+ *  go through rename_world_garage (renameGarageSchema), never a direct column write. */
 export const updateGarageSchema = z
   .object({
-    name: garageNameSchema.optional(),
     openMode: openModeSchema.optional(),
     featuredItemId: z.string().uuid().nullable().optional(),
+    /** Must be a `theme` the owner holds in world_inventory — the DB guard enforces it. */
+    themeItemId: z.string().uuid().nullable().optional(),
   })
   .strict();
 export type UpdateGarageInput = z.infer<typeof updateGarageSchema>;
+
+export const renameGarageSchema = z.object({ name: garageNameSchema });
+export type RenameGarageInput = z.infer<typeof renameGarageSchema>;
 
 export const buyItemSchema = z.object({
   itemId: z.string().uuid(),
