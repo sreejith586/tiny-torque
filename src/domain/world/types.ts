@@ -23,6 +23,8 @@ export interface OwnGarage {
   level: WorldLevelRow;
   /** null at the top level (Vault). */
   nextLevel: WorldLevelRow | null;
+  /** level.display_slots + garage.extra_slots — what the layout may fill (world_slots). */
+  displayCapacity: number;
   inventory: WorldInventoryRow[];
   layout: GarageLayout;
 }
