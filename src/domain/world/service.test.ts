@@ -30,10 +30,16 @@ const repo = vi.hoisted(() => ({
   buyLevel: vi.fn(),
   buyItem: vi.fn(),
   renameGarage: vi.fn(),
+  // module-level aliases in service.ts read these at import time
+  listInvites: vi.fn(),
+  listGuestbookByIds: vi.fn(),
 }));
 vi.mock('./repo', () => repo);
 vi.mock('@/domain/events', () => ({ emitEvent: vi.fn() }));
-vi.mock('@/domain/identity', () => ({ getPublicProfile: vi.fn() }));
+vi.mock('@/domain/identity', () => ({
+  getPublicProfile: vi.fn(),
+  listPublicProfilesByIds: vi.fn(),
+}));
 vi.mock('@/domain/garage', () => ({ listPublicCollectionItems: vi.fn() }));
 
 const supabase = {} as Client;
@@ -80,6 +86,8 @@ function garage(over: Partial<WorldGarageRow> = {}): WorldGarageRow {
     score: 0,
     extra_slots: 0,
     rename_count: 0,
+    visit_count: 0,
+    kudos_count: 0,
     created_at: '2026-10-20T00:00:00.000Z',
     updated_at: '2026-10-20T00:00:00.000Z',
     ...over,

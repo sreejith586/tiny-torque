@@ -6,6 +6,12 @@ export type WorldGarageRow = Tables<'world_garages'>;
 export type WorldLevelRow = Tables<'world_levels'>;
 export type WorldItemRow = Tables<'world_items'>;
 export type WorldInventoryRow = Tables<'world_inventory'>;
+export type WorldVisitRow = Tables<'world_visits'>;
+export type WorldKudosRow = Tables<'world_kudos'>;
+export type WorldGuestbookRow = Tables<'world_guestbook'>;
+export type WorldInviteRow = Tables<'world_invites'>;
+/** The `world_open_garages` view (public garages + public profile, blocks applied per caller). */
+export type WorldOpenGarageRow = Tables<'world_open_garages'>;
 
 export type WorldOpenMode = Enums<'world_open_mode'>;
 export type WorldItemKind = Enums<'world_item_kind'>;
@@ -41,11 +47,29 @@ export interface VisitorGarage {
     | 'featured_item_id'
     | 'theme_item_id'
     | 'score'
+    | 'visit_count'
+    | 'kudos_count'
     | 'created_at'
   >;
   level: WorldLevelRow;
   layout: GarageLayout;
   owner: { id: string; handle: string; displayName: string };
+}
+
+/** A guestbook line with its author's public identity (never PII). */
+export interface GuestbookEntry {
+  id: string;
+  body: string;
+  createdAt: string;
+  hidden: boolean;
+  author: { id: string; handle: string; displayName: string };
+}
+
+export interface RecentVisitor {
+  visitorId: string;
+  handle: string;
+  displayName: string;
+  visitedOn: string;
 }
 
 export interface WorldShop {

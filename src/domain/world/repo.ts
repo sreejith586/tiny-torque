@@ -2,7 +2,17 @@
 // through the SECURITY DEFINER RPCs from 0013_world_rpcs (D-021 / 07 P4) — this file never
 // inserts into world_garages or world_inventory, and never touches token_ledger.
 import type { Client, Json, TablesUpdate } from '@/lib/supabase/types';
-import type { WorldGarageRow, WorldInventoryRow, WorldItemRow, WorldLevelRow } from './types';
+import type {
+  WorldGarageRow,
+  WorldGuestbookRow,
+  WorldInventoryRow,
+  WorldInviteRow,
+  WorldItemRow,
+  WorldKudosRow,
+  WorldLevelRow,
+  WorldOpenGarageRow,
+  WorldVisitRow,
+} from './types';
 
 export async function getGarage(supabase: Client, userId: string): Promise<WorldGarageRow | null> {
   const { data, error } = await supabase
@@ -96,4 +106,146 @@ export async function buyItem(
   });
   if (error) throw error;
   return data as unknown as WorldInventoryRow;
+}
+
+// ---------- W03 social (MV-W03-01/02): every write is an RPC, reads go through RLS ----------
+
+/** null when the caller is the owner (not a visit). */
+export async function recordVisit(
+  supabase: Client,
+  garageUserId: string
+): Promise<WorldVisitRow | null> {
+  const { data, error } = await supabase.rpc('record_world_visit', { p_garage: garageUserId });
+  if (error) throw error;
+  return (data as unknown as WorldVisitRow | null) ?? null;
+}
+
+export async function giveKudos(supabase: Client, garageUserId: string): Promise<WorldKudosRow> {
+  const { data, error } = await supabase.rpc('give_world_kudos', { p_garage: garageUserId });
+  if (error) throw error;
+  return data as unknown as WorldKudosRow;
+}
+
+export async function postGuestbook(
+  supabase: Client,
+  garageUserId: string,
+  body: string
+): Promise<WorldGuestbookRow> {
+  const { data, error } = await supabase.rpc('post_world_guestbook', {
+    p_garage: garageUserId,
+    p_body: body,
+  });
+  if (error) throw error;
+  return data as unknown as WorldGuestbookRow;
+}
+
+export async function hideGuestbook(
+  supabase: Client,
+  entryId: string,
+  hidden: boolean
+): Promise<WorldGuestbookRow> {
+  const { data, error } = await supabase.rpc('hide_world_guestbook', {
+    p_id: entryId,
+    p_hidden: hidden,
+  });
+  if (error) throw error;
+  return data as unknown as WorldGuestbookRow;
+}
+
+export async function listGuestbook(
+  supabase: Client,
+  garageUserId: string,
+  limit = 20
+): Promise<WorldGuestbookRow[]> {
+  const { data, error } = await supabase
+    .from('world_guestbook')
+    .select('*')
+    .eq('garage_user_id', garageUserId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function listRecentVisits(
+  supabase: Client,
+  garageUserId: string,
+  limit = 10
+): Promise<WorldVisitRow[]> {
+  const { data, error } = await supabase
+    .from('world_visits')
+    .select('*')
+    .eq('garage_user_id', garageUserId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function createInvite(
+  supabase: Client,
+  args: { inviteeHandle?: string; hours: number; maxUses: number }
+): Promise<WorldInviteRow> {
+  const { data, error } = await supabase.rpc('create_world_invite', {
+    p_invitee_handle: args.inviteeHandle ?? undefined,
+    p_hours: args.hours,
+    p_max_uses: args.maxUses,
+  });
+  if (error) throw error;
+  return data as unknown as WorldInviteRow;
+}
+
+export async function acceptInvite(supabase: Client, token: string): Promise<WorldInviteRow> {
+  const { data, error } = await supabase.rpc('accept_world_invite', { p_token: token });
+  if (error) throw error;
+  return data as unknown as WorldInviteRow;
+}
+
+export async function revokeInvite(supabase: Client, inviteId: string): Promise<WorldInviteRow> {
+  const { data, error } = await supabase.rpc('revoke_world_invite', { p_id: inviteId });
+  if (error) throw error;
+  return data as unknown as WorldInviteRow;
+}
+
+/** The host's live invites (RLS: host or invitee). */
+export async function listInvites(
+  supabase: Client,
+  garageUserId: string
+): Promise<WorldInviteRow[]> {
+  const { data, error } = await supabase
+    .from('world_invites')
+    .select('*')
+    .eq('garage_user_id', garageUserId)
+    .is('revoked_at', null)
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function listOpenGarages(
+  supabase: Client,
+  args: { country?: string; limit: number }
+): Promise<WorldOpenGarageRow[]> {
+  let qb = supabase
+    .from('world_open_garages')
+    .select('*')
+    .order('kudos_count', { ascending: false })
+    .order('updated_at', { ascending: false })
+    .limit(args.limit);
+  if (args.country) qb = qb.eq('country_code', args.country);
+  const { data, error } = await qb;
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Admin preview for the reports queue: guestbook rows by id (RLS: admin sees hidden lines too). */
+export async function listGuestbookByIds(
+  supabase: Client,
+  ids: string[]
+): Promise<WorldGuestbookRow[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from('world_guestbook').select('*').in('id', ids);
+  if (error) throw error;
+  return data ?? [];
 }

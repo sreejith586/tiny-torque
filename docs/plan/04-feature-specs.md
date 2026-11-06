@@ -199,11 +199,14 @@ Runbook (incidents, rollback, restore from PITR, rotating keys), backups verifie
 
 - **Open house** modes on the garage: `public` (anyone, anon share links included), `followers` (viewer must follow the owner, reuses `follows`), `invite` (owner-only until `world_invites` lands in W03: expiring share tokens + direct invites by handle). Blocks hide a garage both ways. Enforced in RLS (`world_garages` select policy) and mirrored in the service.
 - **Visit** = page view recorded in `world_visits`, one per visitor per garage per day → "recent visitors" (handles only) and counts. **Kudos** = one per visitor per garage per day. **Guestbook** = ≤ 140-char messages, host-moderated (hide), clean-language validator (MV-S6-04 becomes mandatory here). Rate limits as triggers.
+- **Built (0013b, W03 backend):** `record_world_visit` / `give_world_kudos` / `post_world_guestbook` / `hide_world_guestbook` / `create_world_invite` / `accept_world_invite` / `revoke_world_invite`; one visibility function (`world_garage_visible`) behind the policies and the RPCs; `visit_count` / `kudos_count` on the garage; `world_open_garages` view; host notifications `world_visit` / `world_kudos` / `world_guestbook` / `world_invite`; clean-language validator (D-085) on guestbook lines and garage names. Invites: share link (token, ≤ 50 uses, ≤ 30 days) or direct by handle (single use, notified); a live invite opens any non-public garage; ≤ 20 live invites per garage.
 - **Presence** ("who is here now") is deferred (D-017), later via Realtime Presence behind `world_presence`.
 - **Leaderboards** (W11): garage score, race wins, meetup attendance; per country and global, per season; labelled; no paid ranking.
   **AC**
 - RLS matrix (pgTAP): anon sees public garages only; a follower sees a followers-only garage, a stranger doesn't; a blocked viewer sees nothing of the blocker and vice versa; admin sees all. `/api/v1/world/garages/{handle}` returns 404 for anything not visible.
 - A second visit/kudos the same day is a no-op (unique per day), never an error the user sees.
+- Visitor view: a signed-in visitor sees Give kudos / Follow / Report garage / Block and the guestbook composer; anon sees the scene and a sign-in prompt; the owner sees Hide/Unhide per line; a listed car shows "For sale · make an offer" linking to its listing (fixture-harness Playwright, W03).
+- pgTAP (0023): anon cannot visit; the owner's own view is not a visit; a blocked or uninvited viewer gets `garage_not_found`; the 6th guestbook line in an hour is rate-limited; a hidden line stays visible to the host only; a used-up, revoked or expired invite no longer opens the garage; the open-garages list hides a blocker's garage from the blocked user; direct inserts/updates are refused.
   **Events** `world.visited`, `world.kudos_given`, `world.guestbook_posted`
   **Flags** `world`, `world_presence`
 
@@ -282,6 +285,7 @@ Runbook (incidents, rollback, restore from PITR, rotating keys), backups verifie
 - `/admin`: World group in the flags editor (toggle + country/cohort audience helpers — W01), World report queues, economy dashboard (07 §3.4 weekly metrics: sinks ÷ sources, earned vs purchased, cap hit rate, breakage), earn freeze, revoke item, re-run race from seed, cancel meetup with refund, cost guards/alerts (Realtime connections, Edge invocations, PostHog volume).
 - Runbook entries: "earn exploit", "race ran twice", "meetup room abuse" (06 §5 placeholders).
   **AC** Flag edits are admin-only (RLS) and logged as `flag.updated`; economy dashboard numbers are SQL over the ledger `source`/`reason` columns, no second balance.
+- Reports with `target_type` `garage` resolve warn/suspend against the owner; `guestbook` reports resolve against the line's author and offer `hide_guestbook`, which hides through the same RPC the host uses (one `world.guestbook_hidden` event) — pgTAP 0024.
   **Events** `flag.updated`, `report.created`, `report.resolved`, `user.suspended`
   **Flags** all `world*`
 

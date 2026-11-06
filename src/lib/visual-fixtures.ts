@@ -4,11 +4,16 @@ import type { Badge } from '@/domain/gamification/types';
 import type { Listing } from '@/domain/marketplace';
 import type { TokenPackRow, TokenLedgerRow } from '@/domain/tokens';
 import type {
+  GuestbookEntry,
   OwnGarage,
+  RecentVisitor,
+  VisitorGarage,
   WorldGarageRow,
   WorldInventoryRow,
+  WorldInviteRow,
   WorldItemRow,
   WorldLevelRow,
+  WorldOpenGarageRow,
 } from '@/domain/world/types';
 
 // D-027 / D-041 visual-baseline harness. `?__visual=1` makes the signed-in pages (garage, car
@@ -290,6 +295,8 @@ export const FIXTURE_LISTINGS: Listing[] = [
   {
     ...listingBase,
     id: '20000000-0000-4000-8000-000000000001',
+    // marketplace bridge (W03): this listing sells the featured car in the garage fixtures
+    source_item_id: FIXTURE_ITEMS[0]!.id,
     brand: 'Hot Wheels',
     model: 'Nissan Skyline GT-R',
     variant: 'Blue',
@@ -557,6 +564,8 @@ export const FIXTURE_WORLD_GARAGE: WorldGarageRow = {
   score: 120,
   extra_slots: 1,
   rename_count: 1,
+  visit_count: 37,
+  kudos_count: 12,
   created_at: '2026-10-20T00:00:00.000Z',
   updated_at: '2026-10-22T08:00:00.000Z',
 };
@@ -576,3 +585,117 @@ export const FIXTURE_WORLD_OWN: OwnGarage = {
     decor: [],
   },
 };
+
+// ---------- W03 visits & social (MV-W03-03/04/05) ----------
+const VISITOR_A = '00000000-0000-4000-8000-000000000011';
+const VISITOR_B = '00000000-0000-4000-8000-000000000012';
+
+export const FIXTURE_WORLD_VISITOR: VisitorGarage = {
+  garage: {
+    user_id: OWNER,
+    level: FIXTURE_WORLD_GARAGE.level,
+    name: FIXTURE_WORLD_GARAGE.name,
+    open_mode: 'public',
+    featured_item_id: FIXTURE_WORLD_GARAGE.featured_item_id,
+    theme_item_id: FIXTURE_WORLD_GARAGE.theme_item_id,
+    score: FIXTURE_WORLD_GARAGE.score,
+    visit_count: 48,
+    kudos_count: 17,
+    created_at: FIXTURE_WORLD_GARAGE.created_at,
+  },
+  level: FIXTURE_WORLD_LEVELS[1]!,
+  layout: FIXTURE_WORLD_OWN.layout,
+  owner: { id: OWNER, handle: FIXTURE_PROFILE.handle, displayName: FIXTURE_PROFILE.display_name },
+};
+
+export const FIXTURE_WORLD_GUESTBOOK: GuestbookEntry[] = [
+  {
+    id: '52000000-0000-4000-8000-000000000001',
+    body: 'That R34 is unreal. Treasure Hunt too?!',
+    createdAt: '2026-10-30T09:12:00.000Z',
+    hidden: false,
+    author: { id: VISITOR_A, handle: 'diecast_dxb', displayName: 'Rafiq' },
+  },
+  {
+    id: '52000000-0000-4000-8000-000000000002',
+    body: 'Came for the Defender, stayed for the lighting.',
+    createdAt: '2026-10-28T18:40:00.000Z',
+    hidden: false,
+    author: { id: VISITOR_B, handle: 'blr_castings', displayName: 'Meera' },
+  },
+];
+
+export const FIXTURE_WORLD_VISITORS: RecentVisitor[] = [
+  { visitorId: VISITOR_A, handle: 'diecast_dxb', displayName: 'Rafiq', visitedOn: '2026-11-02' },
+  { visitorId: VISITOR_B, handle: 'blr_castings', displayName: 'Meera', visitedOn: '2026-11-01' },
+];
+
+export const FIXTURE_WORLD_OPEN: WorldOpenGarageRow[] = [
+  {
+    user_id: VISITOR_A,
+    name: 'Rafiq’s Showroom',
+    level: 3,
+    score: 310,
+    featured_item_id: null,
+    visit_count: 120,
+    kudos_count: 44,
+    updated_at: '2026-11-02T10:00:00.000Z',
+    handle: 'diecast_dxb',
+    display_name: 'Rafiq',
+    country_code: 'AE',
+    city: 'Dubai',
+  },
+  {
+    user_id: OWNER,
+    name: FIXTURE_WORLD_GARAGE.name,
+    level: 2,
+    score: 120,
+    featured_item_id: FIXTURE_WORLD_GARAGE.featured_item_id,
+    visit_count: 48,
+    kudos_count: 17,
+    updated_at: '2026-11-01T10:00:00.000Z',
+    handle: FIXTURE_PROFILE.handle,
+    display_name: FIXTURE_PROFILE.display_name,
+    country_code: 'IN',
+    city: 'Bengaluru',
+  },
+  {
+    user_id: VISITOR_B,
+    name: 'Meera’s Shed',
+    level: 1,
+    score: 40,
+    featured_item_id: null,
+    visit_count: 9,
+    kudos_count: 3,
+    updated_at: '2026-10-30T10:00:00.000Z',
+    handle: 'blr_castings',
+    display_name: 'Meera',
+    country_code: 'IN',
+    city: 'Bengaluru',
+  },
+];
+
+export const FIXTURE_WORLD_INVITES: WorldInviteRow[] = [
+  {
+    id: '53000000-0000-4000-8000-000000000001',
+    garage_user_id: OWNER,
+    token: 'a'.repeat(64),
+    invitee_id: null,
+    expires_at: '2026-11-09T10:00:00.000Z',
+    max_uses: 10,
+    used_count: 2,
+    revoked_at: null,
+    created_at: '2026-11-02T10:00:00.000Z',
+  },
+  {
+    id: '53000000-0000-4000-8000-000000000002',
+    garage_user_id: OWNER,
+    token: 'b'.repeat(64),
+    invitee_id: VISITOR_B,
+    expires_at: '2026-11-09T10:00:00.000Z',
+    max_uses: 1,
+    used_count: 0,
+    revoked_at: null,
+    created_at: '2026-11-02T11:00:00.000Z',
+  },
+];
