@@ -3,6 +3,7 @@ import type { GarageItem } from '@/domain/garage';
 import type { Badge } from '@/domain/gamification/types';
 import type { Listing } from '@/domain/marketplace';
 import type { TokenPackRow, TokenLedgerRow } from '@/domain/tokens';
+import type { QuestBoard, QuestStatus } from '@/domain/quests';
 import type {
   GuestbookEntry,
   OwnGarage,
@@ -365,6 +366,8 @@ export const FIXTURE_LEDGER: TokenLedgerRow[] = [
     ref_id: null,
     idempotency_key: 'fix-evt-1',
     source: 'purchased',
+    remaining: 30,
+    consumed_earned: null,
     created_at: '2026-09-05T08:00:00.000Z',
   },
   {
@@ -376,7 +379,9 @@ export const FIXTURE_LEDGER: TokenLedgerRow[] = [
     ref_type: null,
     ref_id: null,
     idempotency_key: null,
-    source: null,
+    source: 'purchased',
+    remaining: null,
+    consumed_earned: 0,
     created_at: '2026-09-10T08:00:00.000Z',
   },
 ];
@@ -699,3 +704,52 @@ export const FIXTURE_WORLD_INVITES: WorldInviteRow[] = [
     created_at: '2026-11-02T11:00:00.000Z',
   },
 ];
+
+// ---------- W04 quests & season (MV-W04-05, F-26) — dark until `world_earn` turns on ----------
+const quest = (
+  key: string,
+  cadence: QuestStatus['cadence'],
+  title: string,
+  event: string,
+  threshold: number,
+  progress: number,
+  rewardCredits: number,
+  rewardXp: number
+): QuestStatus => ({
+  key,
+  cadence,
+  title,
+  description: null,
+  event,
+  threshold,
+  progress,
+  percent: Math.round((progress / threshold) * 100),
+  completed: progress >= threshold,
+  completedAt: progress >= threshold ? '2026-11-06T09:00:00.000Z' : null,
+  rewardCredits,
+  rewardXp,
+  periodStart: cadence === 'daily' ? '2026-11-06' : '2026-11-02',
+  periodEnd: cadence === 'daily' ? '2026-11-07' : '2026-11-09',
+});
+
+export const FIXTURE_QUEST_BOARD: QuestBoard = {
+  daily: [
+    quest('visit_garage', 'daily', 'Visit a garage', 'world.visited', 1, 1, 2, 10),
+    quest('give_kudos', 'daily', 'Give kudos', 'world.kudos_given', 1, 0, 2, 10),
+    quest('sign_guestbook', 'daily', 'Sign a guestbook', 'world.guestbook_posted', 1, 0, 2, 10),
+  ],
+  weekly: [
+    quest('weekly_visits', 'weekly', 'Visit 10 garages this week', 'world.visited', 10, 4, 8, 40),
+    quest('weekly_kudos', 'weekly', 'Give kudos 5 times', 'world.kudos_given', 5, 5, 8, 40),
+    quest('weekly_open_days', 'weekly', 'Open TinyTorque on 5 days', 'user.opened', 5, 3, 8, 40),
+  ],
+  streak: 3,
+  season: {
+    id: '00000000-0000-4000-8000-00000000f001',
+    name: "Founders' Season",
+    theme: 'founders',
+    startsAt: '2026-11-10T00:00:00.000Z',
+    endsAt: '2027-01-05T00:00:00.000Z',
+    points: 120,
+  },
+};

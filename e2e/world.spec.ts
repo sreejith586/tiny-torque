@@ -111,3 +111,27 @@ test('visitor garage 404s while dark and guidelines are public (D-028, F-28)', a
   expect(res?.status()).toBe(200);
   await expect(page.getByRole('heading', { name: 'Community guidelines' })).toBeVisible();
 });
+
+test("world home shows today's quests with progress, streak and season (F-26, fixture harness)", async ({
+  page,
+}) => {
+  const res = await page.goto('/world?__visual=1');
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByText("Today's quests", { exact: true })).toBeVisible();
+  await expect(page.getByRole('progressbar')).toHaveCount(6);
+  await expect(
+    page.getByRole('progressbar', { name: 'Visit 10 garages this week' })
+  ).toHaveAttribute('aria-valuenow', '4');
+  await expect(page.getByText('Done', { exact: true })).toHaveCount(2);
+  await expect(page.getByText('3-day streak')).toBeVisible();
+  await expect(page.getByText(/Founders' Season · ends .* · 120 season points/)).toBeVisible();
+});
+
+test('tokens page carries the earned-credit expiry note (F-26/D-070, fixture harness)', async ({
+  page,
+}) => {
+  const res = await page.goto('/tokens?__visual=1');
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByText('12 earned')).toBeVisible();
+  await expect(page.getByText(/Earned tokens expire 180 days/)).toBeVisible();
+});
