@@ -18,9 +18,12 @@ import ThemeSwitcher from './ThemeSwitcher';
 export default function SettingsView({
   profile,
   blocked,
+  worldEnabled = false,
 }: {
   profile: ProfileRow;
   blocked: BlockedUser[];
+  /** Settings › World (MV-W03-04) shows only for users the `world` flag is on for. */
+  worldEnabled?: boolean;
 }) {
   const supabase = createClient();
   const router = useRouter();
@@ -290,6 +293,27 @@ export default function SettingsView({
         </button>
       </form>
 
+      {worldEnabled && (
+        <div className="panel" style={{ marginBottom: 16 }}>
+          <h2 style={{ fontSize: 16 }}>Collectors World</h2>
+          <p className="muted" style={{ fontSize: 13, marginTop: 4 }}>
+            Who can visit your garage, invites and your theme are set in the garage editor.
+          </p>
+          <div className="toggle-row">
+            <span>Open house &amp; invites</span>
+            <Link href="/world/garage" className="muted" style={{ fontSize: 13 }}>
+              Open
+            </Link>
+          </div>
+          <div className="toggle-row">
+            <span>World shop &amp; inventory</span>
+            <Link href="/world/shop" className="muted" style={{ fontSize: 13 }}>
+              Open
+            </Link>
+          </div>
+        </div>
+      )}
+
       <div className="panel" style={{ marginBottom: 16 }}>
         <h2 style={{ fontSize: 16 }}>Legal</h2>
         <div className="toggle-row">
@@ -301,6 +325,12 @@ export default function SettingsView({
         <div className="toggle-row">
           <span>Privacy policy</span>
           <Link href="/legal/privacy" className="muted" style={{ fontSize: 13 }}>
+            Read
+          </Link>
+        </div>
+        <div className="toggle-row">
+          <span>Community guidelines</span>
+          <Link href="/legal/guidelines" className="muted" style={{ fontSize: 13 }}>
             Read
           </Link>
         </div>

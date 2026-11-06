@@ -10,7 +10,12 @@ import {
   WorldError,
   buyItem,
   buyLevel,
+  createInvite,
+  giveKudos,
+  hideGuestbookEntry,
+  postGuestbook,
   renameGarage,
+  revokeInvite,
   saveLayout,
   updateGarageSettings,
   type WorldErrorCode,
@@ -110,6 +115,83 @@ export async function buyItemAction(
     const row = await buyItem(g.supabase, { itemId });
     done();
     return { ok: true, data: { itemId: row.item_id } };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+// ---------- W03 social (MV-W03-03/04): kudos, guestbook, invites ----------
+
+export async function giveKudosAction(
+  garageUserId: string
+): Promise<WorldActionResult<{ givenOn: string }>> {
+  const g = await gate();
+  if (!g.ok) return g;
+  try {
+    const row = await giveKudos(g.supabase, garageUserId);
+    done();
+    return { ok: true, data: { givenOn: row.given_on } };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function postGuestbookAction(
+  garageUserId: string,
+  body: string
+): Promise<WorldActionResult<{ id: string }>> {
+  const g = await gate();
+  if (!g.ok) return g;
+  try {
+    const row = await postGuestbook(g.supabase, { garageUserId, body });
+    done();
+    return { ok: true, data: { id: row.id } };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function hideGuestbookAction(
+  entryId: string,
+  hidden: boolean
+): Promise<WorldActionResult> {
+  const g = await gate();
+  if (!g.ok) return g;
+  try {
+    await hideGuestbookEntry(g.supabase, entryId, hidden);
+    done();
+    return { ok: true, data: undefined };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function createInviteAction(input: {
+  inviteeHandle?: string;
+  hours?: number;
+  maxUses?: number;
+}): Promise<WorldActionResult<{ id: string; token: string; expiresAt: string; maxUses: number }>> {
+  const g = await gate();
+  if (!g.ok) return g;
+  try {
+    const row = await createInvite(g.supabase, input);
+    done();
+    return {
+      ok: true,
+      data: { id: row.id, token: row.token, expiresAt: row.expires_at, maxUses: row.max_uses },
+    };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function revokeInviteAction(inviteId: string): Promise<WorldActionResult> {
+  const g = await gate();
+  if (!g.ok) return g;
+  try {
+    await revokeInvite(g.supabase, inviteId);
+    done();
+    return { ok: true, data: undefined };
   } catch (e) {
     return fail(e);
   }

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getProfile } from '@/domain/identity';
 import { listBlockedUsers, type BlockedUser } from '@/domain/trust';
+import { isFlagEnabled } from '@/domain/flags';
 import SettingsView from '@/components/SettingsView';
 import { FIXTURE_PROFILE, isVisualHarness } from '@/lib/visual-fixtures';
 
@@ -27,7 +28,7 @@ export default async function SettingsPage({
     return (
       <main style={{ padding: '20px 16px', flex: 1 }}>
         {header}
-        <SettingsView profile={FIXTURE_PROFILE} blocked={[]} />
+        <SettingsView profile={FIXTURE_PROFILE} blocked={[]} worldEnabled />
       </main>
     );
   }
@@ -46,11 +47,14 @@ export default async function SettingsPage({
   } catch {
     // RPC missing on this environment (migration not applied yet) — show the page without the list
   }
+  const worldEnabled = await isFlagEnabled(supabase, 'world', { userId: user.id }).catch(
+    () => false
+  );
 
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
       {header}
-      <SettingsView profile={profile} blocked={blocked} />
+      <SettingsView profile={profile} blocked={blocked} worldEnabled={worldEnabled} />
     </main>
   );
 }
