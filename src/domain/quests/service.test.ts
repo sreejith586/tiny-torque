@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getQuestBoard } from './service';
+import { getQuestBoard, getSeasonTrack } from './service';
 import type { Client } from '@/lib/supabase/types';
 import type { CurrentQuestRow } from './types';
 
@@ -9,6 +9,9 @@ const repo = vi.hoisted(() => ({
   getActiveSeason: vi.fn(),
   getSeasonPoints: vi.fn(),
   getLoginStreak: vi.fn(),
+  // W05 (season page): module-level alias + the track reads
+  listSeasons: vi.fn(),
+  listOwnLedgerKeys: vi.fn(),
 }));
 vi.mock('./repo', () => repo);
 
@@ -142,5 +145,51 @@ describe('getQuestBoard (MV-W04-02)', () => {
     expect(repo.listProgress).not.toHaveBeenCalled();
     expect(repo.getSeasonPoints).not.toHaveBeenCalled();
     expect(board).toEqual({ daily: [], weekly: [], streak: 0, season: null });
+  });
+});
+
+describe('quests.getSeasonTrack (MV-W05-03)', () => {
+  const SEASON = '00000000-0000-4000-8000-00000000f001';
+  it('returns null when no season is running', async () => {
+    repo.getActiveSeason.mockResolvedValue(null);
+    expect(await getSeasonTrack(supabase, ME, new Date('2026-11-06T00:00:00Z'))).toBeNull();
+  });
+
+  it('derives milestone statuses from points + the ledger keys that exist', async () => {
+    repo.getActiveSeason.mockResolvedValue({
+      id: SEASON,
+      name: "Founders' Season",
+      theme: 'founders',
+      starts_at: '2026-11-10T00:00:00.000Z',
+      ends_at: '2027-01-05T00:00:00.000Z',
+      track: [
+        { points: 50, reward_credits: 5, label: 'Warm-up' },
+        { points: 150, reward_credits: 10, label: 'On the road' },
+        {
+          points: 300,
+          reward_credits: 25,
+          label: 'Season finisher',
+          reward_item_sku: 'trophy_season_finisher',
+        },
+      ],
+    });
+    repo.getSeasonPoints.mockResolvedValue(120);
+    repo.listOwnLedgerKeys.mockResolvedValue(new Set([`season:${SEASON}:1:${ME}`]));
+    const view = await getSeasonTrack(supabase, ME, new Date('2026-12-30T12:00:00Z'));
+    expect(view?.season.points).toBe(120);
+    expect(view?.milestones.map((m) => [m.reached, m.paid])).toEqual([
+      [true, true],
+      [false, false],
+      [false, false],
+    ]);
+    expect(view?.next?.index).toBe(2);
+    expect(view?.percent).toBe(70);
+    expect(view?.daysLeft).toBe(6);
+    expect(view?.finisherItemSku).toBe('trophy_season_finisher');
+    expect(repo.listOwnLedgerKeys).toHaveBeenCalledWith(supabase, ME, [
+      `season:${SEASON}:1:${ME}`,
+      `season:${SEASON}:2:${ME}`,
+      `season:${SEASON}:3:${ME}`,
+    ]);
   });
 });

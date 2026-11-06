@@ -23,6 +23,7 @@ import {
   validateLayout,
 } from './schema';
 import type { GarageLayout } from './schema';
+import { isPlaceableKind } from './types';
 import type {
   GuestbookEntry,
   OwnGarage,
@@ -163,19 +164,32 @@ export async function renameGarage(supabase: Client, input: unknown): Promise<Wo
 }
 
 /** Saves the layout document after checking slots ≤ capacity (level + bought extra slots), items
- *  public + owned (07 §6.2). */
+ *  public + owned (07 §6.2), decor slots ≤ the level's and holding only placeable kinds (decor /
+ *  signage / trophy — MV-W05-02). Emits world.layout_saved, plus one world.item_placed per decor
+ *  item newly placed since the last save (the garage score consumer recomputes on the former). */
 export async function saveLayout(
   supabase: Client,
   userId: string,
   input: unknown
 ): Promise<GarageLayout> {
   const own = await getOwnGarage(supabase);
-  const publicItems = await listPublicCollectionItems(supabase, userId);
+  const [publicItems, catalogue] = await Promise.all([
+    listPublicCollectionItems(supabase, userId),
+    repo.listActiveItems(supabase),
+  ]);
+  const kindById = new Map(catalogue.map((i) => [i.id, i.kind]));
+  const owned = own.inventory.map((i) => i.item_id);
   const layout = validateLayout(input, {
     displaySlots: own.displayCapacity,
     decorSlots: own.level.decor_slots,
     publicItemIds: new Set(publicItems.map((i) => i.id)),
-    ownedWorldItemIds: new Set(own.inventory.map((i) => i.item_id)),
+    ownedWorldItemIds: new Set(owned),
+    placeableWorldItemIds: new Set(
+      owned.filter((id) => {
+        const kind = kindById.get(id);
+        return kind === undefined || isPlaceableKind(kind); // unknown (inactive) rows: ownership rule only
+      })
+    ),
   });
   await repo.updateGarage(supabase, userId, { layout: layout as unknown as NonNullable<Json> });
   await emitEvent(supabase, {
@@ -185,6 +199,17 @@ export async function saveLayout(
     entityId: userId,
     payload: { slots: layout.slots.length, decor: layout.decor.length },
   });
+  const before = new Set(own.layout.decor.map((d) => d.itemId));
+  for (const d of layout.decor) {
+    if (before.has(d.itemId)) continue;
+    await emitEvent(supabase, {
+      actorId: userId,
+      type: 'world.item_placed',
+      entity: 'world_item',
+      entityId: d.itemId,
+      payload: { slot: d.slot, kind: kindById.get(d.itemId) ?? null },
+    });
+  }
   return layout;
 }
 
@@ -400,7 +425,17 @@ export type {
   WorldOpenMode,
   WorldItemKind,
 } from './types';
-export { WORLD_OPEN_MODES } from './types';
+export { WORLD_OPEN_MODES, PLACEABLE_KINDS, isPlaceableKind } from './types';
+export type { WorldEarnFreezeRow } from './types';
+export {
+  SCORE_WEIGHTS,
+  RARITY_WEIGHT,
+  rarityWeight,
+  garageScore,
+  scoreFromEvents,
+  scoreBreakdown,
+} from './score';
+export type { ScoreInput, ScoreEvent, ScoreState } from './score';
 export {
   garageLayoutSchema,
   EMPTY_LAYOUT,

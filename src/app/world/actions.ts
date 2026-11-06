@@ -108,13 +108,16 @@ export async function buyLevelAction(): Promise<WorldActionResult<{ level: numbe
 
 export async function buyItemAction(
   itemId: string
-): Promise<WorldActionResult<{ itemId: string }>> {
+): Promise<WorldActionResult<{ itemId: string; inventoryId: string; expiresAt: string | null }>> {
   const g = await gate(true);
   if (!g.ok) return g;
   try {
     const row = await buyItem(g.supabase, { itemId });
     done();
-    return { ok: true, data: { itemId: row.item_id } };
+    return {
+      ok: true,
+      data: { itemId: row.item_id, inventoryId: row.id, expiresAt: row.expires_at ?? null },
+    };
   } catch (e) {
     return fail(e);
   }

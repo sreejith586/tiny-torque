@@ -191,6 +191,9 @@ export function eventPaysUser(e: GamificationEvent, userId: string): boolean {
       return p.buyer_id === userId || p.seller_id === userId || e.actor_id === userId;
     case 'review.created':
       return p.seller_id === userId;
+    case 'world.kudos_given':
+      // World badge (0014c): kudos pay the garage owner (entity_id), never the giver
+      return e.entity_id === userId;
     default:
       return e.actor_id === userId;
   }
@@ -309,7 +312,9 @@ export function evaluateBadges(
   const seen = new Set<string>();
   for (const e of events) {
     if (!eventPaysUser(e, userId)) continue;
-    const dedupe = `${e.type}:${e.entity_id ?? e.id}`;
+    // kudos rows all point at the same garage (entity_id = owner): one per giver per day, so dedupe by row
+    const dedupe =
+      e.type === 'world.kudos_given' ? `${e.type}:${e.id}` : `${e.type}:${e.entity_id ?? e.id}`;
     if (seen.has(dedupe)) continue;
     seen.add(dedupe);
     eventCounts.set(e.type, (eventCounts.get(e.type) ?? 0) + 1);

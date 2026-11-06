@@ -822,13 +822,13 @@ isOneToOne: false
                   ]
                 },"seasons": {
                   Row: {
-                    "created_at": string,"ends_at": string,"id": string,"name": string,"starts_at": string,"theme": string | null
+                    "announced_at": string | null,"closed_at": string | null,"created_at": string,"ends_at": string,"id": string,"name": string,"starts_at": string,"theme": string | null,"track": NonNullable<Json>
                   }
                   Insert: {
-                    "created_at"?: string,"ends_at": string,"id"?: string,"name": string,"starts_at": string,"theme"?: string | null
+                    "announced_at"?: string | null,"closed_at"?: string | null,"created_at"?: string,"ends_at": string,"id"?: string,"name": string,"starts_at": string,"theme"?: string | null,"track"?: NonNullable<Json>
                   }
                   Update: {
-                    "created_at"?: string,"ends_at"?: string,"id"?: string,"name"?: string,"starts_at"?: string,"theme"?: string | null
+                    "announced_at"?: string | null,"closed_at"?: string | null,"created_at"?: string,"ends_at"?: string,"id"?: string,"name"?: string,"starts_at"?: string,"theme"?: string | null,"track"?: NonNullable<Json>
                   }
                   Relationships: [
                     
@@ -1013,6 +1013,43 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"world_earn_freezes": {
+                  Row: {
+                    "created_at": string,"frozen_by": string | null,"note": string | null,"user_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"frozen_by"?: string | null,"note"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"frozen_by"?: string | null,"note"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "world_earn_freezes_frozen_by_fkey"
+      columns: ["frozen_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "world_earn_freezes_frozen_by_fkey"
+      columns: ["frozen_by"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "world_earn_freezes_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: true
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "world_earn_freezes_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: true
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"world_garages": {
                   Row: {
                     "created_at": string,"extra_slots": number,"featured_item_id": string | null,"kudos_count": number,"layout": NonNullable<Json>,"level": number,"name": string,"open_mode": Database["public"]['Enums']["world_open_mode"],"rename_count": number,"score": number,"theme_item_id": string | null,"updated_at": string,"user_id": string,"visit_count": number
@@ -1101,13 +1138,13 @@ isOneToOne: false
                   ]
                 },"world_inventory": {
                   Row: {
-                    "acquired_via": Database["public"]['Enums']["world_acquired_via"],"created_at": string,"durable": boolean,"id": string,"item_id": string,"ledger_id": string | null,"user_id": string
+                    "acquired_via": Database["public"]['Enums']["world_acquired_via"],"created_at": string,"durable": boolean,"expires_at": string | null,"id": string,"item_id": string,"ledger_id": string | null,"user_id": string
                   }
                   Insert: {
-                    "acquired_via": Database["public"]['Enums']["world_acquired_via"],"created_at"?: string,"durable"?: boolean,"id"?: string,"item_id": string,"ledger_id"?: string | null,"user_id": string
+                    "acquired_via": Database["public"]['Enums']["world_acquired_via"],"created_at"?: string,"durable"?: boolean,"expires_at"?: string | null,"id"?: string,"item_id": string,"ledger_id"?: string | null,"user_id": string
                   }
                   Update: {
-                    "acquired_via"?: Database["public"]['Enums']["world_acquired_via"],"created_at"?: string,"durable"?: boolean,"id"?: string,"item_id"?: string,"ledger_id"?: string | null,"user_id"?: string
+                    "acquired_via"?: Database["public"]['Enums']["world_acquired_via"],"created_at"?: string,"durable"?: boolean,"expires_at"?: string | null,"id"?: string,"item_id"?: string,"ledger_id"?: string | null,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -1371,7 +1408,7 @@ isOneToOne: false
                   ]
                 },"world_open_garages": {
                   Row: {
-                    "city": string | null,"country_code": string | null,"display_name": string | null,"featured_item_id": string | null,"handle": string | null,"kudos_count": number | null,"level": number | null,"name": string | null,"score": number | null,"updated_at": string | null,"user_id": string | null,"visit_count": number | null
+                    "city": string | null,"country_code": string | null,"display_name": string | null,"featured_item_id": string | null,"handle": string | null,"kudos_count": number | null,"level": number | null,"name": string | null,"score": number | null,"spotlight_until": string | null,"updated_at": string | null,"user_id": string | null,"visit_count": number | null
                   }
                   Relationships: [
                     {
@@ -1495,6 +1532,9 @@ isOneToOne: true
         isOneToOne: false
         isSetofReturn: true
       } },
+"admin_set_earn_freeze":
+{ Args: { "p_frozen": boolean,"p_note"?: string,"p_user": string }; Returns: boolean
+                           },
 "admin_set_suspension":
 { Args: { "p_days"?: number,"p_user_id": string }; Returns: {
               "account_type": Database["public"]['Enums']["account_type"],
@@ -1573,6 +1613,7 @@ isOneToOne: true
               "acquired_via": Database["public"]['Enums']["world_acquired_via"],
 "created_at": string,
 "durable": boolean,
+"expires_at": string | null,
 "id": string,
 "item_id": string,
 "ledger_id": string | null,
@@ -1984,6 +2025,12 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
+"rollover_season":
+{ Args: { "p_at"?: string }; Returns: Json
+                           },
+"season_track_award":
+{ Args: { "p_season": string,"p_user": string }; Returns: number
+                           },
 "show_limit":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
@@ -2067,6 +2114,19 @@ isOneToOne: true
 "world_bump_counter":
 { Args: { "p_column": string,"p_delta": number,"p_garage": string }; Returns: undefined
                            },
+"world_economy_summary":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "metric": string,"note": string,"value": number
+            }[]
+                           },
+"world_economy_weekly":
+{ Args: { "p_weeks"?: number }; Returns: {
+              "buyers": number,"earned": number,"earners": number,"expired": number,"purchased": number,"refunded": number,"spenders": number,"spent": number,"spent_from_earned": number,"week_start": string,"world_spent": number
+            }[]
+                           },
+"world_garage_score_value":
+{ Args: { "p_user": string }; Returns: number
+                           },
 "world_garage_visible":
 { Args: { "p_garage": string,"p_viewer": string }; Returns: boolean
                            },
@@ -2078,6 +2138,12 @@ isOneToOne: true
                            },
 "world_quest_complete":
 { Args: { "p_at": string,"p_cadence": Database["public"]['Enums']["quest_cadence"],"p_key": string,"p_period_start": string,"p_reward_credits": number,"p_reward_item_id": string,"p_reward_xp": number,"p_user": string }; Returns: undefined
+                           },
+"world_recompute_all_scores":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"world_recompute_score":
+{ Args: { "p_user": string }; Returns: number
                            },
 "world_remove_item_from_garage":
 { Args: { "p_item": string,"p_user": string }; Returns: boolean

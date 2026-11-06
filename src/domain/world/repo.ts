@@ -230,6 +230,8 @@ export async function listOpenGarages(
   let qb = supabase
     .from('world_open_garages')
     .select('*')
+    // Spotlight (a paid 24 h consumable, 07 §2.6) floats to the top, labelled in the view
+    .order('spotlight_until', { ascending: false, nullsFirst: false })
     .order('kudos_count', { ascending: false })
     .order('updated_at', { ascending: false })
     .limit(args.limit);

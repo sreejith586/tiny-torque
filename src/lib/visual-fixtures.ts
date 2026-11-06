@@ -3,7 +3,7 @@ import type { GarageItem } from '@/domain/garage';
 import type { Badge } from '@/domain/gamification/types';
 import type { Listing } from '@/domain/marketplace';
 import type { TokenPackRow, TokenLedgerRow } from '@/domain/tokens';
-import type { QuestBoard, QuestStatus } from '@/domain/quests';
+import type { QuestBoard, QuestStatus, SeasonRow, SeasonTrackView } from '@/domain/quests';
 import type {
   GuestbookEntry,
   OwnGarage,
@@ -446,6 +446,10 @@ export const FIXTURE_WORLD_LEVELS: WorldLevelRow[] = [
 ];
 
 const WI = (n: number) => `50000000-0000-4000-8000-00000000000${n}`;
+export const FOUNDERS_SEASON_ID = '00000000-0000-4000-8000-00000000f001';
+/** A Spotlight bought "20 hours ago" relative to the viewer — keeps the active label honest. */
+const FIXTURE_SPOTLIGHT_UNTIL = new Date(Date.now() + 20 * 3600_000).toISOString();
+
 const worldItemBase = {
   description: null,
   season_id: null,
@@ -528,6 +532,64 @@ export const FIXTURE_WORLD_ITEMS: WorldItemRow[] = [
     effect: { grants: 'rename' },
     sort_order: 1001,
   },
+  // ---- W05 (0014c placeholder catalogue): Spotlight, tunes, season-limited decor, season trophy ----
+  {
+    ...worldItemBase,
+    id: WI(8),
+    sku: 'spotlight_24h',
+    kind: 'consumable',
+    name: 'Spotlight (24 h)',
+    description: 'Your garage at the top of Open garages for 24 hours. Labelled Spotlight.',
+    price: 20,
+    min_level: 1,
+    effect: { grants: 'spotlight', hours: '24' },
+    sort_order: 1002,
+  },
+  {
+    ...worldItemBase,
+    id: WI(9),
+    sku: 'tune_street',
+    kind: 'tune',
+    name: 'Street tune',
+    description: 'A small boost to acceleration in races (racing arrives later).',
+    price: 30,
+    min_level: 2,
+    effect: { stat: 'accel', pct: '2' },
+    sort_order: 50,
+  },
+  {
+    ...worldItemBase,
+    id: WI(10),
+    sku: 'decor_founders_banner',
+    kind: 'decor',
+    name: 'Founders banner',
+    description: "Only sold during the Founders' Season.",
+    price: 15,
+    min_level: 1,
+    season_id: FOUNDERS_SEASON_ID,
+    sort_order: 24,
+  },
+  {
+    ...worldItemBase,
+    id: WI(11),
+    sku: 'decor_tool_wall',
+    kind: 'decor',
+    name: 'Tool wall',
+    price: 15,
+    min_level: 1,
+    sort_order: 21,
+  },
+  {
+    ...worldItemBase,
+    id: WI(12),
+    sku: 'trophy_season_finisher',
+    kind: 'trophy',
+    name: 'Season finisher',
+    description: 'Earned by finishing a season track.',
+    price: null,
+    min_level: 1,
+    sort_order: 60,
+  },
 ];
 
 export const FIXTURE_WORLD_INVENTORY: WorldInventoryRow[] = [
@@ -538,6 +600,7 @@ export const FIXTURE_WORLD_INVENTORY: WorldInventoryRow[] = [
     acquired_via: 'purchase',
     ledger_id: null,
     durable: true,
+    expires_at: null,
     created_at: '2026-10-21T08:00:00.000Z',
   },
   {
@@ -547,7 +610,28 @@ export const FIXTURE_WORLD_INVENTORY: WorldInventoryRow[] = [
     acquired_via: 'purchase',
     ledger_id: null,
     durable: true,
+    expires_at: null,
     created_at: '2026-10-22T08:00:00.000Z',
+  },
+  {
+    id: '51000000-0000-4000-8000-000000000003',
+    user_id: OWNER,
+    item_id: WI(11),
+    acquired_via: 'purchase',
+    ledger_id: null,
+    durable: true,
+    expires_at: null,
+    created_at: '2026-11-01T08:00:00.000Z',
+  },
+  {
+    id: '51000000-0000-4000-8000-000000000004',
+    user_id: OWNER,
+    item_id: WI(8),
+    acquired_via: 'purchase',
+    ledger_id: null,
+    durable: false,
+    expires_at: FIXTURE_SPOTLIGHT_UNTIL,
+    created_at: '2026-11-05T12:00:00.000Z',
   },
 ];
 
@@ -564,7 +648,7 @@ export const FIXTURE_WORLD_GARAGE: WorldGarageRow = {
       { slot: 0, itemId: FIXTURE_ITEMS[1]!.id },
       { slot: 1, itemId: FIXTURE_ITEMS[3]!.id },
     ],
-    decor: [],
+    decor: [{ slot: 0, itemId: WI(3) }],
   },
   score: 120,
   extra_slots: 1,
@@ -587,7 +671,7 @@ export const FIXTURE_WORLD_OWN: OwnGarage = {
       { slot: 0, itemId: FIXTURE_ITEMS[1]!.id },
       { slot: 1, itemId: FIXTURE_ITEMS[3]!.id },
     ],
-    decor: [],
+    decor: [{ slot: 0, itemId: WI(3) }],
   },
 };
 
@@ -649,6 +733,7 @@ export const FIXTURE_WORLD_OPEN: WorldOpenGarageRow[] = [
     display_name: 'Rafiq',
     country_code: 'AE',
     city: 'Dubai',
+    spotlight_until: FIXTURE_SPOTLIGHT_UNTIL,
   },
   {
     user_id: OWNER,
@@ -663,6 +748,7 @@ export const FIXTURE_WORLD_OPEN: WorldOpenGarageRow[] = [
     display_name: FIXTURE_PROFILE.display_name,
     country_code: 'IN',
     city: 'Bengaluru',
+    spotlight_until: null,
   },
   {
     user_id: VISITOR_B,
@@ -677,6 +763,7 @@ export const FIXTURE_WORLD_OPEN: WorldOpenGarageRow[] = [
     display_name: 'Meera',
     country_code: 'IN',
     city: 'Bengaluru',
+    spotlight_until: null,
   },
 ];
 
@@ -752,4 +839,84 @@ export const FIXTURE_QUEST_BOARD: QuestBoard = {
     endsAt: '2027-01-05T00:00:00.000Z',
     points: 120,
   },
+};
+
+// ---- W05: seasons + the season track page (MV-W05-01/03) ----
+export const FIXTURE_SEASONS: SeasonRow[] = [
+  {
+    id: FOUNDERS_SEASON_ID,
+    name: "Founders' Season",
+    theme: 'founders',
+    starts_at: '2026-11-10T00:00:00.000Z',
+    ends_at: '2027-01-05T00:00:00.000Z',
+    track: [
+      { points: 50, reward_credits: 5, label: 'Warm-up' },
+      { points: 150, reward_credits: 10, label: 'On the road' },
+      {
+        points: 300,
+        reward_credits: 25,
+        label: 'Season finisher',
+        reward_item_sku: 'trophy_season_finisher',
+      },
+    ],
+    announced_at: '2026-11-10T00:00:00.000Z',
+    closed_at: null,
+    created_at: '2026-11-06T00:00:00.000Z',
+  },
+];
+
+export const FIXTURE_SEASON_TRACK: SeasonTrackView = {
+  season: {
+    id: FOUNDERS_SEASON_ID,
+    name: "Founders' Season",
+    theme: 'founders',
+    startsAt: '2026-11-10T00:00:00.000Z',
+    endsAt: '2027-01-05T00:00:00.000Z',
+    points: 120,
+  },
+  milestones: [
+    {
+      index: 1,
+      label: 'Warm-up',
+      points: 50,
+      rewardCredits: 5,
+      rewardItemSku: null,
+      reached: true,
+      paid: true,
+      remaining: 0,
+    },
+    {
+      index: 2,
+      label: 'On the road',
+      points: 150,
+      rewardCredits: 10,
+      rewardItemSku: null,
+      reached: false,
+      paid: false,
+      remaining: 30,
+    },
+    {
+      index: 3,
+      label: 'Season finisher',
+      points: 300,
+      rewardCredits: 25,
+      rewardItemSku: 'trophy_season_finisher',
+      reached: false,
+      paid: false,
+      remaining: 180,
+    },
+  ],
+  next: {
+    index: 2,
+    label: 'On the road',
+    points: 150,
+    rewardCredits: 10,
+    rewardItemSku: null,
+    reached: false,
+    paid: false,
+    remaining: 30,
+  },
+  percent: 70,
+  daysLeft: 42,
+  finisherItemSku: 'trophy_season_finisher',
 };

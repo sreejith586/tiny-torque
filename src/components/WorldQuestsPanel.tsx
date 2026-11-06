@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { QuestBoard, QuestStatus } from '@/domain/quests';
 
 // /world "Today's quests" (MV-W04-05, F-26, D-090 proposed). Composed from the prototype's pieces
@@ -85,8 +86,10 @@ export default function WorldQuestsPanel({ board }: { board: QuestBoard }) {
 
       {board.season && (
         <p className="muted" style={{ fontSize: 12, marginTop: 12 }}>
-          {board.season.name} · ends {endsOn(board.season.endsAt)} · {board.season.points} season
-          point{board.season.points === 1 ? '' : 's'}
+          <Link href="/world/season">
+            {board.season.name} · ends {endsOn(board.season.endsAt)} · {board.season.points} season
+            point{board.season.points === 1 ? '' : 's'}
+          </Link>
         </p>
       )}
     </div>

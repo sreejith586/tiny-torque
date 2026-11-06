@@ -56,17 +56,17 @@ Naming: tables/columns `snake_case`; TS `camelCase`; enums as Postgres enums mir
 
 ## 4. Testing standards
 
-| Layer | Tool | Rule |
-|---|---|---|
-| Domain rules | Vitest | Every `service.ts` rule has a test; repo mocked; ≥ 80 % line coverage on `domain/` |
-| Schemas | Vitest | zod schemas: valid + invalid fixtures |
-| RLS | pgTAP (`supabase test db`) | One file per migration; owner/stranger/anon/admin matrix; runs in CI |
-| RPCs/triggers | pgTAP | Listing limit, offer transitions incl. concurrency, token idempotency & balance property |
-| Edge Functions | Deno test | Mocked `fetch`; fixtures for Anthropic + Stripe payloads |
-| Critical flows | Playwright | sign-in, add item, scan (mocked fn), publish, offer→accept→sold, chat, buy tokens (Stripe test) — run on every PR preview |
-| Visual/theme | Playwright screenshots | Route × theme × width matrix from S9; diff threshold 0.2 % |
-| Accessibility | axe-playwright | No serious/critical violations |
-| Performance | Lighthouse CI | Budgets: perf ≥ 90, a11y ≥ 90 on staging, mobile profile |
+| Layer          | Tool                       | Rule                                                                                                                      |
+| -------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Domain rules   | Vitest                     | Every `service.ts` rule has a test; repo mocked; ≥ 80 % line coverage on `domain/`                                        |
+| Schemas        | Vitest                     | zod schemas: valid + invalid fixtures                                                                                     |
+| RLS            | pgTAP (`supabase test db`) | One file per migration; owner/stranger/anon/admin matrix; runs in CI                                                      |
+| RPCs/triggers  | pgTAP                      | Listing limit, offer transitions incl. concurrency, token idempotency & balance property                                  |
+| Edge Functions | Deno test                  | Mocked `fetch`; fixtures for Anthropic + Stripe payloads                                                                  |
+| Critical flows | Playwright                 | sign-in, add item, scan (mocked fn), publish, offer→accept→sold, chat, buy tokens (Stripe test) — run on every PR preview |
+| Visual/theme   | Playwright screenshots     | Route × theme × width matrix from S9; diff threshold 0.2 %                                                                |
+| Accessibility  | axe-playwright             | No serious/critical violations                                                                                            |
+| Performance    | Lighthouse CI              | Budgets: perf ≥ 90, a11y ≥ 90 on staging, mobile profile                                                                  |
 
 ## 5. Environments, release & rollback
 
@@ -76,7 +76,7 @@ Naming: tables/columns `snake_case`; TS `camelCase`; enums as Postgres enums mir
 - **Rollback:** Vercel promote previous deployment (seconds). DB: forward-fix migration preferred; destructive changes only after the two-release rule, so previous app version keeps working.
 - **Kill switches:** `ai_scan`, `offers`, `deal_chat`, `token_purchase`, `csv_import`, `marketplace_publish`, `invite_only` — documented in admin Flags with owner and effect.
 - **Secrets:** Vercel + Supabase secrets only; rotation procedure in runbook; service-role key never in Next.js runtime.
-- **World kill switches (D-077):** `world` (master), `world_shop` + `world_earn` (= economy freeze), `world_meetups`, `world_meetups_irl`, `world_races`, `world_clubs`, `world_presence` — `/admin/flags` World group. **Runbook placeholders (MV-W01-10, filled when each feature ships):** _earn exploit_ → `world_earn` OFF, per-user earn freeze, reverse via `admin_adjust_tokens`, audit `domain_events` (W05) · _race ran twice_ → `race_results` is write-once; verify the seed/stats version, re-run from seed only via the admin tool (W08) · _meetup room abuse_ → host mute/kick, then `world_meetups` OFF for the audience, report queue (W06).
+- **World kill switches (D-077):** `world` (master), `world_shop` + `world_earn` (= economy freeze), `world_meetups`, `world_meetups_irl`, `world_races`, `world_clubs`, `world_presence` — `/admin/flags` World group. **Runbook — _earn exploit_ (W05, F-28):** (1) stop the bleeding: `/admin/users` → **Freeze earn** on the account(s) (writes `world_earn_freezes`, `earn_tokens` pays nothing from then on; quests still track) — or, for a pattern not tied to an account, narrow `world_earn`'s audience / switch it OFF in `/admin/flags` (the global freeze, D-077); (2) size it: `/admin/world/economy` (this week's earned, earn-cap hits, earners) + `select * from token_ledger where user_id = … and reason like 'earn\_%' order by created_at`; (3) reverse: `admin_adjust_tokens(user, -n, note)` per account (D-065 allows a negative balance; durable items bought with the proceeds stay unless it was a chargeback-grade case — revoke by hand); (4) audit: `domain_events` for the actor (`tokens.earned`, `quest.completed`, `user.earn_frozen` carries the admin + note); (5) fix the rule (quest row / ceiling constant / consumer whitelist = a migration), replay with `replay_quest_progress(user)` if progress rows were corrupted (credits never move on replay), then **Unfreeze earn**. **World economy weekly review (07 §3.4, every Monday):** open `/admin/world/economy`; note sinks ÷ sources (target > 1.2), earned share of spend, earn-cap hit rate (a rising rate = the ceiling is the binding constraint, not the quests), breakage, median balance vs P90 (a widening gap = hoarding); if sinks ÷ sources < 1 for two weeks, add sinks or lower rewards by **data migration** (prices, `quests.reward_credits`, `seasons.track`), never code; log the numbers in PROGRESS-WORLD's session log. **Other placeholders (filled when each feature ships):** _race ran twice_ → `race_results` is write-once; verify the seed/stats version, re-run from seed only via the admin tool (W08) · _meetup room abuse_ → host mute/kick, then `world_meetups` OFF for the audience, report queue (W06).
 
 ## 6. Observability
 
@@ -89,7 +89,7 @@ Sentry (errors + performance traces, release tagging from commit SHA), PostHog (
 - `docs/adr/ADR-NNN-title.md` for any new decision (template: context, decision, alternatives, reversibility, consequences).
 - `docs/plan/04-feature-specs.md` is living; behaviour changes update it in the same PR.
 - `docs/runbook.md` from Sprint 10.
-- No other prose docs; comments explain *why*, not *what*.
+- No other prose docs; comments explain _why_, not _what_.
 
 ## 8. Sprint rituals (solo-friendly)
 

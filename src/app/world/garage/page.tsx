@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
-import { listInvites } from '@/domain/world';
+import { isPlaceableKind, listInvites } from '@/domain/world';
 import { listPublicProfilesByIds } from '@/domain/identity';
 import GarageEditor, { type InviteSummary } from '@/components/world/GarageEditor';
 import { FIXTURE_WORLD_INVITES, isVisualHarness } from '@/lib/visual-fixtures';
@@ -47,6 +47,7 @@ export default async function WorldGaragePage({
   const { own, items, shop } = await loadWorldPage(sp, { next: '/world/garage' });
   const owned = new Set(own.inventory.map((i) => i.item_id));
   const themes = shop.items.filter((i) => i.kind === 'theme' && owned.has(i.id));
+  const decorItems = shop.items.filter((i) => isPlaceableKind(i.kind) && owned.has(i.id));
   const renamePrice = shop.items.find((i) => i.sku === 'garage_rename')?.price ?? null;
   const invites = await loadInvites(isVisualHarness(sp), own.garage.user_id);
 
@@ -58,6 +59,7 @@ export default async function WorldGaragePage({
         own={own}
         items={items}
         themes={themes}
+        decorItems={decorItems}
         renamePrice={renamePrice}
         invites={invites}
       />
