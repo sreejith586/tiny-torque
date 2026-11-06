@@ -102,6 +102,21 @@ export async function listLedgerForUser(
   return data ?? [];
 }
 
+/** Earned credits still spendable (Σ `remaining` of source = earned credits) — the part of the
+ *  balance that expires 180 days after it was earned (D-070). Summed here: PostgREST aggregates
+ *  are off and a user's open earned credits are a handful of rows. */
+export async function getEarnedBalance(supabase: Client, userId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from('token_ledger')
+    .select('remaining')
+    .eq('user_id', userId)
+    .eq('source', 'earned')
+    .gt('delta', 0)
+    .gt('remaining', 0);
+  if (error) throw error;
+  return (data ?? []).reduce((sum, row) => sum + (row.remaining ?? 0), 0);
+}
+
 export interface SpendTokensArgs {
   reason: TokenLedgerReason;
   cost: number;

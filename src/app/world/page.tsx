@@ -1,8 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import CarCard from '@/components/CarCard';
+import WorldQuestsPanel from '@/components/WorldQuestsPanel';
 import { createClient } from '@/lib/supabase/server';
+import { isFlagEnabled } from '@/domain/flags';
 import { getProfile } from '@/domain/identity';
+import { getQuestBoard, type QuestBoard } from '@/domain/quests';
 import {
   listOpenGarages,
   listRecentVisitors,
@@ -11,6 +14,7 @@ import {
 } from '@/domain/world';
 import {
   FIXTURE_PROFILE,
+  FIXTURE_QUEST_BOARD,
   FIXTURE_WORLD_OPEN,
   FIXTURE_WORLD_VISITORS,
   isVisualHarness,
@@ -49,7 +53,18 @@ async function loadSocial(sp: SearchParams, userId: string) {
   return { country, showingAll: wantAll || !country, open, visitors };
 }
 
-// /world home (MV-W02-01, D-081) + Open garages and recent visitors (MV-W03-05, D-087).
+/** "Today's quests" (MV-W04-05): null while `world_earn` is OFF for this user (D-028 — the panel
+ *  keeps its W02 placeholder), otherwise the caller's board. A read failure degrades to the
+ *  placeholder too; quests are never the reason /world fails to render. */
+async function loadQuests(sp: SearchParams, userId: string): Promise<QuestBoard | null> {
+  if (isVisualHarness(sp)) return FIXTURE_QUEST_BOARD;
+  const supabase = await createClient();
+  if (!(await isFlagEnabled(supabase, 'world_earn', { userId }))) return null;
+  return getQuestBoard(supabase, userId).catch((): QuestBoard | null => null);
+}
+
+// /world home (MV-W02-01, D-081) + Open garages and recent visitors (MV-W03-05, D-087) + quests
+// (MV-W04-05, D-090).
 export default async function WorldHomePage({
   searchParams,
 }: {
@@ -57,7 +72,10 @@ export default async function WorldHomePage({
 }) {
   const sp = await searchParams;
   const { own, items } = await loadWorldPage(sp, { next: '/world' });
-  const social = await loadSocial(sp, own.garage.user_id);
+  const [social, quests] = await Promise.all([
+    loadSocial(sp, own.garage.user_id),
+    loadQuests(sp, own.garage.user_id),
+  ]);
   const featured = own.garage.featured_item_id
     ? (items.find((i) => i.id === own.garage.featured_item_id) ?? null)
     : null;
@@ -191,9 +209,13 @@ export default async function WorldHomePage({
       )}
 
       <div className="section-title">Today&apos;s quests</div>
-      <div className="empty-state">
-        <p>Quests and credit rewards arrive with the earn update.</p>
-      </div>
+      {quests ? (
+        <WorldQuestsPanel board={quests} />
+      ) : (
+        <div className="empty-state">
+          <p>Quests and token rewards arrive with the earn update.</p>
+        </div>
+      )}
       <p className="muted" style={{ fontSize: 12, marginTop: 14 }}>
         Visiting, kudos and guestbooks follow the{' '}
         <Link href="/legal/guidelines">community guidelines</Link>.

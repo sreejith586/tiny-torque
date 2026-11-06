@@ -702,6 +702,56 @@ isOneToOne: false
       referencedColumns: ["code"]
     }
                   ]
+                },"quest_progress": {
+                  Row: {
+                    "completed_at": string | null,"period_start": string,"progress": number,"quest_key": string,"updated_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "completed_at"?: string | null,"period_start": string,"progress"?: number,"quest_key": string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "completed_at"?: string | null,"period_start"?: string,"progress"?: number,"quest_key"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "quest_progress_quest_key_fkey"
+      columns: ["quest_key"]
+isOneToOne: false
+      referencedRelation: "quests"
+      referencedColumns: ["key"]
+    },{
+      foreignKeyName: "quest_progress_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "quest_progress_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"quests": {
+                  Row: {
+                    "active": boolean,"cadence": Database["public"]['Enums']["quest_cadence"],"created_at": string,"description": string | null,"key": string,"reward_credits": number,"reward_item_id": string | null,"reward_xp": number,"rule": NonNullable<Json>,"sort_order": number,"title": string
+                  }
+                  Insert: {
+                    "active"?: boolean,"cadence": Database["public"]['Enums']["quest_cadence"],"created_at"?: string,"description"?: string | null,"key": string,"reward_credits"?: number,"reward_item_id"?: string | null,"reward_xp"?: number,"rule": NonNullable<Json>,"sort_order"?: number,"title": string
+                  }
+                  Update: {
+                    "active"?: boolean,"cadence"?: Database["public"]['Enums']["quest_cadence"],"created_at"?: string,"description"?: string | null,"key"?: string,"reward_credits"?: number,"reward_item_id"?: string | null,"reward_xp"?: number,"rule"?: NonNullable<Json>,"sort_order"?: number,"title"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "quests_reward_item_id_fkey"
+      columns: ["reward_item_id"]
+isOneToOne: false
+      referencedRelation: "world_items"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"reports": {
                   Row: {
                     "created_at": string,"deleted_at": string | null,"id": string,"notes": string | null,"reason": string | null,"reporter_id": string,"resolution_note": string | null,"resolved_at": string | null,"resolved_by": string | null,"status": Database["public"]['Enums']["report_status"],"target_id": string | null,"target_name": string | null,"target_type": string,"updated_at": string
@@ -739,6 +789,48 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"season_points": {
+                  Row: {
+                    "points": number,"season_id": string,"updated_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "points"?: number,"season_id": string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "points"?: number,"season_id"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "season_points_season_id_fkey"
+      columns: ["season_id"]
+isOneToOne: false
+      referencedRelation: "seasons"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "season_points_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "season_points_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"seasons": {
+                  Row: {
+                    "created_at": string,"ends_at": string,"id": string,"name": string,"starts_at": string,"theme": string | null
+                  }
+                  Insert: {
+                    "created_at"?: string,"ends_at": string,"id"?: string,"name": string,"starts_at": string,"theme"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"ends_at"?: string,"id"?: string,"name"?: string,"starts_at"?: string,"theme"?: string | null
+                  }
+                  Relationships: []
                 },"seller_reviews": {
                   Row: {
                     "buyer_id": string | null,"comment": string | null,"created_at": string,"deleted_at": string | null,"id": string,"offer_id": string,"rating": number,"seller_id": string,"updated_at": string
@@ -784,13 +876,13 @@ isOneToOne: false
                   ]
                 },"token_ledger": {
                   Row: {
-                    "balance_after": number,"created_at": string,"delta": number,"id": string,"idempotency_key": string | null,"reason": Database["public"]['Enums']["token_ledger_reason"],"ref_id": string | null,"ref_type": string | null,"source": Database["public"]['Enums']["token_ledger_source"] | null,"user_id": string
+                    "balance_after": number,"consumed_earned": number | null,"created_at": string,"delta": number,"id": string,"idempotency_key": string | null,"reason": Database["public"]['Enums']["token_ledger_reason"],"ref_id": string | null,"ref_type": string | null,"remaining": number | null,"source": Database["public"]['Enums']["token_ledger_source"] | null,"user_id": string
                   }
                   Insert: {
-                    "balance_after": number,"created_at"?: string,"delta": number,"id"?: string,"idempotency_key"?: string | null,"reason": Database["public"]['Enums']["token_ledger_reason"],"ref_id"?: string | null,"ref_type"?: string | null,"source"?: Database["public"]['Enums']["token_ledger_source"] | null,"user_id": string
+                    "balance_after": number,"consumed_earned"?: number | null,"created_at"?: string,"delta": number,"id"?: string,"idempotency_key"?: string | null,"reason": Database["public"]['Enums']["token_ledger_reason"],"ref_id"?: string | null,"ref_type"?: string | null,"remaining"?: number | null,"source"?: Database["public"]['Enums']["token_ledger_source"] | null,"user_id": string
                   }
                   Update: {
-                    "balance_after"?: number,"created_at"?: string,"delta"?: number,"id"?: string,"idempotency_key"?: string | null,"reason"?: Database["public"]['Enums']["token_ledger_reason"],"ref_id"?: string | null,"ref_type"?: string | null,"source"?: Database["public"]['Enums']["token_ledger_source"] | null,"user_id"?: string
+                    "balance_after"?: number,"consumed_earned"?: number | null,"created_at"?: string,"delta"?: number,"id"?: string,"idempotency_key"?: string | null,"reason"?: Database["public"]['Enums']["token_ledger_reason"],"ref_id"?: string | null,"ref_type"?: string | null,"remaining"?: number | null,"source"?: Database["public"]['Enums']["token_ledger_source"] | null,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -1127,6 +1219,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "world_levels"
       referencedColumns: ["level"]
+    },{
+      foreignKeyName: "world_items_season_id_fkey"
+      columns: ["season_id"]
+isOneToOne: false
+      referencedRelation: "seasons"
+      referencedColumns: ["id"]
     }
                   ]
                 },"world_kudos": {
@@ -1336,6 +1434,7 @@ isOneToOne: true
 "admin_adjust_tokens":
 { Args: { "p_delta": number,"p_note"?: string,"p_user": string }; Returns: {
               "balance_after": number,
+"consumed_earned": number | null,
 "created_at": string,
 "delta": number,
 "id": string,
@@ -1343,6 +1442,7 @@ isOneToOne: true
 "reason": Database["public"]['Enums']["token_ledger_reason"],
 "ref_id": string | null,
 "ref_type": string | null,
+"remaining": number | null,
 "source": Database["public"]['Enums']["token_ledger_source"] | null,
 "user_id": string
             }
@@ -1576,6 +1676,7 @@ isOneToOne: true
 "credit_tokens":
 { Args: { "p_delta": number,"p_key"?: string,"p_reason": Database["public"]['Enums']["token_ledger_reason"],"p_ref_id"?: string,"p_ref_type"?: string,"p_user": string }; Returns: {
               "balance_after": number,
+"consumed_earned": number | null,
 "created_at": string,
 "delta": number,
 "id": string,
@@ -1583,6 +1684,7 @@ isOneToOne: true
 "reason": Database["public"]['Enums']["token_ledger_reason"],
 "ref_id": string | null,
 "ref_type": string | null,
+"remaining": number | null,
 "source": Database["public"]['Enums']["token_ledger_source"] | null,
 "user_id": string
             }
@@ -1592,9 +1694,35 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
+"current_quests":
+{ Args: { "p_at"?: string }; Returns: {
+              "cadence": Database["public"]['Enums']["quest_cadence"],"description": string,"key": string,"period_end": string,"period_start": string,"reward_credits": number,"reward_item_id": string,"reward_xp": number,"rule": Json,"sort_order": number,"title": string
+            }[]
+                           },
 "dearmor":
 { Args: { "": string }; Returns: string
                            },
+"earn_tokens":
+{ Args: { "p_amount": number,"p_key": string,"p_reason": Database["public"]['Enums']["token_ledger_reason"],"p_user": string }; Returns: {
+              "balance_after": number,
+"consumed_earned": number | null,
+"created_at": string,
+"delta": number,
+"id": string,
+"idempotency_key": string | null,
+"reason": Database["public"]['Enums']["token_ledger_reason"],
+"ref_id": string | null,
+"ref_type": string | null,
+"remaining": number | null,
+"source": Database["public"]['Enums']["token_ledger_source"] | null,
+"user_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "token_ledger"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "delete_account":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
@@ -1629,6 +1757,9 @@ isOneToOne: true
                            },
 "entitlement_scan_quota":
 { Args: { "p_user": string }; Returns: number
+                           },
+"expire_earned_tokens":
+{ Args: Record<PropertyKey, never>; Returns: number
                            },
 "gamification_events":
 { Args: { "p_user"?: string }; Returns: {
@@ -1690,11 +1821,23 @@ isOneToOne: true
 "media_is_public":
 { Args: { "p_media_id": string }; Returns: boolean
                            },
+"mv_flag_active":
+{ Args: { "p_key": string,"p_user": string }; Returns: boolean
+                           },
 "mv_is_backend_caller":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "pgp_armor_headers":
 { Args: { "": string }; Returns: Record<string, unknown>[]
+                           },
+"mv_stable_bucket":
+{ Args: { "p_input": string }; Returns: number
+                           },
+"mv_utc_day":
+{ Args: { "p_at": string }; Returns: string
+                           },
+"mv_utc_day_start":
+{ Args: { "p_day": string }; Returns: string
                            },
 "post_world_guestbook":
 { Args: { "p_body": string,"p_garage": string }; Returns: {
@@ -1740,6 +1883,18 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
+"quest_completed_at":
+{ Args: { "p_end": string,"p_rule": Json,"p_start": string,"p_user": string }; Returns: string
+                           },
+"quest_period_end":
+{ Args: { "p_cadence": Database["public"]['Enums']["quest_cadence"],"p_start": string }; Returns: string
+                           },
+"quest_period_start":
+{ Args: { "p_at": string,"p_cadence": Database["public"]['Enums']["quest_cadence"] }; Returns: string
+                           },
+"quest_progress_value":
+{ Args: { "p_end": string,"p_rule": Json,"p_start": string,"p_user": string }; Returns: number
+                           },
 "record_world_visit":
 { Args: { "p_garage": string }; Returns: {
               "created_at": string,
@@ -1780,6 +1935,9 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
+"replay_quest_progress":
+{ Args: { "p_from"?: string,"p_user": string }; Returns: number
+                           },
 "resolve_report":
 { Args: { "p_action": string,"p_report_id": string,"p_resolution_note"?: string }; Returns: {
               "created_at": string,
@@ -1843,6 +2001,9 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
+"token_consume_fifo":
+{ Args: { "p_amount": number,"p_earned_first": boolean,"p_user": string }; Returns: number
+                           },
 "token_ledger_source_for":
 { Args: { "p_reason": Database["public"]['Enums']["token_ledger_reason"] }; Returns: Database["public"]['Enums']["token_ledger_source"]
                            },
@@ -1907,12 +2068,18 @@ isOneToOne: true
 "world_has_invite":
 { Args: { "p_garage": string,"p_viewer": string }; Returns: boolean
                            },
+"world_login_streak":
+{ Args: { "p_day"?: string,"p_user": string }; Returns: number
+                           },
+"world_quest_complete":
+{ Args: { "p_at": string,"p_cadence": Database["public"]['Enums']["quest_cadence"],"p_key": string,"p_period_start": string,"p_reward_credits": number,"p_reward_item_id": string,"p_reward_xp": number,"p_user": string }; Returns: undefined
+                           },
 "world_remove_item_from_garage":
 { Args: { "p_item": string,"p_user": string }; Returns: boolean
                            }
           }
           Enums: {
-            "account_type": "individual"|"shop","catalog_status": "proposed"|"verified","entitlement_grant_kind": "listing_slot"|"scan_pack"|"pro_30d"|"world_level"|"world_item","feedback_kind": "bug"|"idea"|"other","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed"|"reserved","listing_type": "sale"|"trade"|"both","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","model_status": "proposed"|"verified"|"merged","notification_type": "offer_received"|"offer_accepted"|"offer_declined"|"message"|"listing_sold"|"review_received"|"badge_unlocked"|"wishlist_match"|"system"|"world_visit"|"world_kudos"|"world_guestbook"|"world_invite","offer_status": "pending"|"accepted"|"declined"|"withdrawn"|"expired"|"completed"|"cancelled","offer_type": "cash"|"buy_now"|"trade","plan_tier": "free"|"pro","report_status": "open"|"reviewed"|"dismissed","scan_kind": "single"|"group"|"visual_search","scan_status": "queued"|"running"|"done"|"failed","token_ledger_reason": "purchase"|"spend_listing_slot"|"spend_scan_pack"|"spend_pro_30d"|"refund"|"admin_adjust"|"promo"|"earn_quest"|"earn_daily"|"earn_race_participation"|"earn_host"|"earn_attend"|"earn_achievement"|"earn_referral"|"earn_season"|"expire_earned"|"spend_garage_level"|"spend_world_item"|"spend_meetup_host"|"spend_race_entry"|"spend_spotlight"|"spend_rename","token_ledger_source": "purchased"|"earned"|"promo"|"adjust","token_purchase_provider": "stripe"|"razorpay","token_purchase_status": "created"|"paid"|"failed"|"refunded","user_role": "user"|"admin","world_acquired_via": "purchase"|"earn"|"promo","world_item_kind": "decor"|"theme"|"tune"|"trophy"|"consumable"|"signage","world_open_mode": "public"|"followers"|"invite"
+            "account_type": "individual"|"shop","catalog_status": "proposed"|"verified","entitlement_grant_kind": "listing_slot"|"scan_pack"|"pro_30d"|"world_level"|"world_item","feedback_kind": "bug"|"idea"|"other","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed"|"reserved","listing_type": "sale"|"trade"|"both","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","model_status": "proposed"|"verified"|"merged","notification_type": "offer_received"|"offer_accepted"|"offer_declined"|"message"|"listing_sold"|"review_received"|"badge_unlocked"|"wishlist_match"|"system"|"world_visit"|"world_kudos"|"world_guestbook"|"world_invite","offer_status": "pending"|"accepted"|"declined"|"withdrawn"|"expired"|"completed"|"cancelled","offer_type": "cash"|"buy_now"|"trade","plan_tier": "free"|"pro","quest_cadence": "daily"|"weekly","report_status": "open"|"reviewed"|"dismissed","scan_kind": "single"|"group"|"visual_search","scan_status": "queued"|"running"|"done"|"failed","token_ledger_reason": "purchase"|"spend_listing_slot"|"spend_scan_pack"|"spend_pro_30d"|"refund"|"admin_adjust"|"promo"|"earn_quest"|"earn_daily"|"earn_race_participation"|"earn_host"|"earn_attend"|"earn_achievement"|"earn_referral"|"earn_season"|"expire_earned"|"spend_garage_level"|"spend_world_item"|"spend_meetup_host"|"spend_race_entry"|"spend_spotlight"|"spend_rename","token_ledger_source": "purchased"|"earned"|"promo"|"adjust"|"mixed","token_purchase_provider": "stripe"|"razorpay","token_purchase_status": "created"|"paid"|"failed"|"refunded","user_role": "user"|"admin","world_acquired_via": "purchase"|"earn"|"promo","world_item_kind": "decor"|"theme"|"tune"|"trophy"|"consumable"|"signage","world_open_mode": "public"|"followers"|"invite"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -2028,7 +2195,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "account_type": ["individual", "shop"],"catalog_status": ["proposed", "verified"],"entitlement_grant_kind": ["listing_slot", "scan_pack", "pro_30d", "world_level", "world_item"],"feedback_kind": ["bug", "idea", "other"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed", "reserved"],"listing_type": ["sale", "trade", "both"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"model_status": ["proposed", "verified", "merged"],"notification_type": ["offer_received", "offer_accepted", "offer_declined", "message", "listing_sold", "review_received", "badge_unlocked", "wishlist_match", "system", "world_visit", "world_kudos", "world_guestbook", "world_invite"],"offer_status": ["pending", "accepted", "declined", "withdrawn", "expired", "completed", "cancelled"],"offer_type": ["cash", "buy_now", "trade"],"plan_tier": ["free", "pro"],"report_status": ["open", "reviewed", "dismissed"],"scan_kind": ["single", "group", "visual_search"],"scan_status": ["queued", "running", "done", "failed"],"token_ledger_reason": ["purchase", "spend_listing_slot", "spend_scan_pack", "spend_pro_30d", "refund", "admin_adjust", "promo", "earn_quest", "earn_daily", "earn_race_participation", "earn_host", "earn_attend", "earn_achievement", "earn_referral", "earn_season", "expire_earned", "spend_garage_level", "spend_world_item", "spend_meetup_host", "spend_race_entry", "spend_spotlight", "spend_rename"],"token_ledger_source": ["purchased", "earned", "promo", "adjust"],"token_purchase_provider": ["stripe", "razorpay"],"token_purchase_status": ["created", "paid", "failed", "refunded"],"user_role": ["user", "admin"],"world_acquired_via": ["purchase", "earn", "promo"],"world_item_kind": ["decor", "theme", "tune", "trophy", "consumable", "signage"],"world_open_mode": ["public", "followers", "invite"]
+            "account_type": ["individual", "shop"],"catalog_status": ["proposed", "verified"],"entitlement_grant_kind": ["listing_slot", "scan_pack", "pro_30d", "world_level", "world_item"],"feedback_kind": ["bug", "idea", "other"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed", "reserved"],"listing_type": ["sale", "trade", "both"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"model_status": ["proposed", "verified", "merged"],"notification_type": ["offer_received", "offer_accepted", "offer_declined", "message", "listing_sold", "review_received", "badge_unlocked", "wishlist_match", "system", "world_visit", "world_kudos", "world_guestbook", "world_invite"],"offer_status": ["pending", "accepted", "declined", "withdrawn", "expired", "completed", "cancelled"],"offer_type": ["cash", "buy_now", "trade"],"plan_tier": ["free", "pro"],"quest_cadence": ["daily", "weekly"],"report_status": ["open", "reviewed", "dismissed"],"scan_kind": ["single", "group", "visual_search"],"scan_status": ["queued", "running", "done", "failed"],"token_ledger_reason": ["purchase", "spend_listing_slot", "spend_scan_pack", "spend_pro_30d", "refund", "admin_adjust", "promo", "earn_quest", "earn_daily", "earn_race_participation", "earn_host", "earn_attend", "earn_achievement", "earn_referral", "earn_season", "expire_earned", "spend_garage_level", "spend_world_item", "spend_meetup_host", "spend_race_entry", "spend_spotlight", "spend_rename"],"token_ledger_source": ["purchased", "earned", "promo", "adjust", "mixed"],"token_purchase_provider": ["stripe", "razorpay"],"token_purchase_status": ["created", "paid", "failed", "refunded"],"user_role": ["user", "admin"],"world_acquired_via": ["purchase", "earn", "promo"],"world_item_kind": ["decor", "theme", "tune", "trophy", "consumable", "signage"],"world_open_mode": ["public", "followers", "invite"]
           }
         }
 } as const

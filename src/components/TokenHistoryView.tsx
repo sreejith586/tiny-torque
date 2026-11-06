@@ -27,6 +27,16 @@ const REASON_LABEL: Record<TokenLedgerReason, string> = {
   spend_rename: 'Spent — garage rename',
 };
 
+/** Where the value came from (credits) or what funded it (spends) — `token_ledger.source`, set by
+ *  the RPCs since W04's FIFO (D-070): earned tokens are spent first and expire after 180 days. */
+const SOURCE_LABEL: Record<NonNullable<TokenLedgerRow['source']>, string> = {
+  purchased: 'purchased',
+  earned: 'earned',
+  promo: 'promo',
+  adjust: 'adjustment',
+  mixed: 'earned + purchased',
+};
+
 export default function TokenHistoryView({ ledger }: { ledger: TokenLedgerRow[] }) {
   if (ledger.length === 0) {
     return (
@@ -53,6 +63,7 @@ export default function TokenHistoryView({ ledger }: { ledger: TokenLedgerRow[] 
             <div>{REASON_LABEL[row.reason] ?? row.reason}</div>
             <div className="muted" style={{ fontSize: 12 }}>
               {new Date(row.created_at).toLocaleString()}
+              {row.source ? ` · ${SOURCE_LABEL[row.source]}` : ''}
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>

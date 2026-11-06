@@ -23,6 +23,7 @@ export class TokenError extends Error {
 
 export const listActivePacks = repo.listActivePacks;
 export const listLedgerForUser = repo.listLedgerForUser;
+export const getEarnedBalance = repo.getEarnedBalance;
 export const listPurchasesForUser = repo.listPurchasesForUser;
 export const getPurchaseBySessionId = repo.getPurchaseBySessionId;
 
