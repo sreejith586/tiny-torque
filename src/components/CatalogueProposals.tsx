@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { verifyModel, rejectModel } from '@/domain/catalog';
 import type { CatalogModelRow } from '@/domain/catalog';
+import CatalogueSpecsEditor from './CatalogueSpecsEditor';
 
 export default function CatalogueProposals({
   models,
@@ -37,29 +38,32 @@ export default function CatalogueProposals({
   return (
     <div>
       {models.map((m) => (
-        <div key={m.id} className="toggle-row">
-          <span>
-            <strong>{brandNames[m.brand_id] ?? '—'}</strong> · {m.name}
-            {m.series ? ` · ${m.series}` : ''}
-          </span>
-          <span style={{ display: 'flex', gap: 8 }}>
-            <button
-              className="btn-secondary"
-              style={{ width: 'auto' }}
-              disabled={busy === m.id}
-              onClick={() => act(m.id, 'verify')}
-            >
-              Verify
-            </button>
-            <button
-              className="btn-danger"
-              style={{ width: 'auto' }}
-              disabled={busy === m.id}
-              onClick={() => act(m.id, 'reject')}
-            >
-              Reject
-            </button>
-          </span>
+        <div key={m.id} style={{ borderTop: '1px solid var(--border)', padding: '10px 0' }}>
+          <div className="toggle-row" style={{ margin: 0 }}>
+            <span>
+              <strong>{brandNames[m.brand_id] ?? '—'}</strong> · {m.name}
+              {m.series ? ` · ${m.series}` : ''}
+            </span>
+            <span style={{ display: 'flex', gap: 8 }}>
+              <button
+                className="btn-secondary"
+                style={{ width: 'auto' }}
+                disabled={busy === m.id}
+                onClick={() => act(m.id, 'verify')}
+              >
+                Verify
+              </button>
+              <button
+                className="btn-danger"
+                style={{ width: 'auto' }}
+                disabled={busy === m.id}
+                onClick={() => act(m.id, 'reject')}
+              >
+                Reject
+              </button>
+            </span>
+          </div>
+          <CatalogueSpecsEditor model={m} />
         </div>
       ))}
     </div>
