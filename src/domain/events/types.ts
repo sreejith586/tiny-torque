@@ -54,6 +54,8 @@ export const EVENT_TYPES = [
   'tokens.adjusted',
   'tokens.earned',
   'tokens.expired',
+  // T-14 d expiry notice per (user, expiry day) batch of earned credits — jobs runner (MV-W04-04, D-070)
+  'tokens.expiring_soon',
   'pro.activated',
   'pro.expired',
   'xp.granted',

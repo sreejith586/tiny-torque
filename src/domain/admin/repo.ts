@@ -2,7 +2,13 @@
 // RPC that re-checks is_admin() itself — this is a second layer, not the real gate (that's the
 // RPC + /admin route guards, src/proxy.ts and src/app/admin/layout.tsx).
 import type { Client } from '@/lib/supabase/types';
-import type { AdminProfileRow, EarnFreezeRow, EconomySummaryRow, EconomyWeeklyRow } from './types';
+import type {
+  AdminProfileRow,
+  EarnFreezeRow,
+  EconomySummaryRow,
+  EconomyWeeklyRow,
+  JobRunRow,
+} from './types';
 
 export async function searchUsers(
   supabase: Client,
@@ -67,6 +73,18 @@ export async function getEconomyWeekly(supabase: Client, weeks = 8): Promise<Eco
 
 export async function getEconomySummary(supabase: Client): Promise<EconomySummaryRow[]> {
   const { data, error } = await supabase.rpc('world_economy_summary');
+  if (error) throw error;
+  return data ?? [];
+}
+
+// ---------- scheduled jobs log (MV-W04-04, F-26 / 06 §5) ----------
+/** Newest first. RLS: admins only (job_runs has no write policy — run_world_job is the writer). */
+export async function listJobRuns(supabase: Client, limit = 50): Promise<JobRunRow[]> {
+  const { data, error } = await supabase
+    .from('job_runs')
+    .select('*')
+    .order('started_at', { ascending: false })
+    .limit(limit);
   if (error) throw error;
   return data ?? [];
 }

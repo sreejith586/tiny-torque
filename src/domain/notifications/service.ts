@@ -22,6 +22,8 @@ const NOTIFICATION_TEXT: Record<NotificationType, string> = {
   world_kudos: 'Your garage got kudos.',
   world_guestbook: 'Someone signed your guestbook.',
   world_invite: 'You were invited to a garage.',
+  // T-14 d earned-credit expiry notice (F-26, D-070; jobs runner MV-W04-04)
+  tokens_expiring: 'Some of your earned credits expire soon.',
 };
 
 /** Pure: what the notification says. No DB access, unit-testable in isolation. */
@@ -50,6 +52,8 @@ export function notificationLink(n: Pick<NotificationRow, 'type' | 'payload'>): 
       return '/world/garage';
     case 'world_invite':
       return typeof payload.handle === 'string' ? `/world/g/${payload.handle}` : '/world';
+    case 'tokens_expiring':
+      return '/tokens/history';
     default:
       return null;
   }
