@@ -75,7 +75,9 @@ export default function AppHeaderClient({
 
   return (
     <header>
-      <Link href="/garage" className="brand-lockup" aria-label="Go to your garage">
+      {/* Accessible name = the visible lockup text (axe label-content-name-mismatch, MV-S9-04);
+          the destination is a tooltip, not the name. */}
+      <Link href="/garage" className="brand-lockup" title="Go to your garage">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="brand-logo" src="/tiny-torque-logo.webp" alt="" width={40} height={40} />
         <span className="brand-text">

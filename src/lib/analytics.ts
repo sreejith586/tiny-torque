@@ -4,6 +4,7 @@
 'use client';
 
 import type { PostHog } from 'posthog-js';
+import * as Sentry from '@sentry/nextjs';
 import type { EventType } from '@/domain/events/types';
 
 // MV-S9-03: posthog-js is loaded on demand (dynamic import, after the first paint) instead of
@@ -57,6 +58,9 @@ export function identify(
 }
 
 export function track(event: string, props: Record<string, string | number | boolean | null> = {}) {
+  // MV-S9-06: the same event is a Sentry breadcrumb, so an error report shows the last actions.
+  // Props are already PII-free by this module's contract (ids, counts, flags only).
+  Sentry.addBreadcrumb({ category: 'action', message: event, data: props, level: 'info' });
   withClient((p) => p.capture(event, props));
 }
 

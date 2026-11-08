@@ -24,6 +24,9 @@
     "db:diff": "supabase db diff -f",
     "guard": "bash docs/plan/tools/guard.sh",
     "analyze": "node scripts/bundle-report.mjs",
+    "a11y:contrast": "node scripts/contrast-check.mjs",
+    "test:e2e:a11y": "playwright test e2e/a11y.spec.ts --project=mobile --project=desktop",
+    "test:e2e:matrix": "THEME_MATRIX=1 playwright test e2e/theme-matrix.spec.ts --project=desktop",
     "lighthouse": "npx --yes @lhci/cli@0.14.0 autorun --collect.url=http://127.0.0.1:3000/ --collect.url=http://127.0.0.1:3000/login --collect.url=http://127.0.0.1:3000/market?__visual=1 --collect.url=http://127.0.0.1:3000/garage?__visual=1",
     "plan:render": "python3 docs/plan/tools/render.py",
     "prepare": "husky"

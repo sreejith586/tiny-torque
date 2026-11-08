@@ -133,7 +133,8 @@ export default function ProfileView({
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : null}
-        <label className="icon-btn profile-banner-edit" aria-label="Change your banner photo">
+        <label className="icon-btn profile-banner-edit">
+          <span className="sr-only">Change your banner photo</span>
           <CameraIcon size={16} />
           <input
             type="file"
@@ -150,10 +151,8 @@ export default function ProfileView({
       </div>
 
       <div className="panel" style={{ marginBottom: 16, paddingTop: 0 }}>
-        <label
-          className={`profile-avatar-btn profile-hero-avatar ${isPro ? 'pro' : ''}`}
-          aria-label="Change your profile photo"
-        >
+        <label className={`profile-avatar-btn profile-hero-avatar ${isPro ? 'pro' : ''}`}>
+          <span className="sr-only">Change your profile photo</span>
           {photoPreview ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img

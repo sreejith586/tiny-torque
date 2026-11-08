@@ -92,7 +92,7 @@ Migration on local+staging with pgTAP · deployable to prod dark behind its flag
 
 ## Current sprint
 
-S1 — Identity, multi-country, platform primitives. Branch `sprint-1`, PRs into `staging`. S0 complete 2026-09-28 (prod live). See PROGRESS.md.
+S9 — PWA, performance, accessibility, scheduled jobs (one PR `[MV-S9-01…06]` into `staging`, branch `mv/S9-pwa-perf-a11y-jobs`). S0–S8 live on prod. Next: S10 hardening & pilot readiness. See PROGRESS.md.
 
 ## Don't
 

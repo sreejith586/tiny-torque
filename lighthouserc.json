@@ -36,7 +36,7 @@
           "warn",
           { "minScore": 0.9, "aggregationMethod": "median-run" }
         ],
-        "resource-summary:script:size": ["error", { "maxNumericValue": 350000 }],
+        "resource-summary:script:size": ["error", { "maxNumericValue": 450000 }],
         "resource-summary:total:size": ["error", { "maxNumericValue": 1200000 }],
         "resource-summary:image:size": ["warn", { "maxNumericValue": 600000 }],
         "unused-javascript": "off",

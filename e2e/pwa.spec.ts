@@ -49,11 +49,21 @@ test('iOS home-screen meta: capable + startup images for every supported size', 
 test('install prompt waits for the 2nd visit, then offers to install (dismiss hides it)', async ({
   page,
 }) => {
+  // The visit counter is written by PwaInit's effect — waiting for it = waiting for hydration, so
+  // the synthetic browser event below always finds the listener attached.
+  const hydrated = (minVisits: number) =>
+    page.waitForFunction(
+      (n) => JSON.parse(localStorage.getItem('mv-pwa-visits') ?? '{"count":0}').count >= n,
+      minVisits
+    );
+  const fireInstallEvent = () =>
+    page.evaluate(() =>
+      window.dispatchEvent(new Event('beforeinstallprompt', { cancelable: true }))
+    );
   // 1st visit: no prompt even when the browser offers one.
   await page.goto('/market');
-  await page.evaluate(() =>
-    window.dispatchEvent(new Event('beforeinstallprompt', { cancelable: true }))
-  );
+  await hydrated(1);
+  await fireInstallEvent();
   await expect(page.locator('[data-install-prompt]')).toHaveCount(0);
 
   // 2nd visit (the visit counter treats a quick reload as the same visit, so backdate the first).
@@ -66,9 +76,8 @@ test('install prompt waits for the 2nd visit, then offers to install (dismiss hi
     );
   });
   await page.goto('/market');
-  await page.evaluate(() =>
-    window.dispatchEvent(new Event('beforeinstallprompt', { cancelable: true }))
-  );
+  await hydrated(2);
+  await fireInstallEvent();
   const prompt = page.locator('[data-install-prompt]');
   await expect(prompt).toBeVisible();
   await expect(prompt).toContainText('Add Tiny Torque to your home screen');
@@ -76,9 +85,8 @@ test('install prompt waits for the 2nd visit, then offers to install (dismiss hi
   await expect(prompt).toHaveCount(0);
   // Dismissed → not offered again on the next visit.
   await page.goto('/market');
-  await page.evaluate(() =>
-    window.dispatchEvent(new Event('beforeinstallprompt', { cancelable: true }))
-  );
+  await hydrated(2);
+  await fireInstallEvent();
   await expect(page.locator('[data-install-prompt]')).toHaveCount(0);
 });
 

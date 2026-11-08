@@ -161,6 +161,8 @@ Role-gated. Pages: Overview (users, items, listings, offers, scans, cost this mo
 
 Manifest, icons, install prompt (deferred until 2nd visit), service worker caching app shell + last-viewed garage (read-only offline banner), `next/image` with Supabase transforms, route-level loading states, skeletons; Lighthouse ≥ 90 perf/a11y on mid-tier Android profile; contrast check script over all 6 themes; focus management in dialogs; reduced-motion respect.
 
+**AC (S9, ticked 2026-11-08):** [x] installable (manifest + icons + iOS meta/splash, install prompt from the 2nd visit — `e2e/pwa.spec.ts`) · [x] service worker = app shell + last garage page read-only + offline banner, nothing else cached (D-097) · [x] route-level `loading.tsx` / `error.tsx` + skeletons on every segment, app-wide 404 / global error, retry affordances (D-100) · [x] Supabase image renders for thumbnails (`?w=`) + lazy loading (D-098) · [x] Lighthouse CI budget perf ≥ 0.9 / a11y ≥ 0.9 on the mobile profile in GitHub Actions (`lighthouse` job — the first real numbers are the PR's run) · [x] contrast script over all 6 themes in CI, all AA (D-099) · [x] focus management in dialogs/dropdowns, labels, reduced-motion · [x] axe in Playwright · [x] theme QA matrix artifact every route × 6 themes × 2 widths (D-056 review aid).
+
 ## F-18 Analytics & pilot instrumentation
 
 PostHog events mirroring key domain events (client-side identify with `user_id`, country, plan; server-side capture from event consumer for money/scan events); funnels defined for 01 §6 metrics; weekly SQL report (materialised view `pilot_kpis_weekly`).
@@ -168,6 +170,8 @@ PostHog events mirroring key domain events (client-side identify with `user_id`,
 ## F-19 Ops readiness
 
 Runbook (incidents, rollback, restore from PITR, rotating keys), backups verified by restore drill in Sprint 10, status page (Vercel + Supabase status links in-app footer), Sentry alert routing to your email/Slack, cost alerts (Anthropic spend, Supabase usage).
+
+**AC (S9 part, ticked 2026-11-08):** [x] scheduled expiry runs itself — `expire_listings` / `expire_offers` hourly, `purge_trash` + `ensure_event_partitions` daily via pg_cron, logged in `job_runs` (D-096) · [x] delete-account purge of `auth.users` + storage objects (`purge_accounts`, `purge_media`, 7-day grace) · [x] alert on failure = the daily `h1-jobs.yml` run fails on any errored `job_runs` row of either track (GitHub notifies the owner) · [x] `/admin/world/economy` › Job runs shows the H1 jobs. Still open for S10: runbook, PITR restore drill, status links, Sentry alert routing, cost alerts.
 
 ## Collectors World (H3) — F-20…F-28
 

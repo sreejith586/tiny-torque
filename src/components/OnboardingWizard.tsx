@@ -220,7 +220,14 @@ export default function OnboardingWizard({
       <h1 style={{ fontSize: 26 }}>Set up your profile</h1>
       <p className="muted">Just a couple of details to get you into your garage.</p>
 
-      <div style={{ display: 'flex', gap: 6, margin: '18px 0' }} aria-label="Progress">
+      <div
+        style={{ display: 'flex', gap: 6, margin: '18px 0' }}
+        role="progressbar"
+        aria-label={`Step ${stepIndex + 1} of ${steps.length}`}
+        aria-valuemin={1}
+        aria-valuemax={steps.length}
+        aria-valuenow={stepIndex + 1}
+      >
         {steps.map((s, i) => (
           <div
             key={s}

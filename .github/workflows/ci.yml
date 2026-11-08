@@ -38,6 +38,8 @@ jobs:
       - run: pnpm test
       - name: Decision guard (D-023)
         run: bash docs/plan/tools/guard.sh
+      - name: Theme contrast (WCAG AA over the 6 themes, F-17 / MV-S9-04)
+        run: node scripts/contrast-check.mjs
       - name: Build
         run: pnpm build
         env:
@@ -219,3 +221,13 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with: { name: playwright-report, path: playwright-report, retention-days: 7 }
+      - name: Theme QA screenshot matrix (MV-S9-05, D-056 review aid — never a gate)
+        if: always()
+        continue-on-error: true
+        run: THEME_MATRIX=1 pnpm exec playwright test e2e/theme-matrix.spec.ts --project=desktop --reporter=line
+        env:
+          BASE_URL: ${{ github.event.deployment_status.environment_url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: theme-matrix, path: playwright-report/theme-matrix, retention-days: 14, if-no-files-found: ignore }

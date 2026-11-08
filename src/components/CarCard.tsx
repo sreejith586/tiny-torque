@@ -87,6 +87,10 @@ export default function CarCard({
         {item.media.length > 1 ? (
           // CSS-only swipe carousel (scroll-snap) — no JS needed, works inside the card link.
           <div
+            // Keyboard-scrollable (MV-S9-04 axe: scrollable-region-focusable).
+            tabIndex={0}
+            role="group"
+            aria-label={`${item.media.length} photos`}
             style={{
               display: 'flex',
               width: '100%',

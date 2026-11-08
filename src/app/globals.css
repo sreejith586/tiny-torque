@@ -278,7 +278,9 @@ button:active,
 
 .btn-danger {
   background: var(--danger);
-  color: #fff;
+  /* MV-S9-04: the same per-theme button text token btn-primary uses — white sat at 2.7:1 on the
+     dark themes' pink/red danger tokens. */
+  color: var(--btn-text);
 }
 
 .btn-primary:disabled,
@@ -314,6 +316,18 @@ textarea:focus {
   box-shadow:
     inset 0 1px 3px rgba(0, 0, 0, 0.08),
     0 0 0 3px color-mix(in srgb, var(--orange) 20%, transparent);
+}
+
+/* type="search" (MV-S9-04: the garage/market search fields are real search inputs for AT) keeps
+   the plain text-field look — no WebKit searchfield chrome or cancel button. */
+input[type='search'] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+input[type='search']::-webkit-search-cancel-button,
+input[type='search']::-webkit-search-decoration {
+  -webkit-appearance: none;
+  display: none;
 }
 
 input::placeholder,
@@ -1566,7 +1580,8 @@ header {
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--teal) 18%, var(--panel));
+  /* MV-S9-04: 10 % tint (was 18 %) so the 11 px teal label clears 4.5:1 on the dark themes. */
+  background: color-mix(in srgb, var(--teal) 10%, var(--panel));
   color: var(--teal);
   border: 1px solid color-mix(in srgb, var(--teal) 40%, var(--border));
   white-space: nowrap;
@@ -1859,4 +1874,19 @@ header {
 .profile-hero-avatar.pro {
   border-color: var(--gold);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 45%, transparent);
+}
+
+/* ---------- Reduced motion (MV-S9-04, F-17 "reduced-motion respect") ----------
+   Every D-044/D-045 micro-interaction (press scale, splash fade, loader dots, progress fills,
+   unlock toast, pro-pill shine) collapses to an instant state change for people who asked the OS
+   for less motion. Transitions keep a 1 ms duration so `transitionend`-driven code still fires. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
