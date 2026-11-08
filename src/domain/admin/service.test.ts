@@ -136,6 +136,6 @@ describe('job runs helpers (MV-W04-04, 06 §5 job_runs)', () => {
       'expired 3 · users 2'
     );
     expect(jobResultSummary({ day: '2026-11-10', emitted: 2 })).toBe('day 2026-11-10 · emitted 2');
-    expect(jobResultSummary(null)).toBe('');
+    expect(jobResultSummary([])).toBe(''); // jsonb not null: a non-object result is just empty
   });
 });

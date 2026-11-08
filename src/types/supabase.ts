@@ -500,15 +500,17 @@ isOneToOne: false
                   ]
                 },"job_runs": {
                   Row: {
-                    "error": string | null,"finished_at": string | null,"id": number,"job": string,"result": Json,"run_at": string,"started_at": string,"status": string,"triggered_by": string
+                    "error": string | null,"finished_at": string | null,"id": number,"job": string,"result": NonNullable<Json>,"run_at": string,"started_at": string,"status": string,"triggered_by": string
                   }
                   Insert: {
-                    "error"?: string | null,"finished_at"?: string | null,"id"?: never,"job": string,"result"?: Json,"run_at": string,"started_at"?: string,"status"?: string,"triggered_by"?: string
+                    "error"?: string | null,"finished_at"?: string | null,"id"?: never,"job": string,"result"?: NonNullable<Json>,"run_at": string,"started_at"?: string,"status"?: string,"triggered_by"?: string
                   }
                   Update: {
-                    "error"?: string | null,"finished_at"?: string | null,"id"?: never,"job"?: string,"result"?: Json,"run_at"?: string,"started_at"?: string,"status"?: string,"triggered_by"?: string
+                    "error"?: string | null,"finished_at"?: string | null,"id"?: never,"job"?: string,"result"?: NonNullable<Json>,"run_at"?: string,"started_at"?: string,"status"?: string,"triggered_by"?: string
                   }
-                  Relationships: []
+                  Relationships: [
+                    
+                  ]
                 },"listing_favorites": {
                   Row: {
                     "created_at": string,"listing_id": string,"user_id": string
@@ -2041,7 +2043,15 @@ isOneToOne: true
                            },
 "run_world_job":
 { Args: { "p_at"?: string,"p_job": string,"p_source"?: string }; Returns: {
-              "error": string | null,"finished_at": string | null,"id": number,"job": string,"result": Json,"run_at": string,"started_at": string,"status": string,"triggered_by": string
+              "error": string | null,
+"finished_at": string | null,
+"id": number,
+"job": string,
+"result": NonNullable<Json>,
+"run_at": string,
+"started_at": string,
+"status": string,
+"triggered_by": string
             }[]
                           SetofOptions: {
         from: "*"
