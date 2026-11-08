@@ -70,6 +70,9 @@ export interface LayoutContext {
   publicItemIds: ReadonlySet<string>;
   /** world_items ids the owner holds in world_inventory. */
   ownedWorldItemIds: ReadonlySet<string>;
+  /** Owned ids whose kind may sit in a decor slot (decor / signage / trophy — never a theme, tune
+   *  or consumable). Omitted = every owned item is placeable (W02 callers / tests). */
+  placeableWorldItemIds?: ReadonlySet<string>;
 }
 
 /** Full layout validation: shape (zod) + capacity + ownership/visibility. Throws WorldError. */
@@ -89,6 +92,8 @@ export function validateLayout(input: unknown, ctx: LayoutContext): GarageLayout
   }
   for (const d of layout.decor) {
     if (!ctx.ownedWorldItemIds.has(d.itemId)) throw new WorldError('item_not_owned');
+    if (ctx.placeableWorldItemIds && !ctx.placeableWorldItemIds.has(d.itemId))
+      throw new WorldError('item_not_placeable');
   }
   return layout;
 }

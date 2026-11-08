@@ -18,6 +18,9 @@ export const EVENT_TYPES = [
   'user.opened',
   'user.suspended',
   'user.unsuspended',
+  // admin earn freeze per user (F-26 / 06 §5 'earn exploit', MV-W05-06)
+  'user.earn_frozen',
+  'user.earn_unfrozen',
   'item.created',
   'item.updated',
   'item.deleted',
@@ -79,6 +82,7 @@ export const EVENT_TYPES = [
   'world.invite_accepted',
   'world.invite_revoked',
   'world.score_updated',
+  'world.item_placed',
   'meetup.created',
   'meetup.scheduled',
   'meetup.started',
@@ -101,6 +105,8 @@ export const EVENT_TYPES = [
   'quest.reset',
   'season.started',
   'season.ended',
+  'season.milestone_reached',
+  'season.finished',
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

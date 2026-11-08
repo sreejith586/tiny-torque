@@ -20,6 +20,9 @@ export default function AdminOverviewPage() {
         <Link href="/admin/flags" className="btn-secondary">
           Feature flags
         </Link>
+        <Link href="/admin/world/economy" className="btn-secondary">
+          World economy
+        </Link>
       </div>
       <p className="muted" style={{ fontSize: 13, marginTop: 14 }}>
         More pages (Overview stats, Invites) land in later sprints.

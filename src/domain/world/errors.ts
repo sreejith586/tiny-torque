@@ -12,6 +12,9 @@ export type WorldErrorCode =
   | 'level_too_low'
   | 'already_owned'
   | 'slot_cap_reached'
+  | 'spotlight_active'
+  | 'season_closed'
+  | 'item_not_placeable'
   | 'invalid_name'
   | 'theme_not_owned'
   | 'layout_invalid'
@@ -53,6 +56,8 @@ const RPC_CODES: WorldErrorCode[] = [
   'level_too_low',
   'already_owned',
   'slot_cap_reached',
+  'spotlight_active',
+  'season_closed',
   'invalid_name',
   'theme_not_owned',
   'garage_not_found',

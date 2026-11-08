@@ -56,6 +56,33 @@ export async function getSeasonPoints(
   return data?.points ?? 0;
 }
 
+/** Which of the given idempotency keys exist in the caller's own ledger (RLS: own rows) — how the
+ *  season page tells a paid milestone from a merely reached one (MV-W05-03). */
+export async function listOwnLedgerKeys(
+  supabase: Client,
+  userId: string,
+  keys: readonly string[]
+): Promise<Set<string>> {
+  if (keys.length === 0) return new Set();
+  const { data, error } = await supabase
+    .from('token_ledger')
+    .select('idempotency_key')
+    .eq('user_id', userId)
+    .in('idempotency_key', [...keys]);
+  if (error) throw error;
+  return new Set((data ?? []).map((r) => r.idempotency_key).filter((k): k is string => !!k));
+}
+
+/** Every season (public read), newest first — the shop's season-limited labels. */
+export async function listSeasons(supabase: Client): Promise<SeasonRow[]> {
+  const { data, error } = await supabase
+    .from('seasons')
+    .select('*')
+    .order('starts_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
 /** Consecutive UTC days with a first open, ending today (world_login_streak(), own user only). */
 export async function getLoginStreak(supabase: Client, userId: string): Promise<number> {
   const { data, error } = await supabase.rpc('world_login_streak', { p_user: userId });

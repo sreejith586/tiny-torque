@@ -256,6 +256,7 @@ describe('world.saveLayout', () => {
   it('validates against the level capacity, the owner public cars and inventory, then emits world.layout_saved', async () => {
     repo.ensureGarage.mockResolvedValue(garage());
     repo.listInventory.mockResolvedValue([{ item_id: LAMP } as never]);
+    repo.listActiveItems.mockResolvedValue([{ id: LAMP, kind: 'decor' } as never]);
     vi.mocked(listPublicCollectionItems).mockResolvedValue([{ id: CAR_A }] as never);
     repo.updateGarage.mockResolvedValue(garage());
 
@@ -270,10 +271,49 @@ describe('world.saveLayout', () => {
       supabase,
       expect.objectContaining({ type: 'world.layout_saved', entity: 'garage', entityId: OWNER })
     );
+    // the lamp was not in the stored layout → one world.item_placed (MV-W05-02)
+    expect(emitEvent).toHaveBeenCalledWith(
+      supabase,
+      expect.objectContaining({
+        type: 'world.item_placed',
+        entity: 'world_item',
+        entityId: LAMP,
+        payload: { slot: 0, kind: 'decor' },
+      })
+    );
+    expect(emitEvent).toHaveBeenCalledTimes(2);
+  });
+
+  it('refuses a theme in a decor slot (only decor / signage / trophy are placeable)', async () => {
+    repo.ensureGarage.mockResolvedValue(garage());
+    repo.listInventory.mockResolvedValue([{ item_id: LAMP } as never]);
+    repo.listActiveItems.mockResolvedValue([{ id: LAMP, kind: 'theme' } as never]);
+    vi.mocked(listPublicCollectionItems).mockResolvedValue([] as never);
+    await expect(
+      saveLayout(supabase, OWNER, { version: 1, slots: [], decor: [{ slot: 0, itemId: LAMP }] })
+    ).rejects.toThrow(new WorldError('item_not_placeable'));
+    expect(repo.updateGarage).not.toHaveBeenCalled();
+  });
+
+  it('does not re-emit world.item_placed for decor that was already placed', async () => {
+    repo.ensureGarage.mockResolvedValue(
+      garage({ layout: { version: 1, slots: [], decor: [{ slot: 1, itemId: LAMP }] } as never })
+    );
+    repo.listInventory.mockResolvedValue([{ item_id: LAMP } as never]);
+    repo.listActiveItems.mockResolvedValue([{ id: LAMP, kind: 'signage' } as never]);
+    vi.mocked(listPublicCollectionItems).mockResolvedValue([] as never);
+    repo.updateGarage.mockResolvedValue(garage());
+    await saveLayout(supabase, OWNER, {
+      version: 1,
+      slots: [],
+      decor: [{ slot: 0, itemId: LAMP }],
+    });
+    expect(emitEvent).toHaveBeenCalledTimes(1);
   });
 
   it('rejects a private car and writes nothing', async () => {
     repo.ensureGarage.mockResolvedValue(garage());
+    repo.listActiveItems.mockResolvedValue([]);
     vi.mocked(listPublicCollectionItems).mockResolvedValue([{ id: CAR_A }] as never);
     await expect(
       saveLayout(supabase, OWNER, { version: 1, slots: [{ slot: 0, itemId: CAR_B }], decor: [] })

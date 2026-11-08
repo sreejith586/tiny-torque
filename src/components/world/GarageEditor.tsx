@@ -16,7 +16,7 @@ import {
   updateGarageSettingsAction,
 } from '@/app/world/actions';
 import GarageScene from './GarageScene';
-import { placeInSlot, slotCells } from './scene';
+import { decorCells, placeDecor, placeInSlot, slotCells } from './scene';
 import { OPEN_MODE_LABEL } from './copy';
 import styles from './World.module.css';
 
@@ -34,6 +34,7 @@ export default function GarageEditor({
   own,
   items,
   themes,
+  decorItems = [],
   renamePrice,
   invites: initialInvites,
 }: {
@@ -41,6 +42,8 @@ export default function GarageEditor({
   items: GarageItem[];
   /** Themes the owner holds in inventory — the only ones the guard lets them apply. */
   themes: WorldItemRow[];
+  /** Owned decor / signage / trophies — what a decor slot may hold (MV-W05-01). */
+  decorItems?: WorldItemRow[];
   renamePrice: number | null;
   invites: InviteSummary[];
 }) {
@@ -64,6 +67,7 @@ export default function GarageEditor({
 
   const themeSku = themeId ? (themes.find((t) => t.id === themeId)?.sku ?? null) : null;
   const cells = slotCells(layout, items, own.displayCapacity);
+  const decorSlots = decorCells(layout, decorItems, own.level.decor_slots);
   const dirty =
     JSON.stringify(layout) !== JSON.stringify(saved.layout) || featured !== saved.featured;
 
@@ -182,6 +186,7 @@ export default function GarageEditor({
         items={items}
         featuredItemId={featured}
         themeSku={themeSku}
+        decorItems={decorItems}
       />
 
       {error && (
@@ -251,6 +256,42 @@ export default function GarageEditor({
             >
               {pending ? 'Saving…' : 'Save garage'}
             </button>
+          </>
+        )}
+      </div>
+
+      <div className="section-title">Decor slots</div>
+      <div className="panel">
+        {decorItems.length === 0 ? (
+          <div className="empty-state" style={{ padding: 14 }}>
+            <p>
+              No decor yet. Decor, signage and trophies from the <a href="/world/shop">shop</a> can
+              be placed here.
+            </p>
+          </div>
+        ) : (
+          <>
+            {decorSlots.map((cell) => (
+              <div className={styles.editorRow} key={cell.slot}>
+                <label htmlFor={`decor-${cell.slot}`}>Decor {cell.slot + 1}</label>
+                <select
+                  id={`decor-${cell.slot}`}
+                  value={cell.item?.id ?? ''}
+                  onChange={(e) => setLayout(placeDecor(layout, cell.slot, e.target.value || null))}
+                >
+                  <option value="">— empty —</option>
+                  {decorItems.map((i) => (
+                    <option key={i.id} value={i.id}>
+                      {i.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+            <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+              {own.level.decor_slots} decor slot{own.level.decor_slots === 1 ? '' : 's'} at level{' '}
+              {own.level.level}. Saved with the garage (the Save button above).
+            </p>
           </>
         )}
       </div>

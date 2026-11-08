@@ -5,9 +5,11 @@ import { isFlagEnabled } from '@/domain/flags';
 import {
   getGarageForVisitor,
   listGuestbook,
+  listShop,
   recordVisit,
   type GuestbookEntry,
   type VisitorGarage,
+  type WorldItemRow,
 } from '@/domain/world';
 import { listPublicCollectionItems, type GarageItem } from '@/domain/garage';
 import { listMyListings, type Listing } from '@/domain/marketplace';
@@ -17,6 +19,7 @@ import {
   FIXTURE_ITEMS,
   FIXTURE_LISTINGS,
   FIXTURE_WORLD_GUESTBOOK,
+  FIXTURE_WORLD_ITEMS,
   FIXTURE_WORLD_VISITOR,
   isVisualHarness,
 } from '@/lib/visual-fixtures';
@@ -26,6 +29,8 @@ type SearchParams = Record<string, string | string[] | undefined>;
 interface VisitorPageData {
   garage: VisitorGarage;
   items: GarageItem[];
+  /** The public catalogue rows the layout's decor refers to (names only, W05). */
+  decorItems: WorldItemRow[];
   listingByItem: Record<string, string>;
   guestbook: GuestbookEntry[];
   viewerId: string | null;
@@ -44,6 +49,7 @@ async function load(handle: string, searchParams: SearchParams): Promise<Visitor
     return {
       garage: FIXTURE_WORLD_VISITOR,
       items,
+      decorItems: FIXTURE_WORLD_ITEMS,
       listingByItem: listed?.source_item_id ? { [listed.source_item_id]: listed.id } : {},
       guestbook: FIXTURE_WORLD_GUESTBOOK,
       viewerId: '00000000-0000-4000-8000-000000000002',
@@ -65,14 +71,18 @@ async function load(handle: string, searchParams: SearchParams): Promise<Visitor
   const viewerId = user?.id ?? null;
   const isOwner = viewerId === ownerId;
 
-  const [items, listings, guestbook, followerCount, viewerFollows, viewer] = await Promise.all([
-    listPublicCollectionItems(supabase, ownerId),
-    listMyListings(supabase, ownerId, 'active').catch((): Listing[] => []),
-    listGuestbook(supabase, ownerId),
-    countFollowers(supabase, ownerId).catch(() => 0),
-    viewerId && !isOwner ? isFollowing(supabase, viewerId, ownerId).catch(() => false) : false,
-    viewerId ? getPublicProfileById(supabase, viewerId).catch(() => null) : null,
-  ]);
+  const [items, listings, guestbook, followerCount, viewerFollows, viewer, shop] =
+    await Promise.all([
+      listPublicCollectionItems(supabase, ownerId),
+      listMyListings(supabase, ownerId, 'active').catch((): Listing[] => []),
+      listGuestbook(supabase, ownerId),
+      countFollowers(supabase, ownerId).catch(() => 0),
+      viewerId && !isOwner ? isFollowing(supabase, viewerId, ownerId).catch(() => false) : false,
+      viewerId ? getPublicProfileById(supabase, viewerId).catch(() => null) : null,
+      garage.layout.decor.length > 0 ? listShop(supabase).catch(() => null) : null,
+    ]);
+  const placed = new Set(garage.layout.decor.map((d) => d.itemId));
+  const decorItems = (shop?.items ?? []).filter((i) => placed.has(i.id));
   if (viewerId && !isOwner) {
     // Best-effort: a rate-limited or raced visit must never take the page down.
     await recordVisit(supabase, ownerId).catch(() => null);
@@ -83,6 +93,7 @@ async function load(handle: string, searchParams: SearchParams): Promise<Visitor
   return {
     garage,
     items,
+    decorItems,
     listingByItem,
     guestbook,
     viewerId,

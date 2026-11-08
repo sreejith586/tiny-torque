@@ -18,7 +18,13 @@ export default async function WorldShopPage({
     <main style={{ padding: '20px 16px', flex: 1 }}>
       <h1 className="page-heading">World shop</h1>
       <p className="page-sub">Levels, themes and extras — paid with your tokens.</p>
-      <WorldShop own={data.own} shop={data.shop} balance={data.balance} xpLevel={data.xpLevel} />
+      <WorldShop
+        own={data.own}
+        shop={data.shop}
+        seasons={data.seasons}
+        balance={data.balance}
+        xpLevel={data.xpLevel}
+      />
     </main>
   );
 }

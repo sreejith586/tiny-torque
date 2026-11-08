@@ -6,8 +6,8 @@
 import type { ReactNode } from 'react';
 import CarCard from '@/components/CarCard';
 import type { GarageItem } from '@/domain/garage';
-import type { GarageLayout, WorldLevelRow } from '@/domain/world';
-import { levelBackdrop, slotCells } from './scene';
+import type { GarageLayout, WorldItemRow, WorldLevelRow } from '@/domain/world';
+import { decorCells, levelBackdrop, slotCells } from './scene';
 import styles from './World.module.css';
 
 export default function GarageScene({
@@ -19,6 +19,7 @@ export default function GarageScene({
   items,
   featuredItemId,
   themeSku,
+  decorItems = [],
   subtitle,
   slotFooter,
 }: {
@@ -30,6 +31,9 @@ export default function GarageScene({
   items: readonly GarageItem[];
   featuredItemId: string | null;
   themeSku: string | null;
+  /** World items that may appear in `layout.decor` (owner: owned placeables; visitor: the public
+   *  catalogue). Placed decor renders as a labelled row under the sign (MV-W05-01). */
+  decorItems?: readonly WorldItemRow[];
   /** Visitor view: visits / kudos line under the sign (MV-W03-03). */
   subtitle?: ReactNode;
   /** Visitor view: rendered under a placed car — the "For sale" deep link (marketplace bridge). */
@@ -37,6 +41,7 @@ export default function GarageScene({
 }) {
   const featured = featuredItemId ? (items.find((i) => i.id === featuredItemId) ?? null) : null;
   const cells = slotCells(layout, items, capacity);
+  const decor = decorCells(layout, decorItems, level.decor_slots).filter((c) => c.item);
 
   return (
     <section
@@ -57,6 +62,19 @@ export default function GarageScene({
         <p className="muted" style={{ position: 'relative', fontSize: 12, margin: '-4px 0 10px' }}>
           {subtitle}
         </p>
+      )}
+      {decor.length > 0 && (
+        <ul
+          className="tab-row"
+          aria-label="Decor"
+          style={{ position: 'relative', listStyle: 'none', padding: 0, margin: '0 0 10px' }}
+        >
+          {decor.map((c) => (
+            <li key={c.slot} className="tab-chip" style={{ cursor: 'default' }}>
+              {c.item!.name}
+            </li>
+          ))}
+        </ul>
       )}
 
       <div className={styles.featured}>
