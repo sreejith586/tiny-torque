@@ -2,7 +2,7 @@ import {
   jobHealth,
   jobResultSummary,
   jobRunSeconds,
-  WORLD_JOB_NAMES,
+  KNOWN_JOB_NAMES,
   type JobRunRow,
 } from '@/domain/admin';
 
@@ -28,7 +28,7 @@ function statusLabel(status: string): string {
 export default function AdminJobRunsView({ runs }: { runs: JobRunRow[] }) {
   const health = jobHealth(runs);
   const seen = new Set(health.map((h) => h.job));
-  const neverRan = WORLD_JOB_NAMES.filter((j) => !seen.has(j));
+  const neverRan = KNOWN_JOB_NAMES.filter((j) => !seen.has(j));
 
   return (
     <div>
@@ -89,9 +89,12 @@ export default function AdminJobRunsView({ runs }: { runs: JobRunRow[] }) {
           </table>
         )}
         <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
-          Schedules (UTC): quest reset 00:05 daily + 00:10 Monday · expiry notice 00:20 · expiry
-          00:30 · season rollover hourly · score recompute 02:45. A red row = read its error, then
-          06 §5 &quot;a job_runs row shows an error&quot;.
+          Schedules (UTC) — World: quest reset 00:05 daily + 00:10 Monday · expiry notice 00:20 ·
+          expiry 00:30 · season rollover hourly · score recompute 02:45. H1 (MV-S9-01): expire
+          listings :15 hourly · expire offers :20 hourly · purge trash 03:35 · event partitions
+          03:50 · purge media + purge accounts daily 04:00 via the <code>h1-jobs</code> GitHub
+          workflow → Edge Function <code>jobs</code>. A red row = read its error, then 06 §5 &quot;a
+          job_runs row shows an error&quot;.
         </p>
       </div>
 

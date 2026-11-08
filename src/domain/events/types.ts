@@ -11,6 +11,8 @@ export const EVENT_TYPES = [
   'user.accepted_terms',
   'profile.updated',
   'user.deleted',
+  // auth.users row + storage objects gone after the grace period — purge_accounts job (MV-S9-01, D-080)
+  'user.purged',
   'user.blocked',
   'user.unblocked',
   'user.followed',
