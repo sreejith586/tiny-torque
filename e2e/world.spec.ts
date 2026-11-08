@@ -329,7 +329,7 @@ test('world home lists the next meetups (F-23, fixture harness)', async ({ page 
   test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
   await expect(page.getByText('Meetups', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: /JDM night/ })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'All meetups' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'More meetups' })).toHaveAttribute(
     'href',
     '/world/meetups?__visual=1'
   );

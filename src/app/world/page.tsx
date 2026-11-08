@@ -264,7 +264,7 @@ export default async function WorldHomePage({
                 className="btn-secondary"
                 style={{ display: 'block', textAlign: 'center', marginTop: 10 }}
               >
-                All meetups
+                More meetups
               </Link>
             </div>
           )}
