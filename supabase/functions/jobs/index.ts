@@ -10,7 +10,8 @@
 //   curl -X POST https://<ref>.functions.supabase.co/jobs -H "x-jobs-secret: $JOBS_SECRET" \
 //        -H "content-type: application/json" -d '{"job":"all"}'
 //   body: { job?: 'all' | 'quest_reset' | 'earned_expiry_notice' | 'earned_expiry' |
-//                 'season_rollover' | 'score_recompute', at?: ISO instant }
+//                 'season_rollover' | 'score_recompute' |
+//                 'meetup_transitions' | 'meetup_reminders' (0015, → run_meetup_jobs), at?: ISO instant }
 //
 // Flow: verify the secret (constant-time) -> validate the body (lib.ts) -> call the SECURITY
 // DEFINER dispatcher `run_world_job` with the service role (the only role besides a direct
@@ -29,6 +30,7 @@ import {
   verifySecret,
   type JobRunRow,
 } from './lib.ts';
+import { dispatcherFor } from './meetups.ts';
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -63,9 +65,10 @@ serve(async (req: Request) => {
   });
   const args: Record<string, unknown> = { p_job: parsed.value.job, p_source: 'edge' };
   if (parsed.value.at) args.p_at = parsed.value.at;
-  const { data, error } = await admin.rpc('run_world_job', args);
+  const dispatcher = dispatcherFor(parsed.value.job);
+  const { data, error } = await admin.rpc(dispatcher, args);
   if (error) {
-    console.error('run_world_job failed', error);
+    console.error(`${dispatcher} failed`, error);
     return json({ error: 'Job dispatch failed.', detail: error.message }, 500);
   }
   const runs = (data ?? []) as JobRunRow[];

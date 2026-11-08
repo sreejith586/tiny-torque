@@ -93,6 +93,12 @@ export const EVENT_TYPES = [
   'meetup.rsvp',
   'meetup.checked_in',
   'meetup.best_in_show',
+  // W06 additions (MV-W06-01/02): the RPCs emit these; `meetup.updated` is the service's (host edits)
+  'meetup.updated',
+  'meetup.invited',
+  'meetup.showcase_updated',
+  'meetup.moderated',
+  'meetup.reminder',
   'race.created',
   'race.entered',
   'race.locked',

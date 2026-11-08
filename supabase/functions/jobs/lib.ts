@@ -10,6 +10,8 @@
 // summarise what the dispatcher returned, and mirror two pieces of window arithmetic (quest reset
 // windows, T-14 d expiry batches) so an operator can predict a run before firing it.
 
+import { MEETUP_JOB_NAMES, type MeetupJobName } from './meetups.ts';
+
 /** The dispatcher's job names, in the order `run_world_job('all')` runs them. */
 export const JOB_NAMES = [
   'quest_reset',
@@ -21,7 +23,8 @@ export const JOB_NAMES = [
 export type JobName = (typeof JOB_NAMES)[number];
 
 export interface JobRequest {
-  job: JobName | 'all';
+  /** A World job, a meetup job (0015, routed to `run_meetup_jobs`), or 'all' (= every World job). */
+  job: JobName | MeetupJobName | 'all';
   /** ISO instant the jobs reason about; omitted = the database's now(). */
   at: string | null;
 }
@@ -38,7 +41,10 @@ export function parseJobRequest(body: unknown): ParseResult {
   const b = body as Record<string, unknown>;
   const job = b.job === undefined ? 'all' : b.job;
   if (typeof job !== 'string' || !isJobName(job)) {
-    return { ok: false, error: `job must be one of ${['all', ...JOB_NAMES].join(', ')}.` };
+    return {
+      ok: false,
+      error: `job must be one of ${['all', ...JOB_NAMES, ...MEETUP_JOB_NAMES].join(', ')}.`,
+    };
   }
   let at: string | null = null;
   if (b.at !== undefined && b.at !== null) {
@@ -50,8 +56,12 @@ export function parseJobRequest(body: unknown): ParseResult {
   return { ok: true, value: { job, at } };
 }
 
-export function isJobName(value: string): value is JobName | 'all' {
-  return value === 'all' || (JOB_NAMES as readonly string[]).includes(value);
+export function isJobName(value: string): value is JobName | MeetupJobName | 'all' {
+  return (
+    value === 'all' ||
+    (JOB_NAMES as readonly string[]).includes(value) ||
+    (MEETUP_JOB_NAMES as readonly string[]).includes(value)
+  );
 }
 
 /** Constant-time comparison of the shared secret (header value vs JOBS_SECRET). Length leaks
