@@ -98,7 +98,11 @@ select tests.authenticate_as('60000000-0000-0000-0000-00000000000b');
 select is(
   (select public.is_pro('60000000-0000-0000-0000-00000000000b')), false, 'a fresh user is not Pro'
 );
+-- credit_tokens is service-role / definer-only since 0014b_earn_engine (the 0009 comment made true):
+-- fund the account as the backend, then spend as the user.
+select tests.clear_authentication();
 select public.credit_tokens('60000000-0000-0000-0000-00000000000b', 60, 'purchase', null, null, 'evt_test_2');
+select tests.authenticate_as('60000000-0000-0000-0000-00000000000b');
 select public.spend_tokens('spend_pro_30d', 60, 'pro_30d');
 select is(
   (select public.is_pro('60000000-0000-0000-0000-00000000000b')), true,

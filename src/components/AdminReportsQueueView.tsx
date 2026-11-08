@@ -9,7 +9,10 @@ import type { PublicProfileRow } from '@/types/database';
 type Item = {
   report: ReportRow;
   listingPreview: Listing | null;
+  /** `user` and `garage` targets (a garage report targets its owner, W03). */
   userPreview: PublicProfileRow | null;
+  /** `guestbook` targets: the reported line (admin RLS sees hidden ones too). */
+  guestbookPreview: { body: string; hidden: boolean } | null;
   reporterName: string | null;
 };
 
@@ -18,6 +21,7 @@ const ACTION_LABEL: Record<AdminReportAction, string> = {
   remove_listing: 'Remove listing',
   warn: 'Warn',
   suspend: 'Suspend (7 days)',
+  hide_guestbook: 'Hide line',
 };
 
 const ACTION_CONFIRM: Record<AdminReportAction, string> = {
@@ -25,10 +29,11 @@ const ACTION_CONFIRM: Record<AdminReportAction, string> = {
   remove_listing: 'Remove this listing? It will no longer be visible to anyone.',
   warn: 'Send this user a warning notification?',
   suspend: "Suspend this user's account for 7 days?",
+  hide_guestbook: 'Hide this guestbook line for everyone except the host?',
 };
 
 function ReportRowCard({ item, onResolved }: { item: Item; onResolved: (id: string) => void }) {
-  const { report, listingPreview, userPreview, reporterName } = item;
+  const { report, listingPreview, userPreview, guestbookPreview, reporterName } = item;
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState<AdminReportAction | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -36,9 +41,11 @@ function ReportRowCard({ item, onResolved }: { item: Item; onResolved: (id: stri
   const actions: AdminReportAction[] =
     report.target_type === 'listing'
       ? ['remove_listing', 'warn', 'suspend', 'dismiss']
-      : report.target_type === 'user'
+      : report.target_type === 'user' || report.target_type === 'garage'
         ? ['warn', 'suspend', 'dismiss']
-        : ['dismiss'];
+        : report.target_type === 'guestbook'
+          ? ['hide_guestbook', 'warn', 'suspend', 'dismiss']
+          : ['dismiss'];
 
   async function run(action: AdminReportAction) {
     if (!window.confirm(ACTION_CONFIRM[action])) return;
@@ -63,7 +70,10 @@ function ReportRowCard({ item, onResolved }: { item: Item; onResolved: (id: stri
     }
   }
 
-  const preview = listingPreview && `${listingPreview.brand} ${listingPreview.model ?? ''}`.trim();
+  const preview =
+    (listingPreview && `${listingPreview.brand} ${listingPreview.model ?? ''}`.trim()) ||
+    (guestbookPreview &&
+      `“${guestbookPreview.body}”${guestbookPreview.hidden ? ' (already hidden)' : ''}`);
 
   return (
     <div className="panel" style={{ marginBottom: 10 }}>

@@ -3,6 +3,19 @@ import type { GarageItem } from '@/domain/garage';
 import type { Badge } from '@/domain/gamification/types';
 import type { Listing } from '@/domain/marketplace';
 import type { TokenPackRow, TokenLedgerRow } from '@/domain/tokens';
+import type { QuestBoard, QuestStatus, SeasonRow, SeasonTrackView } from '@/domain/quests';
+import type {
+  GuestbookEntry,
+  OwnGarage,
+  RecentVisitor,
+  VisitorGarage,
+  WorldGarageRow,
+  WorldInventoryRow,
+  WorldInviteRow,
+  WorldItemRow,
+  WorldLevelRow,
+  WorldOpenGarageRow,
+} from '@/domain/world/types';
 
 // D-027 / D-041 visual-baseline harness. `?__visual=1` makes the signed-in pages (garage, car
 // detail, profile; add/scan/offers need no data) render this deterministic fixture data with no
@@ -283,6 +296,8 @@ export const FIXTURE_LISTINGS: Listing[] = [
   {
     ...listingBase,
     id: '20000000-0000-4000-8000-000000000001',
+    // marketplace bridge (W03): this listing sells the featured car in the garage fixtures
+    source_item_id: FIXTURE_ITEMS[0]!.id,
     brand: 'Hot Wheels',
     model: 'Nissan Skyline GT-R',
     variant: 'Blue',
@@ -351,6 +366,8 @@ export const FIXTURE_LEDGER: TokenLedgerRow[] = [
     ref_id: null,
     idempotency_key: 'fix-evt-1',
     source: 'purchased',
+    remaining: 30,
+    consumed_earned: null,
     created_at: '2026-09-05T08:00:00.000Z',
   },
   {
@@ -362,7 +379,544 @@ export const FIXTURE_LEDGER: TokenLedgerRow[] = [
     ref_type: null,
     ref_id: null,
     idempotency_key: null,
-    source: null,
+    source: 'purchased',
+    remaining: null,
+    consumed_earned: 0,
     created_at: '2026-09-10T08:00:00.000Z',
   },
 ];
+
+// ---------- Collectors World (MV-W02, F-20/F-27) — dark until the world* flags turn on ----------
+export const FIXTURE_WORLD_LEVELS: WorldLevelRow[] = [
+  {
+    level: 1,
+    name: 'Shed',
+    display_slots: 4,
+    decor_slots: 2,
+    visitor_cap: 10,
+    host_cap: 0,
+    price: 0,
+    min_xp_level: 1,
+    max_extra_slots: 2,
+  },
+  {
+    level: 2,
+    name: 'Garage',
+    display_slots: 8,
+    decor_slots: 4,
+    visitor_cap: 25,
+    host_cap: 10,
+    price: 40,
+    min_xp_level: 2,
+    max_extra_slots: 3,
+  },
+  {
+    level: 3,
+    name: 'Showroom',
+    display_slots: 12,
+    decor_slots: 6,
+    visitor_cap: 50,
+    host_cap: 25,
+    price: 90,
+    min_xp_level: 3,
+    max_extra_slots: 4,
+  },
+  {
+    level: 4,
+    name: 'Warehouse',
+    display_slots: 20,
+    decor_slots: 8,
+    visitor_cap: 100,
+    host_cap: 50,
+    price: 180,
+    min_xp_level: 4,
+    max_extra_slots: 5,
+  },
+  {
+    level: 5,
+    name: 'Vault',
+    display_slots: 30,
+    decor_slots: 12,
+    visitor_cap: 200,
+    host_cap: 100,
+    price: 350,
+    min_xp_level: 5,
+    max_extra_slots: 6,
+  },
+];
+
+const WI = (n: number) => `50000000-0000-4000-8000-00000000000${n}`;
+export const FOUNDERS_SEASON_ID = '00000000-0000-4000-8000-00000000f001';
+/** A Spotlight bought "20 hours ago" relative to the viewer — keeps the active label honest. */
+const FIXTURE_SPOTLIGHT_UNTIL = new Date(Date.now() + 20 * 3600_000).toISOString();
+
+const worldItemBase = {
+  description: null,
+  season_id: null,
+  active: true,
+  art_path: null,
+  effect: {} as Record<string, string>,
+  sort_order: 0,
+  created_at: '2026-10-20T00:00:00.000Z',
+};
+export const FIXTURE_WORLD_ITEMS: WorldItemRow[] = [
+  {
+    ...worldItemBase,
+    id: WI(1),
+    sku: 'theme_neon_workshop',
+    kind: 'theme',
+    name: 'Neon Workshop',
+    price: 25,
+    min_level: 1,
+    sort_order: 10,
+  },
+  {
+    ...worldItemBase,
+    id: WI(2),
+    sku: 'theme_showroom_white',
+    kind: 'theme',
+    name: 'Showroom White',
+    price: 25,
+    min_level: 3,
+    sort_order: 11,
+  },
+  {
+    ...worldItemBase,
+    id: WI(3),
+    sku: 'decor_neon_sign',
+    kind: 'decor',
+    name: 'Neon sign',
+    price: 10,
+    min_level: 1,
+    sort_order: 20,
+  },
+  {
+    ...worldItemBase,
+    id: WI(4),
+    sku: 'signage_welcome',
+    kind: 'signage',
+    name: 'Welcome board',
+    price: 0,
+    min_level: 1,
+    sort_order: 30,
+  },
+  {
+    ...worldItemBase,
+    id: WI(5),
+    sku: 'trophy_first_meetup',
+    kind: 'trophy',
+    name: 'First meetup',
+    price: null,
+    min_level: 1,
+    sort_order: 40,
+  },
+  {
+    ...worldItemBase,
+    id: WI(6),
+    sku: 'extra_display_slot',
+    kind: 'consumable',
+    name: 'Extra display slot',
+    price: 15,
+    min_level: 1,
+    effect: { grants: 'display_slot' },
+    sort_order: 1000,
+  },
+  {
+    ...worldItemBase,
+    id: WI(7),
+    sku: 'garage_rename',
+    kind: 'consumable',
+    name: 'Garage rename',
+    price: 5,
+    min_level: 1,
+    effect: { grants: 'rename' },
+    sort_order: 1001,
+  },
+  // ---- W05 (0014c placeholder catalogue): Spotlight, tunes, season-limited decor, season trophy ----
+  {
+    ...worldItemBase,
+    id: WI(8),
+    sku: 'spotlight_24h',
+    kind: 'consumable',
+    name: 'Spotlight (24 h)',
+    description: 'Your garage at the top of Open garages for 24 hours. Labelled Spotlight.',
+    price: 20,
+    min_level: 1,
+    effect: { grants: 'spotlight', hours: '24' },
+    sort_order: 1002,
+  },
+  {
+    ...worldItemBase,
+    id: WI(9),
+    sku: 'tune_street',
+    kind: 'tune',
+    name: 'Street tune',
+    description: 'A small boost to acceleration in races (racing arrives later).',
+    price: 30,
+    min_level: 2,
+    effect: { stat: 'accel', pct: '2' },
+    sort_order: 50,
+  },
+  {
+    ...worldItemBase,
+    id: WI(10),
+    sku: 'decor_founders_banner',
+    kind: 'decor',
+    name: 'Founders banner',
+    description: "Only sold during the Founders' Season.",
+    price: 15,
+    min_level: 1,
+    season_id: FOUNDERS_SEASON_ID,
+    sort_order: 24,
+  },
+  {
+    ...worldItemBase,
+    id: WI(11),
+    sku: 'decor_tool_wall',
+    kind: 'decor',
+    name: 'Tool wall',
+    price: 15,
+    min_level: 1,
+    sort_order: 21,
+  },
+  {
+    ...worldItemBase,
+    id: WI(12),
+    sku: 'trophy_season_finisher',
+    kind: 'trophy',
+    name: 'Season finisher',
+    description: 'Earned by finishing a season track.',
+    price: null,
+    min_level: 1,
+    sort_order: 60,
+  },
+];
+
+export const FIXTURE_WORLD_INVENTORY: WorldInventoryRow[] = [
+  {
+    id: '51000000-0000-4000-8000-000000000001',
+    user_id: OWNER,
+    item_id: WI(3),
+    acquired_via: 'purchase',
+    ledger_id: null,
+    durable: true,
+    expires_at: null,
+    created_at: '2026-10-21T08:00:00.000Z',
+  },
+  {
+    id: '51000000-0000-4000-8000-000000000002',
+    user_id: OWNER,
+    item_id: WI(1),
+    acquired_via: 'purchase',
+    ledger_id: null,
+    durable: true,
+    expires_at: null,
+    created_at: '2026-10-22T08:00:00.000Z',
+  },
+  {
+    id: '51000000-0000-4000-8000-000000000003',
+    user_id: OWNER,
+    item_id: WI(11),
+    acquired_via: 'purchase',
+    ledger_id: null,
+    durable: true,
+    expires_at: null,
+    created_at: '2026-11-01T08:00:00.000Z',
+  },
+  {
+    id: '51000000-0000-4000-8000-000000000004',
+    user_id: OWNER,
+    item_id: WI(8),
+    acquired_via: 'purchase',
+    ledger_id: null,
+    durable: false,
+    expires_at: FIXTURE_SPOTLIGHT_UNTIL,
+    created_at: '2026-11-05T12:00:00.000Z',
+  },
+];
+
+export const FIXTURE_WORLD_GARAGE: WorldGarageRow = {
+  user_id: OWNER,
+  level: 2,
+  name: "Varun's Garage",
+  open_mode: 'public',
+  featured_item_id: FIXTURE_ITEMS[0]!.id,
+  theme_item_id: WI(1),
+  layout: {
+    version: 1,
+    slots: [
+      { slot: 0, itemId: FIXTURE_ITEMS[1]!.id },
+      { slot: 1, itemId: FIXTURE_ITEMS[3]!.id },
+    ],
+    decor: [{ slot: 0, itemId: WI(3) }],
+  },
+  score: 120,
+  extra_slots: 1,
+  rename_count: 1,
+  visit_count: 37,
+  kudos_count: 12,
+  created_at: '2026-10-20T00:00:00.000Z',
+  updated_at: '2026-10-22T08:00:00.000Z',
+};
+
+export const FIXTURE_WORLD_OWN: OwnGarage = {
+  garage: FIXTURE_WORLD_GARAGE,
+  level: FIXTURE_WORLD_LEVELS[1]!,
+  nextLevel: FIXTURE_WORLD_LEVELS[2]!,
+  displayCapacity: FIXTURE_WORLD_LEVELS[1]!.display_slots + FIXTURE_WORLD_GARAGE.extra_slots,
+  inventory: FIXTURE_WORLD_INVENTORY,
+  layout: {
+    version: 1,
+    slots: [
+      { slot: 0, itemId: FIXTURE_ITEMS[1]!.id },
+      { slot: 1, itemId: FIXTURE_ITEMS[3]!.id },
+    ],
+    decor: [{ slot: 0, itemId: WI(3) }],
+  },
+};
+
+// ---------- W03 visits & social (MV-W03-03/04/05) ----------
+const VISITOR_A = '00000000-0000-4000-8000-000000000011';
+const VISITOR_B = '00000000-0000-4000-8000-000000000012';
+
+export const FIXTURE_WORLD_VISITOR: VisitorGarage = {
+  garage: {
+    user_id: OWNER,
+    level: FIXTURE_WORLD_GARAGE.level,
+    name: FIXTURE_WORLD_GARAGE.name,
+    open_mode: 'public',
+    featured_item_id: FIXTURE_WORLD_GARAGE.featured_item_id,
+    theme_item_id: FIXTURE_WORLD_GARAGE.theme_item_id,
+    score: FIXTURE_WORLD_GARAGE.score,
+    visit_count: 48,
+    kudos_count: 17,
+    created_at: FIXTURE_WORLD_GARAGE.created_at,
+  },
+  level: FIXTURE_WORLD_LEVELS[1]!,
+  layout: FIXTURE_WORLD_OWN.layout,
+  owner: { id: OWNER, handle: FIXTURE_PROFILE.handle, displayName: FIXTURE_PROFILE.display_name },
+};
+
+export const FIXTURE_WORLD_GUESTBOOK: GuestbookEntry[] = [
+  {
+    id: '52000000-0000-4000-8000-000000000001',
+    body: 'That R34 is unreal. Treasure Hunt too?!',
+    createdAt: '2026-10-30T09:12:00.000Z',
+    hidden: false,
+    author: { id: VISITOR_A, handle: 'diecast_dxb', displayName: 'Rafiq' },
+  },
+  {
+    id: '52000000-0000-4000-8000-000000000002',
+    body: 'Came for the Defender, stayed for the lighting.',
+    createdAt: '2026-10-28T18:40:00.000Z',
+    hidden: false,
+    author: { id: VISITOR_B, handle: 'blr_castings', displayName: 'Meera' },
+  },
+];
+
+export const FIXTURE_WORLD_VISITORS: RecentVisitor[] = [
+  { visitorId: VISITOR_A, handle: 'diecast_dxb', displayName: 'Rafiq', visitedOn: '2026-11-02' },
+  { visitorId: VISITOR_B, handle: 'blr_castings', displayName: 'Meera', visitedOn: '2026-11-01' },
+];
+
+export const FIXTURE_WORLD_OPEN: WorldOpenGarageRow[] = [
+  {
+    user_id: VISITOR_A,
+    name: 'Rafiq’s Showroom',
+    level: 3,
+    score: 310,
+    featured_item_id: null,
+    visit_count: 120,
+    kudos_count: 44,
+    updated_at: '2026-11-02T10:00:00.000Z',
+    handle: 'diecast_dxb',
+    display_name: 'Rafiq',
+    country_code: 'AE',
+    city: 'Dubai',
+    spotlight_until: FIXTURE_SPOTLIGHT_UNTIL,
+  },
+  {
+    user_id: OWNER,
+    name: FIXTURE_WORLD_GARAGE.name,
+    level: 2,
+    score: 120,
+    featured_item_id: FIXTURE_WORLD_GARAGE.featured_item_id,
+    visit_count: 48,
+    kudos_count: 17,
+    updated_at: '2026-11-01T10:00:00.000Z',
+    handle: FIXTURE_PROFILE.handle,
+    display_name: FIXTURE_PROFILE.display_name,
+    country_code: 'IN',
+    city: 'Bengaluru',
+    spotlight_until: null,
+  },
+  {
+    user_id: VISITOR_B,
+    name: 'Meera’s Shed',
+    level: 1,
+    score: 40,
+    featured_item_id: null,
+    visit_count: 9,
+    kudos_count: 3,
+    updated_at: '2026-10-30T10:00:00.000Z',
+    handle: 'blr_castings',
+    display_name: 'Meera',
+    country_code: 'IN',
+    city: 'Bengaluru',
+    spotlight_until: null,
+  },
+];
+
+export const FIXTURE_WORLD_INVITES: WorldInviteRow[] = [
+  {
+    id: '53000000-0000-4000-8000-000000000001',
+    garage_user_id: OWNER,
+    token: 'a'.repeat(64),
+    invitee_id: null,
+    expires_at: '2026-11-09T10:00:00.000Z',
+    max_uses: 10,
+    used_count: 2,
+    revoked_at: null,
+    created_at: '2026-11-02T10:00:00.000Z',
+  },
+  {
+    id: '53000000-0000-4000-8000-000000000002',
+    garage_user_id: OWNER,
+    token: 'b'.repeat(64),
+    invitee_id: VISITOR_B,
+    expires_at: '2026-11-09T10:00:00.000Z',
+    max_uses: 1,
+    used_count: 0,
+    revoked_at: null,
+    created_at: '2026-11-02T11:00:00.000Z',
+  },
+];
+
+// ---------- W04 quests & season (MV-W04-05, F-26) — dark until `world_earn` turns on ----------
+const quest = (
+  key: string,
+  cadence: QuestStatus['cadence'],
+  title: string,
+  event: string,
+  threshold: number,
+  progress: number,
+  rewardCredits: number,
+  rewardXp: number
+): QuestStatus => ({
+  key,
+  cadence,
+  title,
+  description: null,
+  event,
+  threshold,
+  progress,
+  percent: Math.round((progress / threshold) * 100),
+  completed: progress >= threshold,
+  completedAt: progress >= threshold ? '2026-11-06T09:00:00.000Z' : null,
+  rewardCredits,
+  rewardXp,
+  periodStart: cadence === 'daily' ? '2026-11-06' : '2026-11-02',
+  periodEnd: cadence === 'daily' ? '2026-11-07' : '2026-11-09',
+});
+
+export const FIXTURE_QUEST_BOARD: QuestBoard = {
+  daily: [
+    quest('visit_garage', 'daily', 'Visit a garage', 'world.visited', 1, 1, 2, 10),
+    quest('give_kudos', 'daily', 'Give kudos', 'world.kudos_given', 1, 0, 2, 10),
+    quest('sign_guestbook', 'daily', 'Sign a guestbook', 'world.guestbook_posted', 1, 0, 2, 10),
+  ],
+  weekly: [
+    quest('weekly_visits', 'weekly', 'Visit 10 garages this week', 'world.visited', 10, 4, 8, 40),
+    quest('weekly_kudos', 'weekly', 'Give kudos 5 times', 'world.kudos_given', 5, 5, 8, 40),
+    quest('weekly_open_days', 'weekly', 'Open TinyTorque on 5 days', 'user.opened', 5, 3, 8, 40),
+  ],
+  streak: 3,
+  season: {
+    id: '00000000-0000-4000-8000-00000000f001',
+    name: "Founders' Season",
+    theme: 'founders',
+    startsAt: '2026-11-10T00:00:00.000Z',
+    endsAt: '2027-01-05T00:00:00.000Z',
+    points: 120,
+  },
+};
+
+// ---- W05: seasons + the season track page (MV-W05-01/03) ----
+export const FIXTURE_SEASONS: SeasonRow[] = [
+  {
+    id: FOUNDERS_SEASON_ID,
+    name: "Founders' Season",
+    theme: 'founders',
+    starts_at: '2026-11-10T00:00:00.000Z',
+    ends_at: '2027-01-05T00:00:00.000Z',
+    track: [
+      { points: 50, reward_credits: 5, label: 'Warm-up' },
+      { points: 150, reward_credits: 10, label: 'On the road' },
+      {
+        points: 300,
+        reward_credits: 25,
+        label: 'Season finisher',
+        reward_item_sku: 'trophy_season_finisher',
+      },
+    ],
+    announced_at: '2026-11-10T00:00:00.000Z',
+    closed_at: null,
+    created_at: '2026-11-06T00:00:00.000Z',
+  },
+];
+
+export const FIXTURE_SEASON_TRACK: SeasonTrackView = {
+  season: {
+    id: FOUNDERS_SEASON_ID,
+    name: "Founders' Season",
+    theme: 'founders',
+    startsAt: '2026-11-10T00:00:00.000Z',
+    endsAt: '2027-01-05T00:00:00.000Z',
+    points: 120,
+  },
+  milestones: [
+    {
+      index: 1,
+      label: 'Warm-up',
+      points: 50,
+      rewardCredits: 5,
+      rewardItemSku: null,
+      reached: true,
+      paid: true,
+      remaining: 0,
+    },
+    {
+      index: 2,
+      label: 'On the road',
+      points: 150,
+      rewardCredits: 10,
+      rewardItemSku: null,
+      reached: false,
+      paid: false,
+      remaining: 30,
+    },
+    {
+      index: 3,
+      label: 'Season finisher',
+      points: 300,
+      rewardCredits: 25,
+      rewardItemSku: 'trophy_season_finisher',
+      reached: false,
+      paid: false,
+      remaining: 180,
+    },
+  ],
+  next: {
+    index: 2,
+    label: 'On the road',
+    points: 150,
+    rewardCredits: 10,
+    rewardItemSku: null,
+    reached: false,
+    paid: false,
+    remaining: 30,
+  },
+  percent: 70,
+  daysLeft: 42,
+  finisherItemSku: 'trophy_season_finisher',
+};

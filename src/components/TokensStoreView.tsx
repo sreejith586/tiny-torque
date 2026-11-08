@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { buyPackAction } from '@/app/tokens/actions';
 import { SPEND_OPTION_CONFIG, type TokenPackRow } from '@/domain/tokens';
+import { EARN_RULES } from '@/domain/quests';
 
 const SPEND_LABEL: Record<keyof typeof SPEND_OPTION_CONFIG, string> = {
   listing_slot: 'Extra listing slot (permanent)',
@@ -14,9 +15,12 @@ const SPEND_LABEL: Record<keyof typeof SPEND_OPTION_CONFIG, string> = {
 export default function TokensStoreView({
   balance,
   packs,
+  earnedBalance = 0,
 }: {
   balance: number;
   packs: TokenPackRow[];
+  /** Earned (World) tokens still unspent — the part that expires (D-070). 0 hides the line. */
+  earnedBalance?: number;
 }) {
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +46,15 @@ export default function TokensStoreView({
         <div style={{ fontSize: 32, fontFamily: 'var(--font-heading)', color: 'var(--orange)' }}>
           {balance}
         </div>
+        {earnedBalance > 0 && (
+          <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+            {earnedBalance} earned
+          </div>
+        )}
+        <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
+          Earned tokens expire {EARN_RULES.earnedExpiryDays} days after you earn them and are spent
+          first. Purchased tokens never expire.
+        </p>
       </div>
 
       <div className="section-title">What tokens buy</div>

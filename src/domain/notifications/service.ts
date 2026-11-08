@@ -17,6 +17,13 @@ const NOTIFICATION_TEXT: Record<NotificationType, string> = {
   badge_unlocked: 'You unlocked a new badge.',
   wishlist_match: 'A new listing matches your wishlist.',
   system: 'Tiny Torque update.',
+  // Collectors World (W03, F-21)
+  world_visit: 'Someone visited your garage.',
+  world_kudos: 'Your garage got kudos.',
+  world_guestbook: 'Someone signed your guestbook.',
+  world_invite: 'You were invited to a garage.',
+  // T-14 d earned-credit expiry notice (F-26, D-070; jobs runner MV-W04-04)
+  tokens_expiring: 'Some of your earned credits expire soon.',
 };
 
 /** Pure: what the notification says. No DB access, unit-testable in isolation. */
@@ -39,6 +46,14 @@ export function notificationLink(n: Pick<NotificationRow, 'type' | 'payload'>): 
     case 'review_received':
     case 'badge_unlocked': // the badge grid lives on the profile stats dashboard (MV-S8-03)
       return '/profile';
+    case 'world_visit':
+    case 'world_kudos':
+    case 'world_guestbook':
+      return '/world/garage';
+    case 'world_invite':
+      return typeof payload.handle === 'string' ? `/world/g/${payload.handle}` : '/world';
+    case 'tokens_expiring':
+      return '/tokens/history';
     default:
       return null;
   }

@@ -41,14 +41,20 @@ export const handleParamSchema = z
   .toLowerCase()
   .regex(/^[a-z0-9_]{3,24}$/);
 
+/** Owner settings. `name` is deliberately absent: renames are priced after the first one, so they
+ *  go through rename_world_garage (renameGarageSchema), never a direct column write. */
 export const updateGarageSchema = z
   .object({
-    name: garageNameSchema.optional(),
     openMode: openModeSchema.optional(),
     featuredItemId: z.string().uuid().nullable().optional(),
+    /** Must be a `theme` the owner holds in world_inventory — the DB guard enforces it. */
+    themeItemId: z.string().uuid().nullable().optional(),
   })
   .strict();
 export type UpdateGarageInput = z.infer<typeof updateGarageSchema>;
+
+export const renameGarageSchema = z.object({ name: garageNameSchema });
+export type RenameGarageInput = z.infer<typeof renameGarageSchema>;
 
 export const buyItemSchema = z.object({
   itemId: z.string().uuid(),
@@ -64,6 +70,9 @@ export interface LayoutContext {
   publicItemIds: ReadonlySet<string>;
   /** world_items ids the owner holds in world_inventory. */
   ownedWorldItemIds: ReadonlySet<string>;
+  /** Owned ids whose kind may sit in a decor slot (decor / signage / trophy — never a theme, tune
+   *  or consumable). Omitted = every owned item is placeable (W02 callers / tests). */
+  placeableWorldItemIds?: ReadonlySet<string>;
 }
 
 /** Full layout validation: shape (zod) + capacity + ownership/visibility. Throws WorldError. */
@@ -83,6 +92,8 @@ export function validateLayout(input: unknown, ctx: LayoutContext): GarageLayout
   }
   for (const d of layout.decor) {
     if (!ctx.ownedWorldItemIds.has(d.itemId)) throw new WorldError('item_not_owned');
+    if (ctx.placeableWorldItemIds && !ctx.placeableWorldItemIds.has(d.itemId))
+      throw new WorldError('item_not_placeable');
   }
   return layout;
 }
@@ -98,3 +109,36 @@ function checkSlots(entries: GarageLayout['slots'], capacity: number) {
     seenItems.add(e.itemId);
   }
 }
+
+// ---- W03 social boundaries (MV-W03-02) ----
+export const guestbookBodySchema = z
+  .string()
+  .trim()
+  .min(1, 'Write something')
+  .max(140, 'Keep it to 140 characters');
+export const postGuestbookSchema = z.object({
+  garageUserId: z.string().uuid(),
+  body: guestbookBodySchema,
+});
+export type PostGuestbookInput = z.infer<typeof postGuestbookSchema>;
+
+export const createInviteSchema = z.object({
+  /** Direct invite by handle; omit for a share link. */
+  inviteeHandle: handleParamSchema.optional(),
+  hours: z.number().int().min(1).max(720).default(168),
+  /** Share links only; a direct invite is always single-use. */
+  maxUses: z.number().int().min(1).max(50).default(1),
+});
+export type CreateInviteInput = z.infer<typeof createInviteSchema>;
+
+export const inviteTokenSchema = z
+  .string()
+  .trim()
+  .regex(/^[a-f0-9]{64}$/, 'Not an invite token');
+
+export const openGaragesQuerySchema = z.object({
+  /** ISO country or 'all'; the page defaults to the viewer's own country (07 §2.2). */
+  country: z.union([z.literal('all'), z.string().trim().toUpperCase().length(2)]).optional(),
+  limit: z.number().int().min(1).max(50).default(20),
+});
+export type OpenGaragesQuery = z.infer<typeof openGaragesQuerySchema>;

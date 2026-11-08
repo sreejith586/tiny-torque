@@ -20,6 +20,8 @@ function isPublicPath(pathname: string) {
   if (PUBLIC_PATHS.has(pathname)) return true;
   if (pathname.startsWith('/market/')) return true;
   if (pathname.startsWith('/u/')) return true;
+  // /world/g/{handle} (MV-W03-03): public garages back share links; the page 404s while dark.
+  if (pathname.startsWith('/world/g/')) return true;
   if (pathname.startsWith('/legal/')) return true;
   // /api/v1/* (MV-W01-07, ADR-05 future-client seam): JSON handlers do their own auth and answer
   // 401/404 — a redirect to /login is meaningless to a non-browser client.

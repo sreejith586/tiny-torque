@@ -18,6 +18,9 @@ export const EVENT_TYPES = [
   'user.opened',
   'user.suspended',
   'user.unsuspended',
+  // admin earn freeze per user (F-26 / 06 §5 'earn exploit', MV-W05-06)
+  'user.earn_frozen',
+  'user.earn_unfrozen',
   'item.created',
   'item.updated',
   'item.deleted',
@@ -51,6 +54,8 @@ export const EVENT_TYPES = [
   'tokens.adjusted',
   'tokens.earned',
   'tokens.expired',
+  // T-14 d expiry notice per (user, expiry day) batch of earned credits — jobs runner (MV-W04-04, D-070)
+  'tokens.expiring_soon',
   'pro.activated',
   'pro.expired',
   'xp.granted',
@@ -61,6 +66,9 @@ export const EVENT_TYPES = [
   'invite.redeemed',
   'feedback.created',
   'flag.updated',
+  // catalogue car specs (F-25 racing input, MV-W08-prep): member/AI proposal → admin verification
+  'catalog.specs_proposed',
+  'catalog.specs_verified',
   // ---- Collectors World (07 §2, §6.2) ----
   'world.garage_created',
   'world.garage_updated',
@@ -71,7 +79,12 @@ export const EVENT_TYPES = [
   'world.visited',
   'world.kudos_given',
   'world.guestbook_posted',
+  'world.guestbook_hidden',
+  'world.invite_created',
+  'world.invite_accepted',
+  'world.invite_revoked',
   'world.score_updated',
+  'world.item_placed',
   'meetup.created',
   'meetup.scheduled',
   'meetup.started',
@@ -94,6 +107,8 @@ export const EVENT_TYPES = [
   'quest.reset',
   'season.started',
   'season.ended',
+  'season.milestone_reached',
+  'season.finished',
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];
@@ -111,6 +126,7 @@ export type EventEntity =
   | 'review'
   | 'invite'
   | 'flag'
+  | 'catalog_model'
   | 'garage'
   | 'world_item'
   | 'meetup'

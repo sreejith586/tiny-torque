@@ -56,17 +56,17 @@ Naming: tables/columns `snake_case`; TS `camelCase`; enums as Postgres enums mir
 
 ## 4. Testing standards
 
-| Layer | Tool | Rule |
-|---|---|---|
-| Domain rules | Vitest | Every `service.ts` rule has a test; repo mocked; ≥ 80 % line coverage on `domain/` |
-| Schemas | Vitest | zod schemas: valid + invalid fixtures |
-| RLS | pgTAP (`supabase test db`) | One file per migration; owner/stranger/anon/admin matrix; runs in CI |
-| RPCs/triggers | pgTAP | Listing limit, offer transitions incl. concurrency, token idempotency & balance property |
-| Edge Functions | Deno test | Mocked `fetch`; fixtures for Anthropic + Stripe payloads |
-| Critical flows | Playwright | sign-in, add item, scan (mocked fn), publish, offer→accept→sold, chat, buy tokens (Stripe test) — run on every PR preview |
-| Visual/theme | Playwright screenshots | Route × theme × width matrix from S9; diff threshold 0.2 % |
-| Accessibility | axe-playwright | No serious/critical violations |
-| Performance | Lighthouse CI | Budgets: perf ≥ 90, a11y ≥ 90 on staging, mobile profile |
+| Layer          | Tool                       | Rule                                                                                                                      |
+| -------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Domain rules   | Vitest                     | Every `service.ts` rule has a test; repo mocked; ≥ 80 % line coverage on `domain/`                                        |
+| Schemas        | Vitest                     | zod schemas: valid + invalid fixtures                                                                                     |
+| RLS            | pgTAP (`supabase test db`) | One file per migration; owner/stranger/anon/admin matrix; runs in CI                                                      |
+| RPCs/triggers  | pgTAP                      | Listing limit, offer transitions incl. concurrency, token idempotency & balance property                                  |
+| Edge Functions | Deno test                  | Mocked `fetch`; fixtures for Anthropic + Stripe payloads                                                                  |
+| Critical flows | Playwright                 | sign-in, add item, scan (mocked fn), publish, offer→accept→sold, chat, buy tokens (Stripe test) — run on every PR preview |
+| Visual/theme   | Playwright screenshots     | Route × theme × width matrix from S9; diff threshold 0.2 %                                                                |
+| Accessibility  | axe-playwright             | No serious/critical violations                                                                                            |
+| Performance    | Lighthouse CI              | Budgets: perf ≥ 90, a11y ≥ 90 on staging, mobile profile                                                                  |
 
 ## 5. Environments, release & rollback
 
@@ -76,7 +76,8 @@ Naming: tables/columns `snake_case`; TS `camelCase`; enums as Postgres enums mir
 - **Rollback:** Vercel promote previous deployment (seconds). DB: forward-fix migration preferred; destructive changes only after the two-release rule, so previous app version keeps working.
 - **Kill switches:** `ai_scan`, `offers`, `deal_chat`, `token_purchase`, `csv_import`, `marketplace_publish`, `invite_only` — documented in admin Flags with owner and effect.
 - **Secrets:** Vercel + Supabase secrets only; rotation procedure in runbook; service-role key never in Next.js runtime.
-- **World kill switches (D-077):** `world` (master), `world_shop` + `world_earn` (= economy freeze), `world_meetups`, `world_meetups_irl`, `world_races`, `world_clubs`, `world_presence` — `/admin/flags` World group. **Runbook placeholders (MV-W01-10, filled when each feature ships):** _earn exploit_ → `world_earn` OFF, per-user earn freeze, reverse via `admin_adjust_tokens`, audit `domain_events` (W05) · _race ran twice_ → `race_results` is write-once; verify the seed/stats version, re-run from seed only via the admin tool (W08) · _meetup room abuse_ → host mute/kick, then `world_meetups` OFF for the audience, report queue (W06).
+- **World kill switches (D-077):** `world` (master), `world_shop` + `world_earn` (= economy freeze), `world_meetups`, `world_meetups_irl`, `world_races`, `world_clubs`, `world_presence` — `/admin/flags` World group. **Runbook — _earn exploit_ (W05, F-28):** (1) stop the bleeding: `/admin/users` → **Freeze earn** on the account(s) (writes `world_earn_freezes`, `earn_tokens` pays nothing from then on; quests still track) — or, for a pattern not tied to an account, narrow `world_earn`'s audience / switch it OFF in `/admin/flags` (the global freeze, D-077); (2) size it: `/admin/world/economy` (this week's earned, earn-cap hits, earners) + `select * from token_ledger where user_id = … and reason like 'earn\_%' order by created_at`; (3) reverse: `admin_adjust_tokens(user, -n, note)` per account (D-065 allows a negative balance; durable items bought with the proceeds stay unless it was a chargeback-grade case — revoke by hand); (4) audit: `domain_events` for the actor (`tokens.earned`, `quest.completed`, `user.earn_frozen` carries the admin + note); (5) fix the rule (quest row / ceiling constant / consumer whitelist = a migration), replay with `replay_quest_progress(user)` if progress rows were corrupted (credits never move on replay), then **Unfreeze earn**. **World economy weekly review (07 §3.4, every Monday):** open `/admin/world/economy`; note sinks ÷ sources (target > 1.2), earned share of spend, earn-cap hit rate (a rising rate = the ceiling is the binding constraint, not the quests), breakage, median balance vs P90 (a widening gap = hoarding); if sinks ÷ sources < 1 for two weeks, add sinks or lower rewards by **data migration** (prices, `quests.reward_credits`, `seasons.track`), never code; log the numbers in PROGRESS-WORLD's session log. **Other placeholders (filled when each feature ships):** _race ran twice_ → `race_results` is write-once; verify the seed/stats version, re-run from seed only via the admin tool (W08) · _meetup room abuse_ → host mute/kick, then `world_meetups` OFF for the audience, report queue (W06).
+- **Scheduled jobs (MV-W04-04, D-095):** every World job runs through the SECURITY DEFINER dispatcher `run_world_job(job, at, source)` — `quest_reset`, `earned_expiry_notice`, `earned_expiry`, `season_rollover`, `score_recompute`, or `all` — and writes one `job_runs` row per job. **Scheduler = pg_cron** inside the database (`cron.job` rows named `world_*`, written by migration 0014d; times UTC); **manual trigger / fallback = the Edge Function `jobs`** (`supabase functions deploy jobs --no-verify-jwt`, secret `JOBS_SECRET` set with `supabase secrets set`, see `.env.example`). **Run a job by hand:** `curl -X POST https://<ref>.functions.supabase.co/jobs -H "x-jobs-secret: $JOBS_SECRET" -H "content-type: application/json" -d '{"job":"season_rollover"}'` (body `{job?: name | "all", at?: ISO}`; HTTP 200 = all ok, 207 = a job recorded an error, 401 = bad secret) — or, as the `postgres` role in psql, `select * from public.run_world_job('all');`. Every job is idempotent, so re-running is always safe. **Check it is running:** `/admin/world/economy` › "Job runs" (latest run per job, errors / runs, recent runs) or `select * from job_runs order by started_at desc limit 20`; `select jobname, schedule, active from cron.job where jobname like 'world\_%'` shows the schedules, `cron.job_run_details` pg_cron's own log. **When a `job_runs` row shows an error:** (1) read `error` (SQLSTATE + message) and `result`; the other jobs of that run were not affected (each runs in its own sub-transaction); (2) re-run just that job by hand with the same `at` (above) — the fix for a transient error is usually that alone; (3) if it fails again, the cause is data or a changed function: `42883` = a renamed / dropped function (a migration regressed the dispatcher), `42501` = the dispatcher is being called with a JWT (fix the caller, never the grant), anything from `credit_tokens` / `earn_tokens` = read 06 §5 _earn exploit_ first; (4) if pg_cron is not firing at all (`cron.job_run_details` empty, `job_runs` stale) confirm the extension is enabled on the hosted project and schedule the Edge Function from GitHub Actions / an external cron as the fallback until it is; (5) note the outage window in PROGRESS-WORLD's session log — a missed `earned_expiry_notice` day still notifies on the next run (the horizon is 14 d, batches are per expiry day), a missed `quest_reset` window is announced by the next run, a missed `season_rollover` is caught within the hour.
 
 ## 6. Observability
 
@@ -89,7 +90,7 @@ Sentry (errors + performance traces, release tagging from commit SHA), PostHog (
 - `docs/adr/ADR-NNN-title.md` for any new decision (template: context, decision, alternatives, reversibility, consequences).
 - `docs/plan/04-feature-specs.md` is living; behaviour changes update it in the same PR.
 - `docs/runbook.md` from Sprint 10.
-- No other prose docs; comments explain *why*, not *what*.
+- No other prose docs; comments explain _why_, not _what_.
 
 ## 8. Sprint rituals (solo-friendly)
 

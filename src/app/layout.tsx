@@ -12,6 +12,7 @@ import AppHeader from '@/components/AppHeader';
 import BottomNav from '@/components/BottomNav';
 import Providers from '@/components/Providers';
 import Splash from '@/components/Splash';
+import { worldNavEnabled } from '@/lib/world-nav.server';
 
 // Self-hosted (same faces/weights as Varun's Google Fonts setup — D-027):
 // no third-party request at build or runtime, works behind proxies/offline.
@@ -71,7 +72,8 @@ export const viewport: Viewport = {
   themeColor: THEMES[APP_DEFAULT_THEME].vars['--orange'],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const worldEnabled = await worldNavEnabled();
   return (
     <html
       lang="en"
@@ -96,7 +98,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AppHeader />
             {children}
           </div>
-          <BottomNav />
+          <BottomNav worldEnabled={worldEnabled} />
         </Providers>
       </body>
     </html>

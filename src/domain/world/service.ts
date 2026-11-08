@@ -5,24 +5,38 @@
 // the caller's job (route/page), same as every other domain service.
 import type { Client, Json } from '@/lib/supabase/types';
 import { emitEvent } from '@/domain/events';
-import { getPublicProfile } from '@/domain/identity';
+import { findBannedLanguage } from '@/lib/clean-language';
+import { getPublicProfile, listPublicProfilesByIds } from '@/domain/identity';
 import { listPublicCollectionItems } from '@/domain/garage';
 import * as repo from './repo';
 import { WorldError, rethrowAsWorldError } from './errors';
 import {
   buyItemSchema,
+  createInviteSchema,
   handleParamSchema,
+  inviteTokenSchema,
+  openGaragesQuerySchema,
   parseStoredLayout,
+  postGuestbookSchema,
+  renameGarageSchema,
   updateGarageSchema,
   validateLayout,
 } from './schema';
 import type { GarageLayout } from './schema';
+import { isPlaceableKind } from './types';
 import type {
+  GuestbookEntry,
   OwnGarage,
+  RecentVisitor,
   VisitorGarage,
   WorldGarageRow,
+  WorldGuestbookRow,
   WorldInventoryRow,
+  WorldInviteRow,
+  WorldKudosRow,
+  WorldOpenGarageRow,
   WorldShop,
+  WorldVisitRow,
 } from './types';
 
 export { WorldError } from './errors';
@@ -62,6 +76,7 @@ export async function getOwnGarage(supabase: Client): Promise<OwnGarage> {
     garage,
     level,
     nextLevel: levels.find((l) => l.level === garage.level + 1) ?? null,
+    displayCapacity: level.display_slots + garage.extra_slots,
     inventory,
     layout: parseStoredLayout(garage.layout),
   };
@@ -96,6 +111,8 @@ export async function getGarageForVisitor(
       featured_item_id: garage.featured_item_id,
       theme_item_id: garage.theme_item_id,
       score: garage.score,
+      visit_count: garage.visit_count,
+      kudos_count: garage.kudos_count,
       created_at: garage.created_at,
     },
     level,
@@ -104,7 +121,8 @@ export async function getGarageForVisitor(
   };
 }
 
-/** Owner edits name / open house mode / featured car. Level and score are RPC-only. */
+/** Owner edits open house mode / featured car / theme. Name, level, score and the purchase
+ *  bookkeeping columns are RPC-only (world_garages_guard). */
 export async function updateGarageSettings(
   supabase: Client,
   userId: string,
@@ -112,12 +130,17 @@ export async function updateGarageSettings(
 ): Promise<WorldGarageRow> {
   const v = updateGarageSchema.parse(input);
   const patch: Parameters<typeof repo.updateGarage>[2] = {};
-  if (v.name !== undefined) patch.name = v.name;
   if (v.openMode !== undefined) patch.open_mode = v.openMode;
   if (v.featuredItemId !== undefined) patch.featured_item_id = v.featuredItemId;
+  if (v.themeItemId !== undefined) patch.theme_item_id = v.themeItemId;
 
   await ensureGarage(supabase);
-  const row = await repo.updateGarage(supabase, userId, patch);
+  let row: WorldGarageRow;
+  try {
+    row = await repo.updateGarage(supabase, userId, patch);
+  } catch (e) {
+    rethrowAsWorldError(e); // theme_not_owned from the guard trigger
+  }
   await emitEvent(supabase, {
     actorId: userId,
     type: 'world.garage_updated',
@@ -128,19 +151,45 @@ export async function updateGarageSettings(
   return row;
 }
 
-/** Saves the layout document after checking slots ≤ level capacity, items public + owned (07 §6.2). */
+/** Renames the garage via rename_world_garage: first one free, then the `garage_rename` price
+ *  (spend_tokens, D-021). The RPC emits world.garage_updated. */
+export async function renameGarage(supabase: Client, input: unknown): Promise<WorldGarageRow> {
+  const v = renameGarageSchema.parse(input);
+  if (findBannedLanguage(v.name)) throw new WorldError('language_not_allowed'); // MV-S6-04 / W03
+  try {
+    return await repo.renameGarage(supabase, v.name);
+  } catch (e) {
+    rethrowAsWorldError(e);
+  }
+}
+
+/** Saves the layout document after checking slots ≤ capacity (level + bought extra slots), items
+ *  public + owned (07 §6.2), decor slots ≤ the level's and holding only placeable kinds (decor /
+ *  signage / trophy — MV-W05-02). Emits world.layout_saved, plus one world.item_placed per decor
+ *  item newly placed since the last save (the garage score consumer recomputes on the former). */
 export async function saveLayout(
   supabase: Client,
   userId: string,
   input: unknown
 ): Promise<GarageLayout> {
   const own = await getOwnGarage(supabase);
-  const publicItems = await listPublicCollectionItems(supabase, userId);
+  const [publicItems, catalogue] = await Promise.all([
+    listPublicCollectionItems(supabase, userId),
+    repo.listActiveItems(supabase),
+  ]);
+  const kindById = new Map(catalogue.map((i) => [i.id, i.kind]));
+  const owned = own.inventory.map((i) => i.item_id);
   const layout = validateLayout(input, {
-    displaySlots: own.level.display_slots,
+    displaySlots: own.displayCapacity,
     decorSlots: own.level.decor_slots,
     publicItemIds: new Set(publicItems.map((i) => i.id)),
-    ownedWorldItemIds: new Set(own.inventory.map((i) => i.item_id)),
+    ownedWorldItemIds: new Set(owned),
+    placeableWorldItemIds: new Set(
+      owned.filter((id) => {
+        const kind = kindById.get(id);
+        return kind === undefined || isPlaceableKind(kind); // unknown (inactive) rows: ownership rule only
+      })
+    ),
   });
   await repo.updateGarage(supabase, userId, { layout: layout as unknown as NonNullable<Json> });
   await emitEvent(supabase, {
@@ -150,6 +199,17 @@ export async function saveLayout(
     entityId: userId,
     payload: { slots: layout.slots.length, decor: layout.decor.length },
   });
+  const before = new Set(own.layout.decor.map((d) => d.itemId));
+  for (const d of layout.decor) {
+    if (before.has(d.itemId)) continue;
+    await emitEvent(supabase, {
+      actorId: userId,
+      type: 'world.item_placed',
+      entity: 'world_item',
+      entityId: d.itemId,
+      payload: { slot: d.slot, kind: kindById.get(d.itemId) ?? null },
+    });
+  }
   return layout;
 }
 
@@ -182,6 +242,176 @@ export async function listShop(supabase: Client): Promise<WorldShop> {
   return { levels, items };
 }
 
+// ---------- W03 social: visits, kudos, guestbook, invites, open garages (MV-W03-02, F-21) ----------
+// Every mutation is an RPC that emits its own domain event (D-009) and enforces visibility,
+// blocks, dedup and rate limits in the DB (07 P4 / §6.6); this layer adds zod (D-013), the
+// clean-language validator (MV-S6-04, mandatory from W03) and public-profile joins — handles and
+// display names only, never PII (rule 15).
+
+type PublicIdentity = { id: string; handle: string; displayName: string };
+
+async function identities(supabase: Client, ids: string[]): Promise<Map<string, PublicIdentity>> {
+  const unique = Array.from(new Set(ids));
+  if (unique.length === 0) return new Map();
+  const rows = await listPublicProfilesByIds(supabase, unique);
+  return new Map(
+    rows
+      .filter((r) => r.id && r.handle)
+      .map((r) => [
+        r.id as string,
+        {
+          id: r.id as string,
+          handle: r.handle as string,
+          displayName: r.display_name ?? (r.handle as string),
+        },
+      ])
+  );
+}
+
+/** Records today's visit (one row per visitor per day); null when the caller owns the garage.
+ *  Throws garage_not_found for anything the caller may not see (hidden mode, block). */
+export async function recordVisit(
+  supabase: Client,
+  garageUserId: string
+): Promise<WorldVisitRow | null> {
+  try {
+    return await repo.recordVisit(supabase, garageUserId);
+  } catch (e) {
+    rethrowAsWorldError(e);
+  }
+}
+
+/** One kudos per visitor per garage per day; a repeat returns today's row unchanged. */
+export async function giveKudos(supabase: Client, garageUserId: string): Promise<WorldKudosRow> {
+  try {
+    return await repo.giveKudos(supabase, garageUserId);
+  } catch (e) {
+    rethrowAsWorldError(e);
+  }
+}
+
+export async function postGuestbook(supabase: Client, input: unknown): Promise<WorldGuestbookRow> {
+  const v = postGuestbookSchema.parse(input);
+  if (findBannedLanguage(v.body)) throw new WorldError('language_not_allowed');
+  try {
+    return await repo.postGuestbook(supabase, v.garageUserId, v.body);
+  } catch (e) {
+    rethrowAsWorldError(e);
+  }
+}
+
+/** Host (or admin) hides / unhides a line; the RPC checks ownership. */
+export async function hideGuestbookEntry(
+  supabase: Client,
+  entryId: string,
+  hidden = true
+): Promise<WorldGuestbookRow> {
+  try {
+    return await repo.hideGuestbook(supabase, entryId, hidden);
+  } catch (e) {
+    rethrowAsWorldError(e);
+  }
+}
+
+/** Guestbook lines the caller may see (RLS: garage visibility; hidden lines only for the host),
+ *  with each author's public identity. */
+export async function listGuestbook(
+  supabase: Client,
+  garageUserId: string,
+  limit = 20
+): Promise<GuestbookEntry[]> {
+  const rows = await repo.listGuestbook(supabase, garageUserId, limit);
+  const who = await identities(
+    supabase,
+    rows.map((r) => r.author_id)
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    body: r.body,
+    createdAt: r.created_at,
+    hidden: r.hidden_by_host,
+    author: who.get(r.author_id) ?? {
+      id: r.author_id,
+      handle: 'collector',
+      displayName: 'A collector',
+    },
+  }));
+}
+
+/** The owner's "recent visitors" — handles only (07 §2.2). RLS limits the rows to the owner. */
+export async function listRecentVisitors(
+  supabase: Client,
+  garageUserId: string,
+  limit = 10
+): Promise<RecentVisitor[]> {
+  const rows = await repo.listRecentVisits(supabase, garageUserId, limit);
+  const who = await identities(
+    supabase,
+    rows.map((r) => r.visitor_id)
+  );
+  return rows.flatMap((r) => {
+    const p = who.get(r.visitor_id);
+    return p
+      ? [
+          {
+            visitorId: r.visitor_id,
+            handle: p.handle,
+            displayName: p.displayName,
+            visitedOn: r.visited_on,
+          },
+        ]
+      : [];
+  });
+}
+
+/** Share-link invite (token, max uses) or direct invite by handle (single use, notifies them). */
+export async function createInvite(supabase: Client, input: unknown): Promise<WorldInviteRow> {
+  const v = createInviteSchema.parse(input);
+  try {
+    return await repo.createInvite(supabase, {
+      inviteeHandle: v.inviteeHandle,
+      hours: v.hours,
+      maxUses: v.maxUses,
+    });
+  } catch (e) {
+    rethrowAsWorldError(e);
+  }
+}
+
+export async function acceptInvite(supabase: Client, token: unknown): Promise<WorldInviteRow> {
+  const parsed = inviteTokenSchema.safeParse(token);
+  if (!parsed.success) throw new WorldError('invite_invalid');
+  try {
+    return await repo.acceptInvite(supabase, parsed.data);
+  } catch (e) {
+    rethrowAsWorldError(e);
+  }
+}
+
+export async function revokeInvite(supabase: Client, inviteId: string): Promise<WorldInviteRow> {
+  try {
+    return await repo.revokeInvite(supabase, inviteId);
+  } catch (e) {
+    rethrowAsWorldError(e);
+  }
+}
+
+export const listInvites = repo.listInvites;
+
+/** /admin reports queue preview of reported guestbook lines (MV-W03-08). */
+export const listGuestbookByIds = repo.listGuestbookByIds;
+
+/** Public garages for the "Open garages" page: viewer's country by default, 'all' to widen. */
+export async function listOpenGarages(
+  supabase: Client,
+  input: unknown,
+  viewerCountry?: string | null
+): Promise<WorldOpenGarageRow[]> {
+  const q = openGaragesQuerySchema.parse(input ?? {});
+  const country = q.country === 'all' ? undefined : (q.country ?? viewerCountry ?? undefined);
+  return repo.listOpenGarages(supabase, { country, limit: q.limit });
+}
+
 export const listLevels = repo.listLevels;
 
 export type {
@@ -195,14 +425,39 @@ export type {
   WorldOpenMode,
   WorldItemKind,
 } from './types';
-export { WORLD_OPEN_MODES } from './types';
+export { WORLD_OPEN_MODES, PLACEABLE_KINDS, isPlaceableKind } from './types';
+export type { WorldEarnFreezeRow } from './types';
+export {
+  SCORE_WEIGHTS,
+  RARITY_WEIGHT,
+  rarityWeight,
+  garageScore,
+  scoreFromEvents,
+  scoreBreakdown,
+} from './score';
+export type { ScoreInput, ScoreEvent, ScoreState } from './score';
 export {
   garageLayoutSchema,
   EMPTY_LAYOUT,
   parseStoredLayout,
   validateLayout,
   updateGarageSchema,
+  renameGarageSchema,
   buyItemSchema,
   handleParamSchema,
 } from './schema';
-export type { GarageLayout, UpdateGarageInput, BuyItemInput, LayoutContext } from './schema';
+export type {
+  GarageLayout,
+  UpdateGarageInput,
+  RenameGarageInput,
+  BuyItemInput,
+  LayoutContext,
+} from './schema';
+export {
+  createInviteSchema,
+  postGuestbookSchema,
+  openGaragesQuerySchema,
+  inviteTokenSchema,
+} from './schema';
+export type { CreateInviteInput, PostGuestbookInput, OpenGaragesQuery } from './schema';
+export type { GuestbookEntry, RecentVisitor, WorldOpenGarageRow, WorldInviteRow } from './types';

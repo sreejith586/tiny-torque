@@ -1,5 +1,6 @@
 /** Error codes the World service raises. The RPC-originated ones are the exact `raise exception`
- *  messages from 0013_world_rpcs / spend_tokens, so the UI can map them to copy. */
+ *  messages from the world_rpcs / world_slots migrations and spend_tokens, so the UI can map them
+ *  to copy. */
 export type WorldErrorCode =
   | 'not_authorized'
   | 'garage_not_found'
@@ -10,6 +11,12 @@ export type WorldErrorCode =
   | 'earned_only'
   | 'level_too_low'
   | 'already_owned'
+  | 'slot_cap_reached'
+  | 'spotlight_active'
+  | 'season_closed'
+  | 'item_not_placeable'
+  | 'invalid_name'
+  | 'theme_not_owned'
   | 'layout_invalid'
   | 'too_many_slots'
   | 'too_many_decor'
@@ -17,7 +24,18 @@ export type WorldErrorCode =
   | 'duplicate_slot'
   | 'duplicate_item'
   | 'item_not_public'
-  | 'item_not_owned';
+  | 'item_not_owned'
+  | 'language_not_allowed'
+  | 'own_garage'
+  | 'invalid_body'
+  | 'guestbook_rate_limit'
+  | 'visit_rate_limit'
+  | 'entry_not_found'
+  | 'invalid_invite'
+  | 'invitee_not_found'
+  | 'invite_limit'
+  | 'invite_invalid'
+  | 'invite_not_found';
 
 export class WorldError extends Error {
   readonly code: WorldErrorCode;
@@ -37,6 +55,22 @@ const RPC_CODES: WorldErrorCode[] = [
   'earned_only',
   'level_too_low',
   'already_owned',
+  'slot_cap_reached',
+  'spotlight_active',
+  'season_closed',
+  'invalid_name',
+  'theme_not_owned',
+  'garage_not_found',
+  'own_garage',
+  'invalid_body',
+  'guestbook_rate_limit',
+  'visit_rate_limit',
+  'entry_not_found',
+  'invalid_invite',
+  'invitee_not_found',
+  'invite_limit',
+  'invite_invalid',
+  'invite_not_found',
 ];
 
 /** Maps a PostgREST/Postgres error whose message is one of the RPCs' `raise exception` codes to a
