@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { economyWeekRatios, searchUsers, setEarnFreeze } from './service';
+import {
+  economyWeekRatios,
+  jobHealth,
+  jobResultSummary,
+  jobRunSeconds,
+  searchUsers,
+  setEarnFreeze,
+} from './service';
+import type { JobRunRow } from './types';
 import type { Client } from '@/lib/supabase/types';
 
 function mockClient(data: unknown) {
@@ -72,5 +80,62 @@ describe('economyWeekRatios (07 §3.4 — sinks ÷ sources, earned share of spen
       earnedShareOfSpend: null,
       worldShareOfSpend: null,
     });
+  });
+});
+
+describe('job runs helpers (MV-W04-04, 06 §5 job_runs)', () => {
+  const run = (over: Partial<JobRunRow>): JobRunRow => ({
+    id: 1,
+    job: 'quest_reset',
+    triggered_by: 'cron',
+    run_at: '2026-11-10T00:05:00Z',
+    started_at: '2026-11-10T00:05:00Z',
+    finished_at: '2026-11-10T00:05:02Z',
+    status: 'ok',
+    result: {},
+    error: null,
+    ...over,
+  });
+
+  it('jobHealth: newest run per job, error count, dispatcher order then other jobs alphabetically', () => {
+    const rows = jobHealth([
+      run({ id: 1, job: 'season_rollover', started_at: '2026-11-10T01:00:00Z' }),
+      run({ id: 2, job: 'expire_listings', started_at: '2026-11-10T00:30:00Z' }),
+      run({
+        id: 3,
+        job: 'quest_reset',
+        started_at: '2026-11-09T00:05:00Z',
+        status: 'error',
+        error: 'boom',
+      }),
+      run({ id: 4, job: 'quest_reset', started_at: '2026-11-10T00:05:00Z' }),
+      run({
+        id: 5,
+        job: 'season_rollover',
+        started_at: '2026-11-10T02:00:00Z',
+        status: 'error',
+        error: 'x',
+      }),
+    ]);
+    expect(rows.map((r) => r.job)).toEqual(['quest_reset', 'season_rollover', 'expire_listings']);
+    expect(rows[0]).toMatchObject({ runs: 2, errors: 1 });
+    expect(rows[0]!.latest.id).toBe(4);
+    expect(rows[1]).toMatchObject({ runs: 2, errors: 1 });
+    expect(rows[1]!.latest.id).toBe(5);
+    expect(jobHealth([])).toEqual([]);
+  });
+
+  it('jobRunSeconds: whole seconds, null while running', () => {
+    expect(jobRunSeconds(run({}))).toBe(2);
+    expect(jobRunSeconds(run({ finished_at: null }))).toBeNull();
+    expect(jobRunSeconds(run({ finished_at: '2026-11-10T00:04:59Z' }))).toBe(0);
+  });
+
+  it('jobResultSummary: scalar keys only, in order', () => {
+    expect(jobResultSummary({ expired: 3, users: 2, detail: { a: 1 } })).toBe(
+      'expired 3 · users 2'
+    );
+    expect(jobResultSummary({ day: '2026-11-10', emitted: 2 })).toBe('day 2026-11-10 · emitted 2');
+    expect(jobResultSummary([])).toBe(''); // jsonb not null: a non-object result is just empty
   });
 });

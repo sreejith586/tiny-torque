@@ -1,16 +1,19 @@
 import { createClient } from '@/lib/supabase/server';
-import { getEconomySummary, getEconomyWeekly } from '@/domain/admin';
+import { getEconomySummary, getEconomyWeekly, listJobRuns } from '@/domain/admin';
 import AdminEconomyView from '@/components/AdminEconomyView';
+import AdminJobRunsView from '@/components/AdminJobRunsView';
 
 export const dynamic = 'force-dynamic';
 
 // /admin › World › Economy (MV-W05-05, F-28, 07 §3.4). Admin-gated by the layout + proxy; the two
-// RPCs re-check is_admin() themselves. Plain tables, no charts (D-027).
+// RPCs re-check is_admin() themselves. Plain tables, no charts (D-027). The "Job runs" section
+// (MV-W04-04) reads job_runs under its admin-only RLS.
 export default async function AdminWorldEconomyPage() {
   const supabase = await createClient();
-  const [weekly, summary] = await Promise.all([
+  const [weekly, summary, jobRuns] = await Promise.all([
     getEconomyWeekly(supabase, 8).catch(() => []),
     getEconomySummary(supabase).catch(() => []),
+    listJobRuns(supabase, 40).catch(() => []),
   ]);
 
   return (
@@ -23,6 +26,7 @@ export default async function AdminWorldEconomyPage() {
         </p>
       </div>
       <AdminEconomyView weekly={weekly} summary={summary} />
+      <AdminJobRunsView runs={jobRuns} />
     </div>
   );
 }
