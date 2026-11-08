@@ -11,6 +11,12 @@ const nextConfig = {
   },
   headers: async () => [
     {
+      // MV-S9-02: the browser must re-check the service worker on every load so a new deploy's
+      // worker (and its VERSION bump) takes over instead of a day-old cached copy.
+      source: '/sw.js',
+      headers: [{ key: 'Cache-Control', value: 'no-cache, max-age=0, must-revalidate' }],
+    },
+    {
       source: '/(.*)',
       headers: [
         { key: 'X-Content-Type-Options', value: 'nosniff' },
