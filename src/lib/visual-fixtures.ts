@@ -4,6 +4,17 @@ import type { Badge } from '@/domain/gamification/types';
 import type { Listing } from '@/domain/marketplace';
 import type { TokenPackRow, TokenLedgerRow } from '@/domain/tokens';
 import type { QuestBoard, QuestStatus, SeasonRow, SeasonTrackView } from '@/domain/quests';
+import type { DealMessageRow } from '@/domain/messaging';
+import {
+  hostFee,
+  type HostCapacity,
+  type MeetupDetail,
+  type MeetupListItem,
+  type MeetupRow,
+  type MeetupRsvpRow,
+  type MeetupStatus,
+  type PublicIdentity,
+} from '@/domain/meetups';
 import type {
   GuestbookEntry,
   OwnGarage,
@@ -920,3 +931,211 @@ export const FIXTURE_SEASON_TRACK: SeasonTrackView = {
   daysLeft: 42,
   finisherItemSku: 'trophy_season_finisher',
 };
+
+// ---------- W06 virtual meetups (MV-W06-03/04, F-23) — dark until `world_meetups` turns on ----------
+const MEETUP_A = '00000000-0000-4000-8000-00000000a001'; // Rafiq hosts, the viewer is going
+const MEETUP_B = '00000000-0000-4000-8000-00000000a002'; // the viewer hosts (draft → scheduled)
+const MEETUP_C = '00000000-0000-4000-8000-00000000a003'; // Meera hosts, followers only, viewer waitlisted
+const RAFIQ: PublicIdentity = { id: VISITOR_A, handle: 'diecast_dxb', displayName: 'Rafiq' };
+const MEERA: PublicIdentity = { id: VISITOR_B, handle: 'blr_castings', displayName: 'Meera' };
+const ME: PublicIdentity = { id: OWNER, handle: 'varun', displayName: 'Varun' };
+/** Fixed instants (Nov 2026) so the rendered "when" never depends on the review date. */
+const MEETUP_A_START = '2026-11-21T18:00:00.000Z';
+const MEETUP_B_START = '2026-11-28T15:30:00.000Z';
+const MEETUP_C_START = '2026-11-22T14:00:00.000Z';
+
+const meetupRow = (
+  over: Partial<MeetupRow> & Pick<MeetupRow, 'id' | 'host_id' | 'title'>
+): MeetupRow => ({
+  club_id: null,
+  garage_user_id: over.host_id,
+  kind: 'virtual',
+  theme: null,
+  description: null,
+  starts_at: MEETUP_A_START,
+  ends_at: '2026-11-21T20:00:00.000Z',
+  capacity: 10,
+  showcase_limit: 3,
+  visibility: 'public',
+  status: 'scheduled',
+  fee_paid: 5,
+  fee_ledger_id: null,
+  refund_ledger_id: null,
+  scheduled_at: '2026-11-10T09:00:00.000Z',
+  started_at: null,
+  ended_at: null,
+  cancelled_at: null,
+  created_at: '2026-11-10T09:00:00.000Z',
+  updated_at: '2026-11-10T09:00:00.000Z',
+  ...over,
+});
+
+const FIXTURE_MEETUP_A = meetupRow({
+  id: MEETUP_A,
+  host_id: VISITOR_A,
+  title: 'JDM night',
+  theme: 'Skylines, Supras, Silvias',
+  description: 'Bring your best JDM castings. Three cars each, stories welcome.',
+  capacity: 10,
+});
+const FIXTURE_MEETUP_B = meetupRow({
+  id: MEETUP_B,
+  host_id: OWNER,
+  title: 'Treasure Hunt show-and-tell',
+  theme: 'TH & Super TH',
+  starts_at: MEETUP_B_START,
+  ends_at: '2026-11-28T17:00:00.000Z',
+  capacity: 8,
+  status: 'draft',
+  fee_paid: 0,
+  scheduled_at: null,
+});
+const FIXTURE_MEETUP_C = meetupRow({
+  id: MEETUP_C,
+  host_id: VISITOR_B,
+  title: 'Matchbox Monday',
+  starts_at: MEETUP_C_START,
+  ends_at: '2026-11-22T15:30:00.000Z',
+  capacity: 2,
+  visibility: 'followers',
+});
+
+export const FIXTURE_HOST_CAPACITY: HostCapacity = {
+  cap: 10,
+  level: 2,
+  levelName: 'Garage',
+  isPro: false,
+  fee: hostFee,
+};
+
+export const FIXTURE_MEETUPS: MeetupListItem[] = [
+  { meetup: FIXTURE_MEETUP_A, host: RAFIQ, goingCount: 6, myRsvp: 'going', isHost: false },
+  { meetup: FIXTURE_MEETUP_C, host: MEERA, goingCount: 2, myRsvp: 'waitlist', isHost: false },
+  { meetup: FIXTURE_MEETUP_B, host: ME, goingCount: 0, myRsvp: null, isHost: true },
+];
+
+const rsvpRow = (
+  over: Partial<MeetupRsvpRow> & Pick<MeetupRsvpRow, 'meetup_id' | 'user_id'>
+): MeetupRsvpRow => ({
+  status: 'going',
+  role: 'attendee',
+  muted_at: null,
+  removed_at: null,
+  checked_in_at: null,
+  created_at: '2026-11-11T10:00:00.000Z',
+  updated_at: '2026-11-11T10:00:00.000Z',
+  ...over,
+});
+
+/** The detail page in two seats: `attendee` = the viewer is going to Rafiq's JDM night (showcase
+ *  picker, RSVP); `host` = the viewer's own draft (host controls, schedule + fee). `live` flips the
+ *  status so the room renders. `id` is echoed back so in-app links keep working. */
+export function fixtureMeetupDetail(
+  id: string,
+  seat: 'host' | 'attendee',
+  status: MeetupStatus | null = null
+): MeetupDetail {
+  const base = seat === 'host' ? FIXTURE_MEETUP_B : FIXTURE_MEETUP_A;
+  const meetup: MeetupRow = {
+    ...base,
+    id,
+    status: status ?? base.status,
+    started_at: status === 'live' ? '2026-11-21T18:00:00.000Z' : base.started_at,
+  };
+  const itemA = FIXTURE_ITEMS[0]!;
+  const itemB = FIXTURE_ITEMS[1]!;
+  const itemC = FIXTURE_ITEMS[3]!;
+  if (seat === 'host') {
+    return {
+      meetup,
+      host: ME,
+      viewer: {
+        id: OWNER,
+        isHost: true,
+        isCohost: false,
+        isStaff: true,
+        rsvp: null,
+        isMember: true,
+        muted: false,
+      },
+      attendees: [
+        { user: RAFIQ, status: 'going', role: 'cohost', muted: false, removed: false },
+        { user: MEERA, status: 'going', role: 'attendee', muted: true, removed: false },
+      ],
+      goingCount: 2,
+      waitlistCount: 0,
+      showcase: [
+        { id: 'sc-1', userId: VISITOR_A, itemId: itemC.id, position: 0, item: itemC, owner: RAFIQ },
+      ],
+      invites: [{ user: MEERA, createdAt: '2026-11-11T10:00:00.000Z' }],
+    };
+  }
+  const mine = rsvpRow({ meetup_id: id, user_id: OWNER });
+  return {
+    meetup,
+    host: RAFIQ,
+    viewer: {
+      id: OWNER,
+      isHost: false,
+      isCohost: false,
+      isStaff: false,
+      rsvp: mine,
+      isMember: true,
+      muted: false,
+    },
+    attendees: [
+      { user: ME, status: 'going', role: 'attendee', muted: false, removed: false },
+      { user: MEERA, status: 'going', role: 'attendee', muted: false, removed: false },
+    ],
+    goingCount: 6,
+    waitlistCount: 1,
+    showcase: [
+      { id: 'sc-2', userId: OWNER, itemId: itemA.id, position: 0, item: itemA, owner: ME },
+      { id: 'sc-3', userId: OWNER, itemId: itemB.id, position: 1, item: itemB, owner: ME },
+      { id: 'sc-4', userId: VISITOR_B, itemId: itemC.id, position: 0, item: itemC, owner: MEERA },
+    ],
+    invites: [],
+  };
+}
+
+const roomLine = (
+  id: string,
+  sender: string,
+  body: string,
+  reaction: string | null,
+  at: string
+): DealMessageRow => ({
+  id,
+  kind: 'meetup',
+  meetup_id: MEETUP_A,
+  offer_id: null,
+  sender_id: sender,
+  body,
+  reaction,
+  read_at: null,
+  created_at: at,
+});
+export const FIXTURE_ROOM_MESSAGES: DealMessageRow[] = [
+  roomLine(
+    'rm-1',
+    VISITOR_A,
+    'Welcome in! Show us what you brought.',
+    null,
+    '2026-11-21T18:00:30.000Z'
+  ),
+  roomLine(
+    'rm-2',
+    OWNER,
+    'R34 first — the one from the Dubai swap meet.',
+    null,
+    '2026-11-21T18:01:10.000Z'
+  ),
+  roomLine('rm-3', VISITOR_B, 'fire', 'fire', '2026-11-21T18:01:20.000Z'),
+  roomLine(
+    'rm-4',
+    VISITOR_B,
+    'That paint is unreal. Is it the 2019 release?',
+    null,
+    '2026-11-21T18:01:45.000Z'
+  ),
+];

@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/server';
 import { isFlagEnabled } from '@/domain/flags';
 import { getProfile } from '@/domain/identity';
 import { getQuestBoard, type QuestBoard } from '@/domain/quests';
+import { listMeetups, type MeetupListItem } from '@/domain/meetups';
+import { STATUS_LABEL, formatWhen } from '@/components/world/meetups/copy';
 import {
   listOpenGarages,
   listRecentVisitors,
@@ -13,6 +15,7 @@ import {
   type WorldOpenGarageRow,
 } from '@/domain/world';
 import {
+  FIXTURE_MEETUPS,
   FIXTURE_PROFILE,
   FIXTURE_QUEST_BOARD,
   FIXTURE_WORLD_OPEN,
@@ -63,6 +66,17 @@ async function loadQuests(sp: SearchParams, userId: string): Promise<QuestBoard 
   return getQuestBoard(supabase, userId).catch((): QuestBoard | null => null);
 }
 
+/** "Meetups" (MV-W06-03): null while `world_meetups` is OFF for this user (D-028 — no section at
+ *  all), otherwise the next two meetups the viewer may see. Never the reason /world fails. */
+async function loadMeetups(sp: SearchParams, userId: string): Promise<MeetupListItem[] | null> {
+  if (isVisualHarness(sp)) return FIXTURE_MEETUPS.slice(0, 2);
+  const supabase = await createClient();
+  if (!(await isFlagEnabled(supabase, 'world_meetups', { userId }))) return null;
+  return listMeetups(supabase, userId, 'upcoming')
+    .then((rows) => rows.slice(0, 2))
+    .catch((): MeetupListItem[] | null => null);
+}
+
 // /world home (MV-W02-01, D-081) + Open garages and recent visitors (MV-W03-05, D-087) + quests
 // (MV-W04-05, D-090).
 export default async function WorldHomePage({
@@ -72,9 +86,10 @@ export default async function WorldHomePage({
 }) {
   const sp = await searchParams;
   const { own, items } = await loadWorldPage(sp, { next: '/world' });
-  const [social, quests] = await Promise.all([
+  const [social, quests, meetups] = await Promise.all([
     loadSocial(sp, own.garage.user_id),
     loadQuests(sp, own.garage.user_id),
+    loadMeetups(sp, own.garage.user_id),
   ]);
   const featured = own.garage.featured_item_id
     ? (items.find((i) => i.id === own.garage.featured_item_id) ?? null)
@@ -206,6 +221,54 @@ export default async function WorldHomePage({
             </Link>
           ))}
         </div>
+      )}
+
+      {meetups && (
+        <>
+          <div className="section-title">Meetups</div>
+          {meetups.length === 0 ? (
+            <div className="empty-state">
+              <p>
+                No meetups coming up.{' '}
+                <Link href={isVisualHarness(sp) ? '/world/meetups?__visual=1' : '/world/meetups'}>
+                  Host one
+                </Link>
+                .
+              </p>
+            </div>
+          ) : (
+            <div className="panel">
+              {meetups.map(({ meetup, host, goingCount, isHost }) => (
+                <Link
+                  key={meetup.id}
+                  href={`/world/meetups/${meetup.id}${isVisualHarness(sp) ? '?__visual=1' : ''}`}
+                  className="toggle-row"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <span>
+                    <span style={{ display: 'block', fontWeight: 600 }}>{meetup.title}</span>
+                    <span className="muted" style={{ display: 'block', fontSize: 12 }}>
+                      {formatWhen(meetup.starts_at, meetup.ends_at)} ·{' '}
+                      {isHost ? 'you host' : `@${host.handle}`}
+                    </span>
+                  </span>
+                  <span className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+                    {meetup.status === 'live'
+                      ? STATUS_LABEL.live
+                      : `${goingCount}/${meetup.capacity} going`}
+                  </span>
+                </Link>
+              ))}
+              <Link
+                href={isVisualHarness(sp) ? '/world/meetups?__visual=1' : '/world/meetups'}
+                className="btn-secondary"
+                style={{ display: 'block', textAlign: 'center', marginTop: 10 }}
+              >
+                All meetups
+              </Link>
+            </div>
+          )}
+        </>
       )}
 
       <div className="section-title">Today&apos;s quests</div>
