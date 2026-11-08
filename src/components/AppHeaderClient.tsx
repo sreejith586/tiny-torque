@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { APP_SHELL_HIDDEN_ON } from '@/lib/shell-routes';
 import { initials } from '@/lib/initials';
-import { createClient } from '@/lib/supabase/client';
 import { BellIcon } from './icons';
 import MediaImage from './MediaImage';
 
@@ -30,34 +29,45 @@ export default function AppHeaderClient({
 
   useEffect(() => {
     if (!viewerId) return;
-    const supabase = createClient();
-    const channel = supabase
-      .channel(`header-notifications-${viewerId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${viewerId}`,
-        },
-        () => setUnreadCount((n) => n + 1)
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'profiles',
-          filter: `id=eq.${viewerId}`,
-        },
-        // recompute_token_balance (MV-S7-01) updates profiles.tokens whenever the ledger moves.
-        (payload) => setTokens((payload.new as { tokens?: number }).tokens ?? 0)
-      )
-      .subscribe();
+    // MV-S9-03: the header is on every route, so supabase-js (realtime + phoenix, ~65 KB gz) is
+    // loaded here on demand after hydration instead of inside the shared first-load bundle.
+    let cancelled = false;
+    let cleanup: (() => void) | null = null;
+    import('@/lib/supabase/client').then(({ createClient }) => {
+      if (cancelled) return;
+      const supabase = createClient();
+      const channel = supabase
+        .channel(`header-notifications-${viewerId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${viewerId}`,
+          },
+          () => setUnreadCount((n) => n + 1)
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${viewerId}`,
+          },
+          // recompute_token_balance (MV-S7-01) updates profiles.tokens whenever the ledger moves.
+          (payload) => setTokens((payload.new as { tokens?: number }).tokens ?? 0)
+        )
+        .subscribe();
+      cleanup = () => {
+        supabase.removeChannel(channel);
+      };
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      cleanup?.();
     };
   }, [viewerId]);
 
@@ -124,6 +134,8 @@ export default function AppHeaderClient({
               <MediaImage
                 mediaId={photoMediaId}
                 alt=""
+                width={96}
+                priority
                 style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
               />
             ) : (

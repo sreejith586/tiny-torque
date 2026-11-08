@@ -3,37 +3,61 @@
 // dot.namespaced and lower-case. Never pass phone numbers or PII in props.
 'use client';
 
-import posthog from 'posthog-js';
+import type { PostHog } from 'posthog-js';
 import type { EventType } from '@/domain/events/types';
 
-let ready = false;
+// MV-S9-03: posthog-js is loaded on demand (dynamic import, after the first paint) instead of
+// riding in every route's first-load bundle. Calls made before it is ready are queued and replayed.
+let client: PostHog | null = null;
+let loading: Promise<void> | null = null;
+const queue: Array<(p: PostHog) => void> = [];
+
+function withClient(fn: (p: PostHog) => void) {
+  if (client) fn(client);
+  else if (loading) queue.push(fn);
+}
 
 export function initAnalytics() {
-  if (ready || typeof window === 'undefined') return;
+  if (client || loading || typeof window === 'undefined') return;
   const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
   if (!key) return; // analytics is optional in dev/preview
-  posthog.init(key, {
-    api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
-    capture_pageview: true,
-    capture_pageleave: true,
-    persistence: 'localStorage+cookie',
-    autocapture: false, // explicit events only
-    mask_all_text: true,
-  });
-  ready = true;
+  const start = () => {
+    loading = import('posthog-js')
+      .then(({ default: posthog }) => {
+        posthog.init(key, {
+          api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
+          capture_pageview: true,
+          capture_pageleave: true,
+          persistence: 'localStorage+cookie',
+          autocapture: false, // explicit events only
+          mask_all_text: true,
+        });
+        client = posthog;
+        for (const fn of queue.splice(0)) fn(posthog);
+      })
+      .catch(() => {
+        loading = null; // blocked / offline — analytics simply stays off this session
+      });
+  };
+  // Yield to the main thread first so the import never competes with hydration.
+  const w = window as Window & {
+    requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+  };
+  if (typeof w.requestIdleCallback === 'function') w.requestIdleCallback(start, { timeout: 3000 });
+  else window.setTimeout(start, 1500);
+  // Mark "loading" synchronously so early track()/identify() calls queue instead of dropping.
+  loading = loading ?? Promise.resolve();
 }
 
 export function identify(
   userId: string,
   traits: { country_code?: string; plan?: string; account_type?: string } = {}
 ) {
-  if (!ready) return;
-  posthog.identify(userId, traits);
+  withClient((p) => p.identify(userId, traits));
 }
 
 export function track(event: string, props: Record<string, string | number | boolean | null> = {}) {
-  if (!ready) return;
-  posthog.capture(event, props);
+  withClient((p) => p.capture(event, props));
 }
 
 /**
@@ -71,6 +95,5 @@ export function trackWorld(
 }
 
 export function resetAnalytics() {
-  if (!ready) return;
-  posthog.reset();
+  withClient((p) => p.reset());
 }

@@ -61,7 +61,7 @@ export default function ListingCard({
           <div className={styles.carousel}>
             {listing.media.map((m) => (
               <div key={m.id} className={styles.carouselSlide}>
-                <MediaImage src={m.url} mediaId={m.id} alt={listing.brand} />
+                <MediaImage src={m.url} mediaId={m.id} alt={listing.brand} width={480} />
               </div>
             ))}
             <span className={styles.carouselCount}>{listing.media.length} photos</span>
@@ -71,6 +71,7 @@ export default function ListingCard({
             src={listing.media[0]?.url}
             mediaId={listing.media[0]?.id}
             alt={listing.brand}
+            width={480}
           />
         )}
       </div>

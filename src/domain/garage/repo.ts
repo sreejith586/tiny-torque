@@ -189,7 +189,8 @@ export async function listTrash(supabase: Client, userId: string): Promise<Colle
     .select('*')
     .eq('owner_id', userId)
     .not('deleted_at', 'is', null)
-    .order('deleted_at', { ascending: false });
+    .order('deleted_at', { ascending: false })
+    .limit(200); // MV-S9-03: the trash is 30-day bounded by purge_trash; cap the read regardless
   if (error) throw error;
   return (data ?? []).map(toRow);
 }

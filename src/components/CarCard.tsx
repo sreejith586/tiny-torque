@@ -56,7 +56,7 @@ export default function CarCard({
     return (
       <Link href={`/garage/${item.id}`} className="car-card" style={{ flexDirection: 'row' }}>
         <div className="car-photo" style={{ width: 72, height: 72, flex: '0 0 auto' }}>
-          <MediaImage src={primary?.url} mediaId={primary?.id} alt={item.brand} />
+          <MediaImage src={primary?.url} mediaId={primary?.id} alt={item.brand} width={240} />
         </div>
         <div className="car-body" style={{ flex: 1 }}>
           <div className="car-brand">{item.brand}</div>
@@ -100,12 +100,12 @@ export default function CarCard({
                 key={m.id}
                 style={{ flex: '0 0 100%', height: '100%', scrollSnapAlign: 'center' }}
               >
-                <MediaImage src={m.url} mediaId={m.id} alt={item.brand} />
+                <MediaImage src={m.url} mediaId={m.id} alt={item.brand} width={480} />
               </div>
             ))}
           </div>
         ) : (
-          <MediaImage src={primary?.url} mediaId={primary?.id} alt={item.brand} />
+          <MediaImage src={primary?.url} mediaId={primary?.id} alt={item.brand} width={480} />
         )}
         {item.media.length > 1 && (
           <span className="thumb-carousel-count">{item.media.length} photos</span>

@@ -128,6 +128,8 @@ export default function ProfileView({
           <MediaImage
             mediaId={bannerMediaId}
             alt=""
+            width={960}
+            priority
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : null}
@@ -163,6 +165,8 @@ export default function ProfileView({
             <MediaImage
               mediaId={photoMediaId}
               alt=""
+              width={240}
+              priority
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           ) : (

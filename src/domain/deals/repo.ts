@@ -47,6 +47,9 @@ export async function transition(
   return data as unknown as OfferRow;
 }
 
+/** Upper bound for the non-paginated offer lists (MV-S9-03). */
+const LIST_CAP = 200;
+
 export async function getOffer(supabase: Client, id: string): Promise<OfferRow | null> {
   const { data, error } = await supabase.from('offers').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
@@ -60,7 +63,9 @@ export async function listReceived(
 ): Promise<OfferRow[]> {
   let qb = supabase.from('offers').select('*').eq('seller_id', sellerId);
   if (status) qb = qb.eq('status', status);
-  const { data, error } = await qb.order('created_at', { ascending: false });
+  // MV-S9-03 pagination audit: the inbox is grouped client-side; cap the fetch so one very active
+  // seller cannot pull an unbounded history on every open (the oldest beyond this are terminal).
+  const { data, error } = await qb.order('created_at', { ascending: false }).limit(LIST_CAP);
   if (error) throw error;
   return (data ?? []) as OfferRow[];
 }
@@ -72,7 +77,7 @@ export async function listSent(
 ): Promise<OfferRow[]> {
   let qb = supabase.from('offers').select('*').eq('buyer_id', buyerId);
   if (status) qb = qb.eq('status', status);
-  const { data, error } = await qb.order('created_at', { ascending: false });
+  const { data, error } = await qb.order('created_at', { ascending: false }).limit(LIST_CAP);
   if (error) throw error;
   return (data ?? []) as OfferRow[];
 }

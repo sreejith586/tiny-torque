@@ -1,8 +1,9 @@
 // CSV / XLSX garage import (MV-S2-08, F-04). Pure header-mapping + row validation (unit-tested)
 // plus thin papaparse / SheetJS parse wrappers. No @supabase here — the batched insert goes
 // through the garage service (addCollectionItems) in 100-row batches.
-import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+// papaparse / xlsx (~110 KB gz together) are imported on demand inside the parse wrappers
+// (MV-S9-03): the import screen's first load ships the mapping UI only; the parsers arrive when a
+// file is actually picked.
 import { collectionItemInputSchema } from './schema';
 import type { CollectionItemInput } from './types';
 
@@ -93,6 +94,7 @@ export const CSV_TEMPLATE =
 export type ParsedSheet = { headers: string[]; rows: Record<string, string>[] };
 
 export async function parseCsv(file: File): Promise<ParsedSheet> {
+  const { default: Papa } = await import('papaparse');
   return new Promise((resolve, reject) => {
     Papa.parse<Record<string, string>>(file, {
       header: true,
@@ -104,6 +106,7 @@ export async function parseCsv(file: File): Promise<ParsedSheet> {
 }
 
 export async function parseXlsx(file: File): Promise<ParsedSheet> {
+  const XLSX = await import('xlsx');
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: 'array' });
   const sheet = wb.Sheets[wb.SheetNames[0]!];

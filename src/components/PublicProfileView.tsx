@@ -68,6 +68,8 @@ export default function PublicProfileView({
           <MediaImage
             mediaId={profile.banner_media_id}
             alt=""
+            width={960}
+            priority
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         )}
@@ -82,6 +84,8 @@ export default function PublicProfileView({
             <MediaImage
               mediaId={profile.avatar_media_id}
               alt=""
+              width={240}
+              priority
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           ) : (

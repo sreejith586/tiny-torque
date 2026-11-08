@@ -51,7 +51,12 @@ export default function TrashView({ items }: { items: GarageItem[] }) {
             style={{ flexDirection: 'row', alignItems: 'center' }}
           >
             <div className="car-photo" style={{ width: 56, height: 56, flex: '0 0 auto' }}>
-              <MediaImage src={item.media[0]?.url} mediaId={item.media[0]?.id} alt={item.brand} />
+              <MediaImage
+                src={item.media[0]?.url}
+                mediaId={item.media[0]?.id}
+                alt={item.brand}
+                width={240}
+              />
             </div>
             <div className="car-body" style={{ flex: 1 }}>
               <div className="car-brand">{item.brand}</div>

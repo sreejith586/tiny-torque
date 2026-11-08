@@ -35,4 +35,12 @@ export default withSentryConfig(nextConfig, {
   project: process.env.SENTRY_PROJECT,
   widenClientFileUpload: true,
   disableLogger: true,
+  // MV-S9-03: Session Replay is never enabled (replaysOnErrorSampleRate: 0) and debug statements
+  // are dev-only, so tree-shake both out of every route's first-load JS.
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+    excludeReplayIframe: true,
+    excludeReplayShadowDom: true,
+    excludeReplayWorker: true,
+  },
 });

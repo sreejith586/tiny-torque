@@ -155,6 +155,7 @@ export default function MyListingsView({
                 src={listing.media[0]?.url}
                 mediaId={listing.media[0]?.id}
                 alt={listing.brand}
+                width={240}
               />
             </div>
             <div className={marketStyles.info}>
