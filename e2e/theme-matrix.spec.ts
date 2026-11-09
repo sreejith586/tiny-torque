@@ -7,7 +7,8 @@ import path from 'node:path';
 // `theme-matrix` artifact for Sreejith's visual review against garage-log-147.html. A review AID,
 // not a pixel-diff gate: the only assertions are "the page rendered" (no 4xx/5xx, body painted).
 // Signed-in screens render from the ?__visual=1 fixtures (never honoured in production), so this
-// runs on previews and local builds; set THEME_MATRIX=1 to run it (it is slow: 6 × 2 × ~20 pages).
+// runs on previews and local builds; set THEME_MATRIX=1 to run it (6 themes in parallel workers,
+// ~56 shots each, a few minutes in all).
 
 const THEMES = [
   'workshop-light',
@@ -72,25 +73,33 @@ async function shoot(
     ? `${route.path}?__visual=1${route.name === 'garage-tour' ? '&__tour=1' : ''}`
     : route.path;
   await page.setViewportSize({ width: width.width, height: width.height });
-  const res = await page.goto(url);
+  // domcontentloaded (not networkidle: realtime sockets never go idle) + a short settle for
+  // hydration and lazy images; the 3.5 s brand splash is hidden by CSS rather than waited out —
+  // 336 shots × 3.5 s was the whole e2e job's timeout budget.
+  const res = await page.goto(url, { waitUntil: 'domcontentloaded' });
   const status = res?.status() ?? 0;
   // Unknown route is the one expected 404; harness routes that 307 to /login mean the harness is
   // off here (production) — record it rather than fail the whole matrix.
-  if (route.name !== 'not-found') expect(status, `${url}`).toBeLessThan(500);
+  // Soft: one broken route must not stop the other 55 shots of this theme (the matrix is a
+  // review aid); the test still ends red and names the route.
+  if (route.name !== 'not-found') expect.soft(status, `${url}`).toBeLessThan(500);
+  await page.waitForTimeout(500);
   await page
-    .waitForSelector('[data-splash]', { state: 'detached', timeout: 10_000 })
+    .addStyleTag({
+      content:
+        '[data-splash]{display:none !important} *,*::before,*::after{animation-duration:0s !important;transition-duration:0s !important}',
+    })
     .catch(() => {});
-  await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
   const dir = path.join(OUT, theme, width.name);
   mkdirSync(dir, { recursive: true });
   await page.screenshot({ path: path.join(dir, `${route.name}.png`), fullPage: true });
   const painted = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  expect(painted, 'body is painted').not.toBe('rgba(0, 0, 0, 0)');
+  expect.soft(painted, `${url}: body is painted`).not.toBe('rgba(0, 0, 0, 0)');
 }
 
 test.describe('theme QA screenshot matrix (MV-S9-05)', () => {
   test.skip(process.env.THEME_MATRIX !== '1', 'set THEME_MATRIX=1 to produce the matrix');
-  test.describe.configure({ timeout: 120_000 });
+  test.describe.configure({ timeout: 300_000 });
 
   for (const theme of THEMES) {
     test(`${theme}: every route at 360 + 1280`, async ({ page }, testInfo) => {
