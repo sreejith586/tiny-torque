@@ -10,7 +10,8 @@
 //   curl -X POST https://<ref>.functions.supabase.co/jobs -H "x-jobs-secret: $JOBS_SECRET" \
 //        -H "content-type: application/json" -d '{"job":"all"}'
 //   body: { job?: 'all' | 'quest_reset' | 'earned_expiry_notice' | 'earned_expiry' |
-//                 'season_rollover' | 'score_recompute', at?: ISO instant }
+//                 'season_rollover' | 'score_recompute' |
+//                 'meetup_transitions' | 'meetup_reminders' (0015, → run_meetup_jobs), at?: ISO instant }
 //   H1 track (MV-S9-01, h1.ts / h1-run.ts): { track: 'h1', job?: 'all' | 'expire_listings' |
 //     'expire_offers' | 'purge_trash' | 'ensure_event_partitions' | 'purge_media' | 'purge_accounts',
 //     at?, grace_days?, limit? } → run_h1_job + the Storage / Auth purges; 207 also when any run of
@@ -33,6 +34,7 @@ import {
   verifySecret,
   type JobRunRow,
 } from './lib.ts';
+import { dispatcherFor } from './meetups.ts';
 import { isH1Request, parseH1JobRequest } from './h1.ts';
 import { runH1 } from './h1-run.ts';
 
@@ -77,9 +79,10 @@ serve(async (req: Request) => {
   if (!parsed.ok) return json({ error: 'Invalid request.', detail: parsed.error }, 400);
   const args: Record<string, unknown> = { p_job: parsed.value.job, p_source: 'edge' };
   if (parsed.value.at) args.p_at = parsed.value.at;
-  const { data, error } = await admin.rpc('run_world_job', args);
+  const dispatcher = dispatcherFor(parsed.value.job);
+  const { data, error } = await admin.rpc(dispatcher, args);
   if (error) {
-    console.error('run_world_job failed', error);
+    console.error(`${dispatcher} failed`, error);
     return json({ error: 'Job dispatch failed.', detail: error.message }, 500);
   }
   const runs = (data ?? []) as JobRunRow[];

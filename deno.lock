@@ -41,6 +41,7 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@axe-core/playwright@^4.14.0",
         "npm:@playwright/test@^1.63.0",
         "npm:@sentry/nextjs@11",
         "npm:@supabase/ssr@~0.12.7",
