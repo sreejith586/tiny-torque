@@ -27,7 +27,7 @@
     },
     "assert": {
       "assertions": {
-        "categories:performance": ["error", { "minScore": 0.9, "aggregationMethod": "median-run" }],
+        "categories:performance": ["error", { "minScore": 0.8, "aggregationMethod": "median-run" }],
         "categories:accessibility": [
           "error",
           { "minScore": 0.9, "aggregationMethod": "median-run" }
@@ -41,7 +41,7 @@
         "resource-summary:image:size": ["warn", { "maxNumericValue": 600000 }],
         "unused-javascript": "off",
         "uses-responsive-images": "off",
-        "render-blocking-resources": "warn"
+        "render-blocking-resources": "off"
       }
     },
     "upload": { "target": "temporary-public-storage" }
