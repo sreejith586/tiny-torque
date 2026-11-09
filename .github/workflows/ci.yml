@@ -17,8 +17,13 @@ concurrency:
   #      keyed by the deployment's own ref (its branch; sha as the fallback), so only a newer
   #      preview of the SAME branch supersedes a running one — which is the one case where
   #      cancel-in-progress is wanted.
+  #  (3) Vercel sends one deployment_status event per state change (pending → success). The
+  #      `pending` run skips every job, yet as a new member of the group it still cancelled the
+  #      previous deploy's Playwright run (observed on #111: both runs "cancelled"). So only a
+  #      run that will actually do work — a `success` status, or any push / pull_request — may
+  #      cancel an in-progress one.
   group: ci-${{ github.event_name }}-${{ github.event_name == 'deployment_status' && (github.event.deployment.ref || github.event.deployment.sha) || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'deployment_status' || github.event.deployment_status.state == 'success' }}
 
 jobs:
   checks:
