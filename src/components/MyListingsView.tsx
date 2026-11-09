@@ -28,7 +28,7 @@ const TABS: { key: Status; label: string }[] = [
  * expire_listings() cron exists despite 03-data-model.md describing one) — "expired" here is a
  * view computed over `active` rows past their `expires_at`, not a stored status. */
 function viewStatus(l: Listing): Status | null {
-  if (l.status === 'sold' || l.status === 'reserved') return l.status;
+  if (l.status === 'sold' || l.status === 'reserved' || l.status === 'expired') return l.status;
   if (l.status === 'active') {
     const days = daysUntilExpiry(l.expires_at);
     return days != null && days < 0 ? 'expired' : 'active';
@@ -155,6 +155,7 @@ export default function MyListingsView({
                 src={listing.media[0]?.url}
                 mediaId={listing.media[0]?.id}
                 alt={listing.brand}
+                width={240}
               />
             </div>
             <div className={marketStyles.info}>

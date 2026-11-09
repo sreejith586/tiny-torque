@@ -11,6 +11,12 @@ const nextConfig = {
   },
   headers: async () => [
     {
+      // MV-S9-02: the browser must re-check the service worker on every load so a new deploy's
+      // worker (and its VERSION bump) takes over instead of a day-old cached copy.
+      source: '/sw.js',
+      headers: [{ key: 'Cache-Control', value: 'no-cache, max-age=0, must-revalidate' }],
+    },
+    {
       source: '/(.*)',
       headers: [
         { key: 'X-Content-Type-Options', value: 'nosniff' },
@@ -29,4 +35,12 @@ export default withSentryConfig(nextConfig, {
   project: process.env.SENTRY_PROJECT,
   widenClientFileUpload: true,
   disableLogger: true,
+  // MV-S9-03: Session Replay is never enabled (replaysOnErrorSampleRate: 0) and debug statements
+  // are dev-only, so tree-shake both out of every route's first-load JS.
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+    excludeReplayIframe: true,
+    excludeReplayShadowDom: true,
+    excludeReplayWorker: true,
+  },
 });

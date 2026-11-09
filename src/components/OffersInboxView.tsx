@@ -328,6 +328,7 @@ function ListingGroup({
               <MediaImage
                 mediaId={listing.media[0].id}
                 alt=""
+                width={240}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
             )}

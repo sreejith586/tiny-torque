@@ -200,6 +200,8 @@ export default function CarDetailView({
           src={item.media[0]?.url}
           mediaId={item.media[0]?.id}
           alt={item.brand}
+          width={960}
+          priority
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       </div>
@@ -212,6 +214,7 @@ export default function CarDetailView({
                 src={m.url}
                 mediaId={m.id}
                 alt=""
+                width={240}
                 style={{ width: 56, height: 56, objectFit: 'cover' }}
               />
             </div>
@@ -407,6 +410,7 @@ export default function CarDetailView({
                                   src={item.media[0]?.url}
                                   mediaId={item.media[0]?.id}
                                   alt={item.brand}
+                                  width={480}
                                 />
                               </div>
                               <div className={marketStyles.info}>

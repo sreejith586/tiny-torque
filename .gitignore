@@ -27,3 +27,4 @@ test-results/
 
 # local baseline-regen download (not committed)
 .baseline-dl*/
+.lighthouseci

@@ -1,6 +1,5 @@
 import type { Client } from '@/lib/supabase/types';
 import type { PaymentProvider } from '@/lib/payments/types';
-import { paymentProvider } from '@/lib/payments';
 import * as repo from './repo';
 import { createCheckoutSessionSchema, adminAdjustTokensSchema } from './schema';
 import { SPEND_OPTION_CONFIG, type SpendOption } from './types';
@@ -39,9 +38,12 @@ export async function createCheckoutSession(
   userId: string,
   input: unknown,
   urls: { successUrl: string; cancelUrl: string },
-  provider: PaymentProvider = paymentProvider
+  provider?: PaymentProvider
 ): Promise<CreateCheckoutSessionResult> {
   const { packId } = createCheckoutSessionSchema.parse(input);
+  // MV-S9-03: the Stripe SDK is server-only (server action) — imported here on demand so client
+  // components that use the rest of this service (store, success page) never bundle it.
+  provider ??= (await import('@/lib/payments')).paymentProvider;
   const pack: TokenPackRow | null = await repo.getPack(supabase, packId);
   if (!pack || !pack.active) throw new TokenError('pack_not_found');
 

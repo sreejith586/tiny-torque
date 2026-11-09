@@ -44,6 +44,8 @@ export default function BottomNav({ worldEnabled = false }: { worldEnabled?: boo
             key={tab.href}
             href={tab.href}
             className={`nav-item ${'isAdd' in tab && tab.isAdd ? 'nav-add' : ''} ${active ? 'active' : ''}`}
+            aria-label={tab.label}
+            aria-current={active ? 'page' : undefined}
           >
             <span className="nav-icon">
               <tab.Icon size={20} />

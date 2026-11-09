@@ -12,6 +12,10 @@
 //   body: { job?: 'all' | 'quest_reset' | 'earned_expiry_notice' | 'earned_expiry' |
 //                 'season_rollover' | 'score_recompute' |
 //                 'meetup_transitions' | 'meetup_reminders' (0015, → run_meetup_jobs), at?: ISO instant }
+//   H1 track (MV-S9-01, h1.ts / h1-run.ts): { track: 'h1', job?: 'all' | 'expire_listings' |
+//     'expire_offers' | 'purge_trash' | 'ensure_event_partitions' | 'purge_media' | 'purge_accounts',
+//     at?, grace_days?, limit? } → run_h1_job + the Storage / Auth purges; 207 also when any run of
+//     either track failed in the last 24 h (the daily h1-jobs.yml workflow alerts on that).
 //
 // Flow: verify the secret (constant-time) -> validate the body (lib.ts) -> call the SECURITY
 // DEFINER dispatcher `run_world_job` with the service role (the only role besides a direct
@@ -31,6 +35,8 @@ import {
   type JobRunRow,
 } from './lib.ts';
 import { dispatcherFor } from './meetups.ts';
+import { isH1Request, parseH1JobRequest } from './h1.ts';
+import { runH1 } from './h1-run.ts';
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -57,12 +63,20 @@ serve(async (req: Request) => {
       return json({ error: 'Invalid request.', detail: 'Body is not JSON.' }, 400);
     }
   }
-  const parsed = parseJobRequest(raw);
-  if (!parsed.ok) return json({ error: 'Invalid request.', detail: parsed.error }, 400);
-
   const admin: SupabaseClient = createClient(SUPABASE_URL, SERVICE_KEY, {
     auth: { persistSession: false },
   });
+
+  // H1 housekeeping track (MV-S9-01) — its own parser / runner so both tracks evolve apart.
+  if (isH1Request(raw)) {
+    const h1 = parseH1JobRequest(raw);
+    if (!h1.ok) return json({ error: 'Invalid request.', detail: h1.error }, 400);
+    const out = await runH1(admin, h1.value);
+    return json(out.body, out.status);
+  }
+
+  const parsed = parseJobRequest(raw);
+  if (!parsed.ok) return json({ error: 'Invalid request.', detail: parsed.error }, 400);
   const args: Record<string, unknown> = { p_job: parsed.value.job, p_source: 'edge' };
   if (parsed.value.at) args.p_at = parsed.value.at;
   const dispatcher = dispatcherFor(parsed.value.job);

@@ -184,6 +184,7 @@ export const FIXTURE_PROFILE: ProfileRow = {
   scan_quota_reset_at: '2026-09-01T08:00:00.000Z',
   onboarding_completed_at: '2026-09-01T08:00:00.000Z',
   tutorial_dismissed_at: null,
+  purged_at: null,
   age_confirmed_at: '2026-09-01T08:00:00.000Z',
   terms_version: '1',
   suspended_until: null,

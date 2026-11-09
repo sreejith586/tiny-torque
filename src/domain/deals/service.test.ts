@@ -119,6 +119,7 @@ function mockTables(tables: Record<string, { data: unknown; error?: unknown }>) 
         in: () => chain,
         is: () => chain,
         order: () => chain,
+        limit: () => chain,
         then: (res: (v: unknown) => void) => res(result),
       };
       return chain;

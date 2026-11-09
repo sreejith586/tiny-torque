@@ -38,7 +38,8 @@ export function NoPhotoPlaceholder({ label = 'No Photo' }: { label?: string }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'var(--muted)',
+          color: 'var(--cream)',
+          opacity: 0.85,
           fontSize: 15,
           fontWeight: 600,
           pointerEvents: 'none',
@@ -50,19 +51,39 @@ export function NoPhotoPlaceholder({ label = 'No Photo' }: { label?: string }) {
   );
 }
 
+/** Render widths the signing route accepts (MV-S9-03): a card thumbnail never needs the 1600 px
+ *  original. Kept to a short list so the CDN cache hits instead of one render per random width. */
+export const MEDIA_WIDTHS = [96, 240, 480, 960] as const;
+export type MediaWidth = (typeof MEDIA_WIDTHS)[number];
+
 export default function MediaImage({
   src,
   mediaId,
   alt,
   style,
+  width,
+  priority = false,
 }: {
   src?: string | null;
   mediaId?: string | null;
   alt: string;
   style?: CSSProperties;
+  /** Ask Storage for a resized render of this width (device pixels); omit for the original. */
+  width?: MediaWidth;
+  /** Above-the-fold hero: load eagerly. Everything else lazy-loads (MV-S9-03). */
+  priority?: boolean;
 }) {
-  const url = src ?? (mediaId ? `/api/media/${mediaId}` : null);
+  const url = src ?? (mediaId ? `/api/media/${mediaId}${width ? `?w=${width}` : ''}` : null);
   if (!url) return <NoPhotoPlaceholder />;
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={url} alt={alt} style={style} />;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={url}
+      alt={alt}
+      style={style}
+      loading={priority ? 'eager' : 'lazy'}
+      decoding="async"
+      fetchPriority={priority ? 'high' : 'auto'}
+    />
+  );
 }
