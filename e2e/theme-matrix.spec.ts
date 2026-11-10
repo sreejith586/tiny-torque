@@ -37,9 +37,11 @@ const ROUTES: Array<{ name: string; path: string; harness?: boolean }> = [
   { name: 'garage', path: '/garage', harness: true },
   { name: 'garage-tour', path: '/garage', harness: true },
   { name: 'garage-item', path: `/garage/${FIXTURE_ITEM}`, harness: true },
-  { name: 'garage-add', path: '/garage/add' },
-  { name: 'garage-scan', path: '/garage/scan' },
-  { name: 'garage-import', path: '/garage/import' },
+  // add/scan are client forms that need no data — the harness flag only gets them past the proxy's
+  // session gate; import renders its first step from the fixture owner (MV-S9-05 follow-up).
+  { name: 'garage-add', path: '/garage/add', harness: true },
+  { name: 'garage-scan', path: '/garage/scan', harness: true },
+  { name: 'garage-import', path: '/garage/import', harness: true },
   { name: 'garage-trash', path: '/garage/trash', harness: true },
   { name: 'market', path: '/market', harness: true },
   { name: 'market-listing', path: `/market/${FIXTURE_LISTING}`, harness: true },
@@ -58,7 +60,9 @@ const ROUTES: Array<{ name: string; path: string; harness?: boolean }> = [
   { name: 'world-season', path: '/world/season', harness: true },
   { name: 'legal-terms', path: '/legal/terms' },
   { name: 'offline', path: '/offline' },
-  { name: 'not-found', path: '/no-such-route-xyz' },
+  // An unknown path is non-public, so without the harness flag the proxy sends an anonymous visitor
+  // to /login; the flag lets the real 404 page render (proxy behaviour for anon users unchanged).
+  { name: 'not-found', path: '/no-such-route-xyz', harness: true },
 ];
 
 const OUT = path.join('playwright-report', 'theme-matrix');

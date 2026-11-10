@@ -1,7 +1,9 @@
 import type { ProfileRow, CountryRow, PublicProfileRow } from '@/types/database';
 import type { GarageItem } from '@/domain/garage';
 import type { Badge } from '@/domain/gamification/types';
-import type { Listing } from '@/domain/marketplace';
+import type { Listing, WishlistItemRow } from '@/domain/marketplace';
+import type { InboxGroup } from '@/domain/deals';
+import type { NotificationRow } from '@/domain/notifications';
 import type { TokenPackRow, TokenLedgerRow } from '@/domain/tokens';
 import type { QuestBoard, QuestStatus, SeasonRow, SeasonTrackView } from '@/domain/quests';
 import type { DealMessageRow } from '@/domain/messaging';
@@ -1139,4 +1141,170 @@ export const FIXTURE_ROOM_MESSAGES: DealMessageRow[] = [
     null,
     '2026-11-21T18:01:45.000Z'
   ),
+];
+
+// MV-S9-05 follow-up: fixtures for the signed-in screens the theme matrix was rendering as /login
+// (offers inbox, notifications, trash, my listings, wishlist). Small, deterministic, no DB.
+
+/** /garage/trash — one soft-deleted car (TrashView shows brand/model + Restore). */
+export const FIXTURE_TRASH_ITEMS: GarageItem[] = [
+  {
+    ...FIXTURE_ITEMS[1]!,
+    id: '10000000-0000-4000-8000-000000000009',
+    deleted_at: '2026-10-30T10:00:00.000Z',
+  },
+];
+
+/** /market/mine — the browse fixtures (seller = fixture owner) plus one sold and one reserved. */
+export const FIXTURE_MY_LISTINGS: Listing[] = [
+  ...FIXTURE_LISTINGS,
+  {
+    ...listingBase,
+    id: '20000000-0000-4000-8000-000000000004',
+    brand: 'Matchbox',
+    model: 'Land Rover Defender 110',
+    variant: 'Green',
+    price: 25,
+    status: 'reserved',
+    offer_count: 1,
+    media: [{ id: 'fix-l4', url: PHOTO }],
+  },
+  {
+    ...listingBase,
+    id: '20000000-0000-4000-8000-000000000005',
+    brand: 'Hot Wheels',
+    model: 'Datsun 510 Wagon',
+    variant: 'Orange',
+    price: 80,
+    status: 'sold',
+    sold_at: '2026-10-25T08:00:00.000Z',
+    media: [{ id: 'fix-l5', url: PHOTO }],
+  },
+];
+
+const BUYER = '00000000-0000-4000-8000-000000000002';
+
+const offerBase = {
+  seller_id: OWNER,
+  buyer_id: BUYER,
+  currency: 'AED' as string | null,
+  decline_reason: null as string | null,
+  message: null as string | null,
+  responded_at: null as string | null,
+  completed_at: null as string | null,
+  trade_item_ids: [] as string[],
+  created_at: '2026-11-01T09:00:00.000Z',
+  expires_at: '2026-11-15T09:00:00.000Z',
+};
+
+/** /offers — Received tab: two offers on the featured listing, one pending cash + one accepted
+ * trade with cash top-up; Sent tab: one withdrawn offer on another seller's listing. */
+export const FIXTURE_INBOX_RECEIVED: InboxGroup[] = [
+  {
+    listing: FIXTURE_LISTINGS[0]!,
+    offers: [
+      {
+        ...offerBase,
+        id: '40000000-0000-4000-8000-000000000001',
+        listing_id: FIXTURE_LISTINGS[0]!.id,
+        type: 'cash',
+        status: 'pending',
+        amount: 40,
+        message: 'Would you take 40 for it? Can collect this weekend.',
+        counterpartyName: 'Aisha',
+      },
+      {
+        ...offerBase,
+        id: '40000000-0000-4000-8000-000000000002',
+        listing_id: FIXTURE_LISTINGS[0]!.id,
+        type: 'trade',
+        status: 'accepted',
+        amount: 10,
+        trade_item_ids: [FIXTURE_ITEMS[3]!.id],
+        created_at: '2026-10-28T09:00:00.000Z',
+        responded_at: '2026-10-29T09:00:00.000Z',
+        counterpartyName: 'Rahul',
+      },
+    ],
+  },
+];
+
+export const FIXTURE_INBOX_SENT: InboxGroup[] = [
+  {
+    listing: { ...FIXTURE_LISTINGS[1]!, seller_id: BUYER, seller_name: 'Aisha' },
+    offers: [
+      {
+        ...offerBase,
+        id: '40000000-0000-4000-8000-000000000003',
+        listing_id: FIXTURE_LISTINGS[1]!.id,
+        seller_id: BUYER,
+        buyer_id: OWNER,
+        type: 'cash',
+        status: 'withdrawn',
+        amount: 25,
+        created_at: '2026-10-20T09:00:00.000Z',
+        responded_at: '2026-10-21T09:00:00.000Z',
+      },
+    ],
+  },
+];
+
+/** /notifications — one unread, two read, covering a deep link per surface. */
+export const FIXTURE_NOTIFICATIONS: NotificationRow[] = [
+  {
+    id: '50000000-0000-4000-8000-000000000001',
+    user_id: OWNER,
+    type: 'offer_received',
+    payload: { offer_id: '40000000-0000-4000-8000-000000000001' },
+    read_at: null,
+    created_at: '2026-11-01T09:05:00.000Z',
+  },
+  {
+    id: '50000000-0000-4000-8000-000000000002',
+    user_id: OWNER,
+    type: 'badge_unlocked',
+    payload: { badge: 'first_car' },
+    read_at: '2026-10-30T12:00:00.000Z',
+    created_at: '2026-10-30T11:00:00.000Z',
+  },
+  {
+    id: '50000000-0000-4000-8000-000000000003',
+    user_id: OWNER,
+    type: 'listing_expired',
+    payload: { listing_id: FIXTURE_LISTINGS[2]!.id },
+    read_at: '2026-10-28T12:00:00.000Z',
+    created_at: '2026-10-28T04:00:00.000Z',
+  },
+];
+
+/** /profile/wishlist — two wanted cars, one with a price cap. */
+export const FIXTURE_WISHLIST: WishlistItemRow[] = [
+  {
+    id: '60000000-0000-4000-8000-000000000001',
+    owner_id: OWNER,
+    catalog_model_id: null,
+    brand: 'Hot Wheels',
+    model: 'Datsun Bluebird 510',
+    notes: 'Super Treasure Hunt, any colour',
+    max_price: 150,
+    currency: 'AED',
+    notify: true,
+    deleted_at: null,
+    created_at: '2026-10-10T08:00:00.000Z',
+    updated_at: '2026-10-10T08:00:00.000Z',
+  },
+  {
+    id: '60000000-0000-4000-8000-000000000002',
+    owner_id: OWNER,
+    catalog_model_id: null,
+    brand: 'Tomica',
+    model: 'Nissan GT-R Nismo',
+    notes: null,
+    max_price: null,
+    currency: 'AED',
+    notify: false,
+    deleted_at: null,
+    created_at: '2026-10-12T08:00:00.000Z',
+    updated_at: '2026-10-12T08:00:00.000Z',
+  },
 ];
