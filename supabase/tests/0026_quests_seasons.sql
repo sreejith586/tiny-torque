@@ -11,7 +11,7 @@
 -- where RLS would otherwise hide another user's rows.
 
 begin;
-select plan(59);
+select plan(62);
 
 insert into auth.users (id) values
   ('74000000-0000-0000-0000-00000000000a'),
@@ -223,8 +223,15 @@ select is(
   array['weekly_guestbook', 'weekly_add_cars', 'weekly_garage_update'], 'weekly set 1 = rows 4–6');
 
 -- ---------- consumer: quest progress, completion, reward, season points, clamping ----------
+-- Seeded seasons (the placeholder Founders' Season and any later one) must not decide which season
+-- these assertions hit: on the day a seeded season starts it would out-rank a fixture that began
+-- "yesterday" (CI went red on 2026-11-10 for exactly that). The transaction rolls back.
+delete from public.seasons;
+-- two OVERLAPPING seasons: a completion belongs to the latest-starting one only, in the consumer
+-- and in the replay alike
 insert into public.seasons (id, name, theme, starts_at, ends_at) values
-  ('74000000-0000-0000-0000-0000000000f0', 'Test season', 'test', now() - interval '1 day', now() + interval '1 day');
+  ('74000000-0000-0000-0000-0000000000f0', 'Test season', 'test', now() - interval '1 day', now() + interval '1 day'),
+  ('74000000-0000-0000-0000-0000000000f9', 'Older overlapping season', 'test', now() - interval '2 days', now() + interval '2 days');
 -- whichever world.visited daily quest today's set offers (visit_garage ×1 or visit_three ×3)
 create temp table tq as
   select key, (rule->>'threshold')::int as threshold, reward_credits, reward_xp, period_start
@@ -263,6 +270,10 @@ select is(
   (select points from public.season_points where user_id = '74000000-0000-0000-0000-00000000000d'
      and season_id = '74000000-0000-0000-0000-0000000000f0'),
   (select reward_xp from tq), 'completion adds the quest''s reward_xp to the running season');
+select is(
+  (select count(*)::int from public.season_points where user_id = '74000000-0000-0000-0000-00000000000d'
+     and season_id = '74000000-0000-0000-0000-0000000000f9'),
+  0, 'an older overlapping season gets no points from the consumer');
 
 -- one more visit: clamped, no second completion, no second credit
 insert into public.domain_events (actor_id, type, entity, entity_id, payload) values
@@ -293,6 +304,13 @@ select is(
      and season_id = '74000000-0000-0000-0000-0000000000f0'),
   (select points from snap_points where season_id = '74000000-0000-0000-0000-0000000000f0'),
   'replayed season points equal the consumer''s');
+select is(
+  (select count(*)::int from public.season_points where user_id = '74000000-0000-0000-0000-00000000000d'
+     and season_id = '74000000-0000-0000-0000-0000000000f9'),
+  0, 'replay gives an older overlapping season no points either');
+select is(
+  (select count(*)::int from public.season_points where user_id = '74000000-0000-0000-0000-00000000000d'),
+  (select count(*)::int from snap_points), 'replay yields the same number of season rows');
 select is(
   (select count(*)::int from public.token_ledger where user_id = '74000000-0000-0000-0000-00000000000d'),
   1, 'replay moves no credits');
