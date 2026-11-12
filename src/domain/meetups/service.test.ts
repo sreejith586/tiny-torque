@@ -1,18 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { emitEvent } from '@/domain/events';
 import { listPublicProfilesByIds } from '@/domain/identity';
-import { listMediaForEntities } from '@/domain/media';
+import { listMediaForEntities, listMediaForEntity, uploadMeetupPhoto } from '@/domain/media';
 import { MeetupError } from './errors';
 import {
+  addMeetupPhoto,
   createMeetup,
   getMeetupDetail,
   inviteToMeetup,
   listMeetups,
   moderateAttendee,
+  pingRoom,
+  removeMeetupPhoto,
   rsvpMeetup,
   setShowcase,
   transitionMeetup,
   updateMeetup,
+  voteBestInShow,
 } from './service';
 import type { MeetupRow, MeetupRsvpRow } from './types';
 import type { Client } from '@/lib/supabase/types';
@@ -27,6 +31,11 @@ const repo = vi.hoisted(() => ({
   listGoingRsvps: vi.fn(),
   listShowcase: vi.fn(),
   listInvites: vi.fn(),
+  getMyVote: vi.fn(),
+  getClub: vi.fn(),
+  vote: vi.fn(),
+  pingRoom: vi.fn(),
+  removePhoto: vi.fn(),
   listCollectionItemsByIds: vi.fn(),
   hostCap: vi.fn(),
   createMeetup: vi.fn(),
@@ -43,7 +52,11 @@ vi.mock('@/domain/identity', () => ({
   listPublicProfilesByIds: vi.fn(),
   getProfile: vi.fn(),
 }));
-vi.mock('@/domain/media', () => ({ listMediaForEntities: vi.fn() }));
+vi.mock('@/domain/media', () => ({
+  listMediaForEntities: vi.fn(),
+  listMediaForEntity: vi.fn(),
+  uploadMeetupPhoto: vi.fn(),
+}));
 vi.mock('@/domain/world', () => ({ getOwnGarage: vi.fn() }));
 vi.mock('@/domain/entitlements', () => ({ isProActive: vi.fn() }));
 vi.mock('@/domain/events', () => ({ emitEvent: vi.fn() }));
@@ -77,6 +90,8 @@ const meetup = (over: Partial<MeetupRow> = {}): MeetupRow => ({
   started_at: null,
   ended_at: null,
   cancelled_at: null,
+  best_in_show_id: null,
+  best_in_show_votes: null,
   created_at: future,
   updated_at: future,
   ...over,
@@ -89,6 +104,10 @@ const rsvp = (over: Partial<MeetupRsvpRow> = {}): MeetupRsvpRow => ({
   muted_at: null,
   removed_at: null,
   checked_in_at: null,
+  room_joined_at: null,
+  room_seen_at: null,
+  room_seconds: 0,
+  attended_at: null,
   created_at: future,
   updated_at: future,
   ...over,
@@ -101,6 +120,9 @@ beforeEach(() => {
     { id: GUEST, handle: 'guest', display_name: null },
   ] as never);
   vi.mocked(listMediaForEntities).mockResolvedValue([]);
+  vi.mocked(listMediaForEntity).mockResolvedValue([]);
+  repo.getMyVote.mockResolvedValue(null);
+  repo.getClub.mockResolvedValue(null);
   repo.listInvites.mockResolvedValue([]);
   repo.listShowcase.mockResolvedValue([]);
   repo.listCollectionItemsByIds.mockResolvedValue([]);
@@ -291,5 +313,157 @@ describe('meetups service (MV-W06-02)', () => {
     expect(repo.listMeetupsByIds).toHaveBeenCalledWith(supabase, [M1]); // hosted ids excluded
     expect(mine.map((m) => m.meetup.id)).toEqual([M1, M2]);
     expect(mine.map((m) => m.isHost)).toEqual([false, true]);
+  });
+});
+
+describe('meetups service — best-in-show, attendance, photo wall (MV-W07-01)', () => {
+  const SC1 = '55555555-5555-4555-8555-555555555551';
+  const SC2 = '55555555-5555-4555-8555-555555555552';
+  const CLUB = '66666666-6666-4666-8666-666666666666';
+  const PHOTO = '77777777-7777-4777-8777-777777777777';
+  const showcaseRow = (id: string, user_id: string, votes: number) => ({
+    id,
+    meetup_id: M1,
+    user_id,
+    item_id: ITEM,
+    votes,
+    position: 0,
+    created_at: future,
+  });
+
+  it('the detail carries the tally, the viewer’s ballot, the frozen winner, the wall and the club', async () => {
+    repo.getMeetup.mockResolvedValue(
+      meetup({ status: 'ended', best_in_show_id: SC2, best_in_show_votes: 3, club_id: CLUB })
+    );
+    repo.listRsvps.mockResolvedValue([rsvp({ attended_at: future })]);
+    repo.listShowcase.mockResolvedValue([showcaseRow(SC1, GUEST, 1), showcaseRow(SC2, HOST, 3)]);
+    repo.getMyVote.mockResolvedValue(SC2);
+    repo.getClub.mockResolvedValue({ id: CLUB, slug: 'jdm_club', name: 'JDM Club' });
+    vi.mocked(listMediaForEntity).mockResolvedValue([
+      { id: 'old', owner_id: GUEST, status: 'ready', created_at: '2026-11-01T00:00:00.000Z' },
+      { id: 'gone', owner_id: GUEST, status: 'uploading', created_at: '2026-11-03T00:00:00.000Z' },
+      { id: 'new', owner_id: HOST, status: 'ready', created_at: '2026-11-02T00:00:00.000Z' },
+    ] as never);
+
+    const d = await getMeetupDetail(supabase, M1, GUEST);
+    expect(listMediaForEntity).toHaveBeenCalledWith(supabase, 'meetup_photo', M1);
+    expect(d!.showcase.map((s) => [s.id, s.votes])).toEqual([
+      [SC1, 1],
+      [SC2, 3],
+    ]);
+    expect(d!.myVoteShowcaseId).toBe(SC2);
+    expect(d!.bestInShow).toMatchObject({ showcaseId: SC2, votes: 3, entry: { id: SC2 } });
+    expect(d!.wallPhotos.map((p) => [p.id, p.owner?.handle])).toEqual([
+      ['new', 'host'],
+      ['old', 'guest'],
+    ]);
+    expect(d!.club).toEqual({ id: CLUB, slug: 'jdm_club', name: 'JDM Club' });
+    expect(d!.viewer.attended).toBe(true);
+  });
+
+  it('no winner while running or when nobody voted; a signed-out viewer has no ballot lookup', async () => {
+    repo.getMeetup.mockResolvedValue(meetup({ status: 'live' }));
+    repo.listRsvps.mockResolvedValue([]);
+    const d = await getMeetupDetail(supabase, M1, null);
+    expect(d!.bestInShow).toBeNull();
+    expect(d!.myVoteShowcaseId).toBeNull();
+    expect(d!.club).toBeNull();
+    expect(d!.viewer.attended).toBe(false);
+    expect(repo.getMyVote).not.toHaveBeenCalled();
+    expect(repo.getClub).not.toHaveBeenCalled();
+  });
+
+  it('createMeetup keeps the club for any visibility (hosted by the club)', async () => {
+    repo.createMeetup.mockResolvedValue(meetup({ status: 'draft', club_id: CLUB }));
+    await createMeetup(supabase, {
+      title: 'Club open night',
+      startsAt: future,
+      durationMinutes: 60,
+      capacity: 3,
+      visibility: 'public',
+      clubId: CLUB,
+    });
+    expect(repo.createMeetup).toHaveBeenCalledWith(
+      supabase,
+      expect.objectContaining({ visibility: 'public', clubId: CLUB })
+    );
+    repo.createMeetup.mockRejectedValue({ message: 'not_club_staff' });
+    await expect(
+      createMeetup(supabase, {
+        title: 'Not mine',
+        startsAt: future,
+        durationMinutes: 60,
+        capacity: 3,
+        visibility: 'club',
+        clubId: CLUB,
+      })
+    ).rejects.toThrow(new MeetupError('not_club_staff'));
+  });
+
+  it.each(['host_level_too_low', 'host_recent_report', 'hosting_suspended'] as const)(
+    'scheduling maps the hosting rule %s',
+    async (code) => {
+      repo.transition.mockRejectedValue({ message: code, code: 'P0001' });
+      await expect(transitionMeetup(supabase, M1, 'schedule')).rejects.toThrow(
+        new MeetupError(code)
+      );
+    }
+  );
+
+  it('voteBestInShow returns the new tally and maps the refusals', async () => {
+    repo.vote.mockResolvedValue(showcaseRow(SC1, GUEST, 4));
+    expect(await voteBestInShow(supabase, M1, SC1)).toEqual({ showcaseId: SC1, votes: 4 });
+    expect(repo.vote).toHaveBeenCalledWith(supabase, M1, SC1);
+    await expect(voteBestInShow(supabase, M1, 'nope')).rejects.toHaveProperty('issues');
+    for (const code of [
+      'voting_closed',
+      'own_entry',
+      'not_attending',
+      'entry_not_found',
+    ] as const) {
+      repo.vote.mockRejectedValue({ message: code });
+      await expect(voteBestInShow(supabase, M1, SC1)).rejects.toThrow(new MeetupError(code));
+    }
+  });
+
+  it('pingRoom reports attendance and never throws', async () => {
+    repo.pingRoom.mockResolvedValue(true);
+    expect(await pingRoom(supabase, M1)).toBe(true);
+    repo.pingRoom.mockRejectedValue(new Error('network'));
+    expect(await pingRoom(supabase, M1)).toBe(false);
+    expect(await pingRoom(supabase, 'nope')).toBe(false);
+  });
+
+  it('addMeetupPhoto uploads, emits meetup.photo_added, and maps the wall’s refusals without an event', async () => {
+    const blob = new Blob(['x']);
+    vi.mocked(uploadMeetupPhoto).mockResolvedValue({ id: PHOTO, created_at: future } as never);
+    const photo = await addMeetupPhoto(supabase, GUEST, M1, blob);
+    expect(uploadMeetupPhoto).toHaveBeenCalledWith(supabase, GUEST, M1, blob, { bytes: 1 });
+    expect(photo).toMatchObject({ id: PHOTO, ownerId: GUEST });
+    expect(emitEvent).toHaveBeenCalledWith(
+      supabase,
+      expect.objectContaining({
+        type: 'meetup.photo_added',
+        entityId: M1,
+        payload: { media_id: PHOTO },
+      })
+    );
+    vi.mocked(emitEvent).mockClear();
+    for (const code of ['photo_limit', 'photo_wall_closed', 'not_attending'] as const) {
+      vi.mocked(uploadMeetupPhoto).mockRejectedValue({ message: code });
+      await expect(addMeetupPhoto(supabase, GUEST, M1, blob)).rejects.toThrow(
+        new MeetupError(code)
+      );
+    }
+    expect(emitEvent).not.toHaveBeenCalled();
+  });
+
+  it('removeMeetupPhoto goes through the RPC', async () => {
+    await removeMeetupPhoto(supabase, PHOTO);
+    expect(repo.removePhoto).toHaveBeenCalledWith(supabase, PHOTO);
+    repo.removePhoto.mockRejectedValue({ message: 'photo_not_found' });
+    await expect(removeMeetupPhoto(supabase, PHOTO)).rejects.toThrow(
+      new MeetupError('photo_not_found')
+    );
   });
 });

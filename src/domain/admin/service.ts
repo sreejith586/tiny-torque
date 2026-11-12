@@ -1,7 +1,14 @@
 // Admin console service (MV-S6-07, F-16). Components/routes import from here, never from repo.
 import type { Client } from '@/lib/supabase/types';
 import * as repo from './repo';
-import type { EconomyWeeklyRow, EconomyWeekRatios, JobHealthRow, JobRunRow } from './types';
+import type {
+  EconomyWeeklyRow,
+  EconomyWeekRatios,
+  HostSuspensionAction,
+  HostSuspensionRow,
+  JobHealthRow,
+  JobRunRow,
+} from './types';
 
 export async function searchUsers(supabase: Client, query: string, limit = 20) {
   return repo.searchUsers(supabase, query.trim(), limit);
@@ -24,6 +31,28 @@ export async function setEarnFreeze(
   const trimmed = note?.trim() || null;
   if (trimmed && trimmed.length > 280) throw new Error('note_too_long');
   return repo.setEarnFreeze(supabase, userId, frozen, trimmed);
+}
+
+// ---------- hosting suspensions (MV-W07-05, F-28) ----------
+export const listHostSuspensions = repo.listHostSuspensions;
+
+/** Suspend / lift a collector's hosting rights or record an appeal note (admin RPC; the audit
+ *  events and the notification are written in the DB). */
+export async function setHostSuspension(
+  supabase: Client,
+  userId: string,
+  action: HostSuspensionAction,
+  note?: string | null
+): Promise<HostSuspensionRow> {
+  const trimmed = note?.trim() || null;
+  if (trimmed && trimmed.length > 1000) throw new Error('note_too_long');
+  if (action === 'note' && !trimmed) throw new Error('note_required');
+  return repo.setHostSuspension(supabase, userId, action, trimmed);
+}
+
+/** Pure: a suspension is in force until an admin lifts it. */
+export function isHostSuspensionActive(row: Pick<HostSuspensionRow, 'lifted_at'>): boolean {
+  return row.lifted_at === null;
 }
 
 /** 07 §3.4 ratios from one weekly row. Pure; null where the denominator is 0 so a table can show
@@ -108,6 +137,8 @@ export function jobResultSummary(result: JobRunRow['result']): string {
 
 export type {
   EarnFreezeRow,
+  HostSuspensionRow,
+  HostSuspensionAction,
   EconomyWeeklyRow,
   EconomySummaryRow,
   EconomyWeekRatios,

@@ -76,6 +76,44 @@ export async function uploadProfileMedia(
   return data;
 }
 
+/**
+ * Upload a (already-compressed) meetup photo-wall image (MV-W07-01, F-23). Same private bucket and
+ * owner-prefixed key as item media; the row's `entity_id` is the meetup. The DB guard
+ * (`media_meetup_photo_guard`) decides whether the uploader may post (room member, wall open, ≤ 6).
+ */
+export async function uploadMeetupPhoto(
+  supabase: Client,
+  userId: string,
+  meetupId: string,
+  blob: Blob,
+  meta: UploadMeta = {}
+): Promise<MediaRow> {
+  const path = `${userId}/meetups/${meetupId}/${crypto.randomUUID()}.jpg`;
+  const { error: upErr } = await supabase.storage
+    .from(ITEM_MEDIA_BUCKET)
+    .upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+  if (upErr) throw upErr;
+
+  const row: TablesInsert<'media'> = {
+    owner_id: userId,
+    kind: 'meetup_photo',
+    entity_id: meetupId,
+    bucket: ITEM_MEDIA_BUCKET,
+    path,
+    width: meta.width ?? null,
+    height: meta.height ?? null,
+    bytes: meta.bytes ?? null,
+    sort_order: 0,
+    status: 'ready',
+  };
+  const { data, error } = await supabase.from('media').insert(row).select().single();
+  if (error) {
+    await supabase.storage.from(ITEM_MEDIA_BUCKET).remove([path]);
+    throw error;
+  }
+  return data;
+}
+
 export async function listForEntity(
   supabase: Client,
   kind: MediaRow['kind'],

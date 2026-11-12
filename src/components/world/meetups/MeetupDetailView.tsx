@@ -3,31 +3,44 @@
 // Meetup detail (MV-W06-03, F-23). Prototype pieces only (D-027 / D-086): panel, toggle-row,
 // status-pill, btn-primary / btn-secondary / btn-danger, garage-grid + CarCard, native <select>,
 // muted, field-error. Optimistic where cheap (rsvp, showcase); every rule is enforced by the RPCs.
-import { useState, useTransition } from 'react';
+// W07 (MV-W07-01) adds the best-in-show results card (the winner's CarCard in a panel), vote counts
+// under the showcase cards, the photo wall (garage-grid of <MediaImage>) and "Report meetup".
+import { useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import CarCard from '@/components/CarCard';
+import MediaImage from '@/components/MediaImage';
+import ReportPrompt from '@/components/ReportPrompt';
 import { Spinner } from '@/components/Loaders';
+import { createClient } from '@/lib/supabase/client';
+import { compressImage } from '@/lib/image';
 import type { GarageItem } from '@/domain/garage';
 import {
+  ATTEND_REWARD,
+  MeetupError,
+  PHOTO_LIMIT,
+  addMeetupPhoto,
   allowedActions,
   acceptsRsvps,
   hostFee,
+  isPhotoWallOpen,
   isRoomOpen,
   refundOnCancel,
   type MeetupAction,
   type MeetupDetail,
+  type MeetupPhoto,
   type MeetupRsvpStatus,
 } from '@/domain/meetups';
 import {
   inviteToMeetupAction,
   moderateAttendeeAction,
+  removeMeetupPhotoAction,
   rsvpMeetupAction,
   setCohostAction,
   setShowcaseAction,
   transitionMeetupAction,
 } from '@/app/world/meetups/actions';
-import { STATUS_LABEL, STATUS_PILL_CLASS, VISIBILITY_LABEL } from './copy';
+import { MEETUP_ERROR_COPY, STATUS_LABEL, STATUS_PILL_CLASS, VISIBILITY_LABEL } from './copy';
 
 const ACTION_LABEL: Record<MeetupAction, string> = {
   schedule: 'Schedule',
@@ -61,6 +74,9 @@ export default function MeetupDetailView({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [photos, setPhotos] = useState<MeetupPhoto[]>(detail.wallPhotos);
+  const [uploading, setUploading] = useState(false);
+  const photoInput = useRef<HTMLInputElement>(null);
 
   const now = new Date();
   const ctx = { now, startsAt: new Date(meetup.starts_at), endsAt: new Date(meetup.ends_at) };
@@ -77,6 +93,13 @@ export default function MeetupDetailView({
     .map((id) => myItems.find((i) => i.id === id) ?? null)
     .filter((i): i is GarageItem => i !== null);
   const othersShowcase = detail.showcase.filter((s) => s.userId !== viewer.id);
+  const showVotes = status === 'live' || status === 'ended';
+  const votesOf = (itemId: string) => detail.showcase.find((s) => s.itemId === itemId)?.votes ?? 0;
+  const votesLabel = (n: number) => `${n} vote${n === 1 ? '' : 's'}`;
+  const wallOpen =
+    isMember && isPhotoWallOpen(status, meetup.ended_at ? new Date(meetup.ended_at) : null, now);
+  const myPhotoCount = photos.filter((p) => p.ownerId === viewer.id).length;
+  const winner = detail.bestInShow;
 
   function flash(msg: string) {
     setError(null);
@@ -195,6 +218,39 @@ export default function MeetupDetailView({
     });
   }
 
+  async function addPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || harness || !viewer.id) return;
+    setError(null);
+    setNotice(null);
+    setUploading(true);
+    try {
+      const blob = await compressImage(file);
+      const photo = await addMeetupPhoto(createClient(), viewer.id, meetup.id, blob);
+      setPhotos((prev) => [photo, ...prev]);
+      flash('Photo added to the wall.');
+    } catch (err) {
+      setError(
+        err instanceof MeetupError ? MEETUP_ERROR_COPY[err.code] : 'Could not add that photo.'
+      );
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function removePhoto(mediaId: string) {
+    run(async () => {
+      const r = await removeMeetupPhotoAction(meetup.id, mediaId);
+      if (!r.ok) {
+        setError(r.error);
+        return;
+      }
+      setPhotos((prev) => prev.filter((p) => p.id !== mediaId));
+      flash('Photo removed.');
+    });
+  }
+
   function moderate(userId: string, action: 'mute' | 'unmute' | 'kick') {
     run(async () => {
       const r = await moderateAttendeeAction(meetup.id, userId, action);
@@ -234,7 +290,23 @@ export default function MeetupDetailView({
         <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
           {VISIBILITY_LABEL[meetup.visibility]} · at{' '}
           <Link href={`/world/g/${host.handle}${harnessQuery}`}>@{host.handle}’s garage</Link>
+          {detail.club && (
+            <>
+              {' '}
+              · hosted by{' '}
+              <Link href={`/world/clubs/${detail.club.slug}${harnessQuery}`}>
+                {detail.club.name}
+              </Link>
+            </>
+          )}
         </p>
+        {viewer.attended && (
+          <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+            {status === 'ended'
+              ? `You attended — attending earns ${ATTEND_REWARD} credits (up to twice a day).`
+              : 'Your attendance is counted.'}
+          </p>
+        )}
 
         {/* viewer's own controls */}
         {!viewer.isStaff && acceptsRsvps(status) && !removed && (
@@ -286,6 +358,39 @@ export default function MeetupDetailView({
           </p>
         )}
       </div>
+
+      {/* ---- best in show (frozen when the meetup ended) ---- */}
+      {status === 'ended' && (
+        <>
+          <div className="section-title">Best in show</div>
+          <div className="panel">
+            {winner ? (
+              <>
+                <p style={{ fontWeight: 600 }}>
+                  {winner.entry?.owner ? `@${winner.entry.owner.handle}` : 'A collector'} ·{' '}
+                  {votesLabel(winner.votes)}
+                </p>
+                {winner.entry?.item ? (
+                  <div className="garage-grid" style={{ marginTop: 10 }}>
+                    <CarCard item={winner.entry.item} view="grid" />
+                  </div>
+                ) : (
+                  <p className="muted" style={{ fontSize: 13, marginTop: 6 }}>
+                    The winning car is no longer public.
+                  </p>
+                )}
+                <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
+                  One vote per attendee. The result was frozen when the meetup ended.
+                </p>
+              </>
+            ) : (
+              <p className="muted" style={{ fontSize: 13 }}>
+                No votes were cast at this meetup.
+              </p>
+            )}
+          </div>
+        </>
+      )}
 
       {/* ---- host panel ---- */}
       {viewer.isStaff && (
@@ -495,7 +600,14 @@ export default function MeetupDetailView({
               </p>
               <div className="garage-grid" style={{ marginBottom: 12 }}>
                 {myPicksItems.map((item) => (
-                  <CarCard key={item.id} item={item} view="grid" />
+                  <div key={item.id}>
+                    <CarCard item={item} view="grid" />
+                    {showVotes && (
+                      <p className="muted" style={{ fontSize: 11, marginTop: 4 }}>
+                        {votesLabel(votesOf(item.id))}
+                      </p>
+                    )}
+                  </div>
                 ))}
               </div>
             </>
@@ -508,6 +620,8 @@ export default function MeetupDetailView({
                     <CarCard item={s.item} view="grid" />
                     <p className="muted" style={{ fontSize: 11, marginTop: 4 }}>
                       @{s.owner?.handle ?? 'collector'}
+                      {showVotes ? ` · ${votesLabel(s.votes)}` : ''}
+                      {detail.myVoteShowcaseId === s.id ? ' · your vote' : ''}
                     </p>
                   </div>
                 ) : (
@@ -521,6 +635,82 @@ export default function MeetupDetailView({
             </div>
           )}
         </>
+      )}
+
+      {/* ---- photo wall (media rows; open while live and for a day after) ---- */}
+      {(showVotes || photos.length > 0) && (
+        <>
+          <div className="section-title">Photo wall</div>
+          {wallOpen && (
+            <div className="panel" style={{ marginBottom: 12 }}>
+              <p className="muted" style={{ fontSize: 13 }}>
+                Share up to {PHOTO_LIMIT} photos from this meetup. Everyone who can see the meetup
+                sees the wall.
+              </p>
+              <input
+                ref={photoInput}
+                type="file"
+                accept="image/*"
+                onChange={addPhoto}
+                style={{ display: 'none' }}
+                aria-label="Add a photo to the wall"
+              />
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ marginTop: 10 }}
+                onClick={() => photoInput.current?.click()}
+                disabled={uploading || pending || myPhotoCount >= PHOTO_LIMIT}
+              >
+                {uploading ? <Spinner /> : 'Add a photo'}
+              </button>
+            </div>
+          )}
+          {photos.length === 0 ? (
+            <div className="empty-state">
+              <p>No photos on the wall yet.</p>
+            </div>
+          ) : (
+            <div className="garage-grid">
+              {photos.map((p) => (
+                <div key={p.id}>
+                  <div className="car-photo">
+                    <MediaImage
+                      mediaId={p.id}
+                      alt={`Meetup photo${p.owner ? ` by @${p.owner.handle}` : ''}`}
+                      width={480}
+                    />
+                  </div>
+                  <p className="muted" style={{ fontSize: 11, marginTop: 4 }}>
+                    {p.ownerId === viewer.id ? 'You' : `@${p.owner?.handle ?? 'collector'}`}
+                  </p>
+                  {(p.ownerId === viewer.id || viewer.isStaff) && (
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      style={{ padding: '4px 10px', fontSize: 12, marginTop: 4 }}
+                      onClick={() => removePhoto(p.id)}
+                      disabled={pending}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {!viewer.isHost && viewer.id && status !== 'draft' && (
+        <div style={{ marginTop: 16 }}>
+          <ReportPrompt
+            targetType="meetup"
+            targetId={meetup.id}
+            targetName={meetup.title}
+            label="Report meetup"
+          />
+        </div>
       )}
 
       {notice && (

@@ -4,7 +4,15 @@
 // how the jobs runner's windows are explained — so they must stay in lock-step with the migration.
 // Table-tested in state.test.ts.
 import type { MeetupRsvpStatus, MeetupStatus } from './types';
-import { CANCEL_REFUND_HOURS, HOST_EARLY_START_MINUTES, PRO_HOST_CAP_MULTIPLIER } from './types';
+import {
+  ATTEND_SECONDS,
+  CANCEL_REFUND_HOURS,
+  HOST_EARLY_START_MINUTES,
+  HOST_REWARD_MIN_ATTENDED,
+  PHOTO_WALL_HOURS_AFTER_END,
+  PRO_HOST_CAP_MULTIPLIER,
+  ROOM_PING_MAX_GAP_SECONDS,
+} from './types';
 
 export type MeetupAction = 'schedule' | 'start' | 'end' | 'cancel';
 /** Who is looking: the host, a co-host, anyone else (attendee / visitor), or the jobs runner. */
@@ -127,4 +135,60 @@ export function reminderHorizon(startsAt: Date, now: Date): '24h' | '1h' | null 
   if (delta <= HOUR) return '1h';
   if (delta <= 24 * HOUR) return '24h';
   return null;
+}
+
+// ---------- W07 (MV-W07-01): best-in-show, attendance clock, photo wall — mirrors of 0015b ----------
+
+/** Ballots move only while the meetup is live; the result is frozen at `ended` (F-23 AC). */
+export function isVotingOpen(status: MeetupStatus): boolean {
+  return status === 'live';
+}
+
+/** A viewer may vote for an entry: voting open, in the room, and not their own car. */
+export function canVoteFor(
+  status: MeetupStatus,
+  isMember: boolean,
+  viewerId: string | null,
+  entryUserId: string
+): boolean {
+  return isVotingOpen(status) && isMember && viewerId !== null && viewerId !== entryUserId;
+}
+
+/** The winner transition_meetup('end') stamps: most votes; ties go to the entry placed on the table
+ *  first (then the lower id). Null when nobody voted. */
+export function bestInShowWinner<T extends { id: string; votes: number; createdAt: string }>(
+  entries: readonly T[]
+): T | null {
+  const voted = entries.filter((e) => e.votes > 0);
+  if (voted.length === 0) return null;
+  return [...voted].sort(
+    (a, b) =>
+      b.votes - a.votes || a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id)
+  )[0]!;
+}
+
+/** The room clock after one more ping — mirrors meetup_room_ping: the gap since the previous ping
+ *  counts, capped at 120 s (a closed tab stops the clock); the first ping only starts it. */
+export function roomSecondsAfterPing(seconds: number, gapSeconds: number | null): number {
+  if (gapSeconds === null) return seconds;
+  return seconds + Math.min(Math.max(Math.floor(gapSeconds), 0), ROOM_PING_MAX_GAP_SECONDS);
+}
+
+export function hasAttended(roomSeconds: number): boolean {
+  return roomSeconds >= ATTEND_SECONDS;
+}
+
+/** The host reward needs at least five collectors who attended (the host does not count). */
+export function hostRewardDue(attendedCount: number): boolean {
+  return attendedCount >= HOST_REWARD_MIN_ATTENDED;
+}
+
+/** The photo wall takes uploads while the meetup is live and for 24 h after it ended. */
+export function isPhotoWallOpen(status: MeetupStatus, endedAt: Date | null, now: Date): boolean {
+  if (status === 'live') return true;
+  return (
+    status === 'ended' &&
+    endedAt !== null &&
+    now.getTime() - endedAt.getTime() < PHOTO_WALL_HOURS_AFTER_END * HOUR
+  );
 }

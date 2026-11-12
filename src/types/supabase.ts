@@ -192,13 +192,13 @@ isOneToOne: false
                   ]
                 },"club_members": {
                   Row: {
-                    "club_id": string,"joined_at": string,"role": Database["public"]['Enums']["club_member_role"],"status": Database["public"]['Enums']["club_member_status"],"user_id": string
+                    "club_id": string,"invited_by": string | null,"joined_at": string,"role": Database["public"]['Enums']["club_member_role"],"status": Database["public"]['Enums']["club_member_status"],"user_id": string
                   }
                   Insert: {
-                    "club_id": string,"joined_at"?: string,"role"?: Database["public"]['Enums']["club_member_role"],"status"?: Database["public"]['Enums']["club_member_status"],"user_id": string
+                    "club_id": string,"invited_by"?: string | null,"joined_at"?: string,"role"?: Database["public"]['Enums']["club_member_role"],"status"?: Database["public"]['Enums']["club_member_status"],"user_id": string
                   }
                   Update: {
-                    "club_id"?: string,"joined_at"?: string,"role"?: Database["public"]['Enums']["club_member_role"],"status"?: Database["public"]['Enums']["club_member_status"],"user_id"?: string
+                    "club_id"?: string,"invited_by"?: string | null,"joined_at"?: string,"role"?: Database["public"]['Enums']["club_member_role"],"status"?: Database["public"]['Enums']["club_member_status"],"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -206,6 +206,18 @@ isOneToOne: false
       columns: ["club_id"]
 isOneToOne: false
       referencedRelation: "clubs"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "club_members_invited_by_fkey"
+      columns: ["invited_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "club_members_invited_by_fkey"
+      columns: ["invited_by"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "club_members_user_id_fkey"
@@ -218,6 +230,43 @@ isOneToOne: false
       columns: ["user_id"]
 isOneToOne: false
       referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"club_night_templates": {
+                  Row: {
+                    "active": boolean,"cadence": string,"capacity": number,"club_id": string,"created_at": string,"duration_minutes": number,"host_id": string,"id": string,"last_meetup_id": string | null,"next_starts_at": string,"theme": string | null,"title": string,"updated_at": string,"visibility": Database["public"]['Enums']["meetup_visibility"]
+                  }
+                  Insert: {
+                    "active"?: boolean,"cadence": string,"capacity": number,"club_id": string,"created_at"?: string,"duration_minutes"?: number,"host_id": string,"id"?: string,"last_meetup_id"?: string | null,"next_starts_at": string,"theme"?: string | null,"title": string,"updated_at"?: string,"visibility"?: Database["public"]['Enums']["meetup_visibility"]
+                  }
+                  Update: {
+                    "active"?: boolean,"cadence"?: string,"capacity"?: number,"club_id"?: string,"created_at"?: string,"duration_minutes"?: number,"host_id"?: string,"id"?: string,"last_meetup_id"?: string | null,"next_starts_at"?: string,"theme"?: string | null,"title"?: string,"updated_at"?: string,"visibility"?: Database["public"]['Enums']["meetup_visibility"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "club_night_templates_club_id_fkey"
+      columns: ["club_id"]
+isOneToOne: false
+      referencedRelation: "clubs"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "club_night_templates_host_id_fkey"
+      columns: ["host_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "club_night_templates_host_id_fkey"
+      columns: ["host_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "club_night_templates_last_meetup_id_fkey"
+      columns: ["last_meetup_id"]
+isOneToOne: false
+      referencedRelation: "meetups"
       referencedColumns: ["id"]
     }
                   ]
@@ -741,13 +790,13 @@ isOneToOne: false
                   ]
                 },"meetup_rsvps": {
                   Row: {
-                    "checked_in_at": string | null,"created_at": string,"meetup_id": string,"muted_at": string | null,"removed_at": string | null,"role": string,"status": Database["public"]['Enums']["meetup_rsvp_status"],"updated_at": string,"user_id": string
+                    "attended_at": string | null,"checked_in_at": string | null,"created_at": string,"meetup_id": string,"muted_at": string | null,"removed_at": string | null,"role": string,"room_joined_at": string | null,"room_seconds": number,"room_seen_at": string | null,"status": Database["public"]['Enums']["meetup_rsvp_status"],"updated_at": string,"user_id": string
                   }
                   Insert: {
-                    "checked_in_at"?: string | null,"created_at"?: string,"meetup_id": string,"muted_at"?: string | null,"removed_at"?: string | null,"role"?: string,"status"?: Database["public"]['Enums']["meetup_rsvp_status"],"updated_at"?: string,"user_id": string
+                    "attended_at"?: string | null,"checked_in_at"?: string | null,"created_at"?: string,"meetup_id": string,"muted_at"?: string | null,"removed_at"?: string | null,"role"?: string,"room_joined_at"?: string | null,"room_seconds"?: number,"room_seen_at"?: string | null,"status"?: Database["public"]['Enums']["meetup_rsvp_status"],"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "checked_in_at"?: string | null,"created_at"?: string,"meetup_id"?: string,"muted_at"?: string | null,"removed_at"?: string | null,"role"?: string,"status"?: Database["public"]['Enums']["meetup_rsvp_status"],"updated_at"?: string,"user_id"?: string
+                    "attended_at"?: string | null,"checked_in_at"?: string | null,"created_at"?: string,"meetup_id"?: string,"muted_at"?: string | null,"removed_at"?: string | null,"role"?: string,"room_joined_at"?: string | null,"room_seconds"?: number,"room_seen_at"?: string | null,"status"?: Database["public"]['Enums']["meetup_rsvp_status"],"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -813,18 +862,61 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"meetups": {
+                },"meetup_votes": {
                   Row: {
-                    "cancelled_at": string | null,"capacity": number,"club_id": string | null,"created_at": string,"description": string | null,"ended_at": string | null,"ends_at": string,"fee_ledger_id": string | null,"fee_paid": number,"garage_user_id": string | null,"host_id": string,"id": string,"kind": Database["public"]['Enums']["meetup_kind"],"refund_ledger_id": string | null,"scheduled_at": string | null,"showcase_limit": number,"started_at": string | null,"starts_at": string,"status": Database["public"]['Enums']["meetup_status"],"theme": string | null,"title": string,"updated_at": string,"visibility": Database["public"]['Enums']["meetup_visibility"]
+                    "created_at": string,"meetup_id": string,"showcase_id": string,"updated_at": string,"voter_id": string
                   }
                   Insert: {
-                    "cancelled_at"?: string | null,"capacity": number,"club_id"?: string | null,"created_at"?: string,"description"?: string | null,"ended_at"?: string | null,"ends_at": string,"fee_ledger_id"?: string | null,"fee_paid"?: number,"garage_user_id"?: string | null,"host_id": string,"id"?: string,"kind"?: Database["public"]['Enums']["meetup_kind"],"refund_ledger_id"?: string | null,"scheduled_at"?: string | null,"showcase_limit"?: number,"started_at"?: string | null,"starts_at": string,"status"?: Database["public"]['Enums']["meetup_status"],"theme"?: string | null,"title": string,"updated_at"?: string,"visibility"?: Database["public"]['Enums']["meetup_visibility"]
+                    "created_at"?: string,"meetup_id": string,"showcase_id": string,"updated_at"?: string,"voter_id": string
                   }
                   Update: {
-                    "cancelled_at"?: string | null,"capacity"?: number,"club_id"?: string | null,"created_at"?: string,"description"?: string | null,"ended_at"?: string | null,"ends_at"?: string,"fee_ledger_id"?: string | null,"fee_paid"?: number,"garage_user_id"?: string | null,"host_id"?: string,"id"?: string,"kind"?: Database["public"]['Enums']["meetup_kind"],"refund_ledger_id"?: string | null,"scheduled_at"?: string | null,"showcase_limit"?: number,"started_at"?: string | null,"starts_at"?: string,"status"?: Database["public"]['Enums']["meetup_status"],"theme"?: string | null,"title"?: string,"updated_at"?: string,"visibility"?: Database["public"]['Enums']["meetup_visibility"]
+                    "created_at"?: string,"meetup_id"?: string,"showcase_id"?: string,"updated_at"?: string,"voter_id"?: string
                   }
                   Relationships: [
                     {
+      foreignKeyName: "meetup_votes_meetup_id_fkey"
+      columns: ["meetup_id"]
+isOneToOne: false
+      referencedRelation: "meetups"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "meetup_votes_showcase_id_fkey"
+      columns: ["showcase_id"]
+isOneToOne: false
+      referencedRelation: "meetup_showcase"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "meetup_votes_voter_id_fkey"
+      columns: ["voter_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "meetup_votes_voter_id_fkey"
+      columns: ["voter_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"meetups": {
+                  Row: {
+                    "best_in_show_id": string | null,"best_in_show_votes": number | null,"cancelled_at": string | null,"capacity": number,"club_id": string | null,"created_at": string,"description": string | null,"ended_at": string | null,"ends_at": string,"fee_ledger_id": string | null,"fee_paid": number,"garage_user_id": string | null,"host_id": string,"id": string,"kind": Database["public"]['Enums']["meetup_kind"],"refund_ledger_id": string | null,"scheduled_at": string | null,"showcase_limit": number,"started_at": string | null,"starts_at": string,"status": Database["public"]['Enums']["meetup_status"],"theme": string | null,"title": string,"updated_at": string,"visibility": Database["public"]['Enums']["meetup_visibility"]
+                  }
+                  Insert: {
+                    "best_in_show_id"?: string | null,"best_in_show_votes"?: number | null,"cancelled_at"?: string | null,"capacity": number,"club_id"?: string | null,"created_at"?: string,"description"?: string | null,"ended_at"?: string | null,"ends_at": string,"fee_ledger_id"?: string | null,"fee_paid"?: number,"garage_user_id"?: string | null,"host_id": string,"id"?: string,"kind"?: Database["public"]['Enums']["meetup_kind"],"refund_ledger_id"?: string | null,"scheduled_at"?: string | null,"showcase_limit"?: number,"started_at"?: string | null,"starts_at": string,"status"?: Database["public"]['Enums']["meetup_status"],"theme"?: string | null,"title": string,"updated_at"?: string,"visibility"?: Database["public"]['Enums']["meetup_visibility"]
+                  }
+                  Update: {
+                    "best_in_show_id"?: string | null,"best_in_show_votes"?: number | null,"cancelled_at"?: string | null,"capacity"?: number,"club_id"?: string | null,"created_at"?: string,"description"?: string | null,"ended_at"?: string | null,"ends_at"?: string,"fee_ledger_id"?: string | null,"fee_paid"?: number,"garage_user_id"?: string | null,"host_id"?: string,"id"?: string,"kind"?: Database["public"]['Enums']["meetup_kind"],"refund_ledger_id"?: string | null,"scheduled_at"?: string | null,"showcase_limit"?: number,"started_at"?: string | null,"starts_at"?: string,"status"?: Database["public"]['Enums']["meetup_status"],"theme"?: string | null,"title"?: string,"updated_at"?: string,"visibility"?: Database["public"]['Enums']["meetup_visibility"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "meetups_best_in_show_id_fkey"
+      columns: ["best_in_show_id"]
+isOneToOne: false
+      referencedRelation: "meetup_showcase"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "meetups_club_id_fkey"
       columns: ["club_id"]
 isOneToOne: false
@@ -1013,13 +1105,13 @@ isOneToOne: false
                   ]
                 },"reports": {
                   Row: {
-                    "created_at": string,"deleted_at": string | null,"id": string,"notes": string | null,"reason": string | null,"reporter_id": string,"resolution_note": string | null,"resolved_at": string | null,"resolved_by": string | null,"status": Database["public"]['Enums']["report_status"],"target_id": string | null,"target_name": string | null,"target_type": string,"updated_at": string
+                    "created_at": string,"deleted_at": string | null,"id": string,"notes": string | null,"reason": string | null,"reporter_id": string,"resolution_note": string | null,"resolved_at": string | null,"resolved_by": string | null,"status": Database["public"]['Enums']["report_status"],"target_id": string | null,"target_name": string | null,"target_type": string,"target_user_id": string | null,"updated_at": string
                   }
                   Insert: {
-                    "created_at"?: string,"deleted_at"?: string | null,"id"?: string,"notes"?: string | null,"reason"?: string | null,"reporter_id": string,"resolution_note"?: string | null,"resolved_at"?: string | null,"resolved_by"?: string | null,"status"?: Database["public"]['Enums']["report_status"],"target_id"?: string | null,"target_name"?: string | null,"target_type": string,"updated_at"?: string
+                    "created_at"?: string,"deleted_at"?: string | null,"id"?: string,"notes"?: string | null,"reason"?: string | null,"reporter_id": string,"resolution_note"?: string | null,"resolved_at"?: string | null,"resolved_by"?: string | null,"status"?: Database["public"]['Enums']["report_status"],"target_id"?: string | null,"target_name"?: string | null,"target_type": string,"target_user_id"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "created_at"?: string,"deleted_at"?: string | null,"id"?: string,"notes"?: string | null,"reason"?: string | null,"reporter_id"?: string,"resolution_note"?: string | null,"resolved_at"?: string | null,"resolved_by"?: string | null,"status"?: Database["public"]['Enums']["report_status"],"target_id"?: string | null,"target_name"?: string | null,"target_type"?: string,"updated_at"?: string
+                    "created_at"?: string,"deleted_at"?: string | null,"id"?: string,"notes"?: string | null,"reason"?: string | null,"reporter_id"?: string,"resolution_note"?: string | null,"resolved_at"?: string | null,"resolved_by"?: string | null,"status"?: Database["public"]['Enums']["report_status"],"target_id"?: string | null,"target_name"?: string | null,"target_type"?: string,"target_user_id"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -1043,6 +1135,18 @@ isOneToOne: false
     },{
       foreignKeyName: "reports_resolved_by_fkey"
       columns: ["resolved_by"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reports_target_user_id_fkey"
+      columns: ["target_user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reports_target_user_id_fkey"
+      columns: ["target_user_id"]
 isOneToOne: false
       referencedRelation: "public_profiles"
       referencedColumns: ["id"]
@@ -1390,6 +1494,55 @@ isOneToOne: false
     },{
       foreignKeyName: "world_guestbook_garage_user_id_fkey"
       columns: ["garage_user_id"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"world_host_suspensions": {
+                  Row: {
+                    "appeal_note": string | null,"id": string,"lifted_at": string | null,"lifted_by": string | null,"note": string | null,"reason": string,"suspended_at": string,"suspended_by": string | null,"user_id": string
+                  }
+                  Insert: {
+                    "appeal_note"?: string | null,"id"?: string,"lifted_at"?: string | null,"lifted_by"?: string | null,"note"?: string | null,"reason": string,"suspended_at"?: string,"suspended_by"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "appeal_note"?: string | null,"id"?: string,"lifted_at"?: string | null,"lifted_by"?: string | null,"note"?: string | null,"reason"?: string,"suspended_at"?: string,"suspended_by"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "world_host_suspensions_lifted_by_fkey"
+      columns: ["lifted_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "world_host_suspensions_lifted_by_fkey"
+      columns: ["lifted_by"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "world_host_suspensions_suspended_by_fkey"
+      columns: ["suspended_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "world_host_suspensions_suspended_by_fkey"
+      columns: ["suspended_by"]
+isOneToOne: false
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "world_host_suspensions_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "world_host_suspensions_user_id_fkey"
+      columns: ["user_id"]
 isOneToOne: false
       referencedRelation: "public_profiles"
       referencedColumns: ["id"]
@@ -1795,6 +1948,24 @@ isOneToOne: true
 "admin_set_earn_freeze":
 { Args: { "p_frozen": boolean,"p_note"?: string,"p_user": string }; Returns: boolean
                            },
+"admin_set_host_suspension":
+{ Args: { "p_action": string,"p_note"?: string,"p_user": string }; Returns: {
+              "appeal_note": string | null,
+"id": string,
+"lifted_at": string | null,
+"lifted_by": string | null,
+"note": string | null,
+"reason": string,
+"suspended_at": string,
+"suspended_by": string | null,
+"user_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "world_host_suspensions"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "admin_set_suspension":
 { Args: { "p_days"?: number,"p_user_id": string }; Returns: {
               "account_type": Database["public"]['Enums']["account_type"],
@@ -1912,9 +2083,43 @@ isOneToOne: true
 "catalog_specs_valid":
 { Args: { "p": Json }; Returns: boolean
                            },
+"club_feed":
+{ Args: { "p_club": string,"p_limit"?: number }; Returns: {
+              "actor_id": string,"event_id": number,"occurred_at": string,"payload": Json,"type": string
+            }[]
+                           },
+"club_member_counts":
+{ Args: { "p_clubs": (string)[] }; Returns: {
+              "club_id": string,"members": number
+            }[]
+                           },
+"club_role":
+{ Args: { "p_club": string,"p_user": string }; Returns: string
+                           },
+"create_club":
+{ Args: { "p_country"?: string,"p_description"?: string,"p_join_mode"?: Database["public"]['Enums']["club_join_mode"],"p_name": string,"p_slug": string }; Returns: {
+              "banner_media_id": string | null,
+"country_code": string | null,
+"created_at": string,
+"description": string | null,
+"id": string,
+"join_mode": Database["public"]['Enums']["club_join_mode"],
+"name": string,
+"owner_id": string,
+"slug": string,
+"updated_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "clubs"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "create_meetup":
 { Args: { "p_capacity": number,"p_club_id"?: string,"p_description"?: string,"p_ends_at": string,"p_starts_at": string,"p_theme"?: string,"p_title": string,"p_visibility"?: Database["public"]['Enums']["meetup_visibility"] }; Returns: {
-              "cancelled_at": string | null,
+              "best_in_show_id": string | null,
+"best_in_show_votes": number | null,
+"cancelled_at": string | null,
 "capacity": number,
 "club_id": string | null,
 "created_at": string,
@@ -1983,6 +2188,7 @@ isOneToOne: true
 "target_id": string | null,
 "target_name": string | null,
 "target_type": string,
+"target_user_id": string | null,
 "updated_at": string
             }
                           SetofOptions: {
@@ -2037,6 +2243,9 @@ isOneToOne: true
                            },
 "dearmor":
 { Args: { "": string }; Returns: string
+                           },
+"decide_club_application":
+{ Args: { "p_approve": boolean,"p_club": string,"p_user": string }; Returns: undefined
                            },
 "delete_account":
 { Args: Record<PropertyKey, never>; Returns: undefined
@@ -2165,6 +2374,21 @@ isOneToOne: true
 "increment_listing_view":
 { Args: { "p_listing_id": string }; Returns: undefined
                            },
+"invite_to_club":
+{ Args: { "p_club": string,"p_handle": string }; Returns: {
+              "club_id": string,
+"invited_by": string | null,
+"joined_at": string,
+"role": Database["public"]['Enums']["club_member_role"],
+"status": Database["public"]['Enums']["club_member_status"],
+"user_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "club_members"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "invite_to_meetup":
 { Args: { "p_handle": string,"p_id": string }; Returns: {
               "created_at": string,
@@ -2187,6 +2411,9 @@ isOneToOne: true
 "is_club_member":
 { Args: { "p_club": string,"p_user": string }; Returns: boolean
                            },
+"is_club_staff":
+{ Args: { "p_club": string,"p_user": string }; Returns: boolean
+                           },
 "is_meetup_host":
 { Args: { "p_meetup": string,"p_user": string }; Returns: boolean
                            },
@@ -2197,6 +2424,24 @@ isOneToOne: true
 { Args: { "p_since"?: string }; Returns: {
               "error": string,"job": string,"started_at": string,"status": string
             }[]
+                           },
+"join_club":
+{ Args: { "p_club": string }; Returns: {
+              "club_id": string,
+"invited_by": string | null,
+"joined_at": string,
+"role": Database["public"]['Enums']["club_member_role"],
+"status": Database["public"]['Enums']["club_member_status"],
+"user_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "club_members"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"leave_club":
+{ Args: { "p_club": string }; Returns: undefined
                            },
 "match_catalog_models":
 { Args: { "p_limit"?: number,"p_name": string }; Returns: {
@@ -2218,17 +2463,27 @@ isOneToOne: true
 "meetup_room_member":
 { Args: { "p_meetup": string,"p_user": string }; Returns: boolean
                            },
+"meetup_room_ping":
+{ Args: { "p_id": string }; Returns: boolean
+                           },
 "meetup_visible":
 { Args: { "p_meetup": string,"p_viewer": string }; Returns: boolean
                            },
+"moderate_club_member":
+{ Args: { "p_action": string,"p_club": string,"p_user": string }; Returns: undefined
+                           },
 "moderate_meetup_attendee":
 { Args: { "p_action": string,"p_id": string,"p_user": string }; Returns: {
-              "checked_in_at": string | null,
+              "attended_at": string | null,
+"checked_in_at": string | null,
 "created_at": string,
 "meetup_id": string,
 "muted_at": string | null,
 "removed_at": string | null,
 "role": string,
+"room_joined_at": string | null,
+"room_seconds": number,
+"room_seen_at": string | null,
 "status": Database["public"]['Enums']["meetup_rsvp_status"],
 "updated_at": string,
 "user_id": string
@@ -2354,6 +2609,9 @@ isOneToOne: true
 "redeem_invite":
 { Args: { "p_code": string }; Returns: undefined
                            },
+"remove_meetup_photo":
+{ Args: { "p_media_id": string }; Returns: undefined
+                           },
 "rename_world_garage":
 { Args: { "p_name": string }; Returns: {
               "created_at": string,
@@ -2380,6 +2638,9 @@ isOneToOne: true
 "replay_quest_progress":
 { Args: { "p_from"?: string,"p_user": string }; Returns: number
                            },
+"report_target_user":
+{ Args: { "p_target_id": string,"p_target_type": string }; Returns: string
+                           },
 "resolve_report":
 { Args: { "p_action": string,"p_report_id": string,"p_resolution_note"?: string }; Returns: {
               "created_at": string,
@@ -2395,6 +2656,7 @@ isOneToOne: true
 "target_id": string | null,
 "target_name": string | null,
 "target_type": string,
+"target_user_id": string | null,
 "updated_at": string
             }
                           SetofOptions: {
@@ -2426,12 +2688,16 @@ isOneToOne: true
                            },
 "rsvp_meetup":
 { Args: { "p_id": string,"p_status"?: string }; Returns: {
-              "checked_in_at": string | null,
+              "attended_at": string | null,
+"checked_in_at": string | null,
 "created_at": string,
 "meetup_id": string,
 "muted_at": string | null,
 "removed_at": string | null,
 "role": string,
+"room_joined_at": string | null,
+"room_seconds": number,
+"room_seen_at": string | null,
 "status": Database["public"]['Enums']["meetup_rsvp_status"],
 "updated_at": string,
 "user_id": string
@@ -2499,14 +2765,56 @@ isOneToOne: true
 "season_track_award":
 { Args: { "p_season": string,"p_user": string }; Returns: number
                            },
+"set_club_member_role":
+{ Args: { "p_club": string,"p_role": Database["public"]['Enums']["club_member_role"],"p_user": string }; Returns: {
+              "club_id": string,
+"invited_by": string | null,
+"joined_at": string,
+"role": Database["public"]['Enums']["club_member_role"],
+"status": Database["public"]['Enums']["club_member_status"],
+"user_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "club_members"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"set_club_night":
+{ Args: { "p_cadence": string,"p_capacity": number,"p_club": string,"p_duration": number,"p_first_start": string,"p_theme"?: string,"p_title": string,"p_visibility"?: Database["public"]['Enums']["meetup_visibility"] }; Returns: {
+              "active": boolean,
+"cadence": string,
+"capacity": number,
+"club_id": string,
+"created_at": string,
+"duration_minutes": number,
+"host_id": string,
+"id": string,
+"last_meetup_id": string | null,
+"next_starts_at": string,
+"theme": string | null,
+"title": string,
+"updated_at": string,
+"visibility": Database["public"]['Enums']["meetup_visibility"]
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "club_night_templates"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "set_meetup_cohost":
 { Args: { "p_handle": string,"p_id": string,"p_on": boolean }; Returns: {
-              "checked_in_at": string | null,
+              "attended_at": string | null,
+"checked_in_at": string | null,
 "created_at": string,
 "meetup_id": string,
 "muted_at": string | null,
 "removed_at": string | null,
 "role": string,
+"room_joined_at": string | null,
+"room_seconds": number,
+"room_seen_at": string | null,
 "status": Database["public"]['Enums']["meetup_rsvp_status"],
 "updated_at": string,
 "user_id": string
@@ -2555,6 +2863,9 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
+"stop_club_night":
+{ Args: { "p_club": string }; Returns: undefined
+                           },
 "token_consume_fifo":
 { Args: { "p_amount": number,"p_earned_first": boolean,"p_user": string }; Returns: number
                            },
@@ -2563,7 +2874,9 @@ isOneToOne: true
                            },
 "transition_meetup":
 { Args: { "p_action": string,"p_id": string }; Returns: {
-              "cancelled_at": string | null,
+              "best_in_show_id": string | null,
+"best_in_show_votes": number | null,
+"cancelled_at": string | null,
 "capacity": number,
 "club_id": string | null,
 "created_at": string,
@@ -2617,6 +2930,25 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
+"update_club":
+{ Args: { "p_club": string,"p_country"?: string,"p_description"?: string,"p_join_mode": Database["public"]['Enums']["club_join_mode"],"p_name": string }; Returns: {
+              "banner_media_id": string | null,
+"country_code": string | null,
+"created_at": string,
+"description": string | null,
+"id": string,
+"join_mode": Database["public"]['Enums']["club_join_mode"],
+"name": string,
+"owner_id": string,
+"slug": string,
+"updated_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "clubs"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "verify_catalog_specs":
 { Args: { "p_model_id": string,"p_source"?: string,"p_specs": Json }; Returns: {
               "brand_id": string,
@@ -2645,6 +2977,25 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
+"vote_best_in_show":
+{ Args: { "p_id": string,"p_showcase_id": string }; Returns: {
+              "created_at": string,
+"id": string,
+"item_id": string,
+"meetup_id": string,
+"position": number,
+"user_id": string,
+"votes": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "meetup_showcase"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"world_apply_host_suspension":
+{ Args: { "p_report": string,"p_user": string }; Returns: boolean
+                           },
 "world_bump_counter":
 { Args: { "p_column": string,"p_delta": number,"p_garage": string }; Returns: undefined
                            },
@@ -2666,6 +3017,12 @@ isOneToOne: true
                            },
 "world_has_invite":
 { Args: { "p_garage": string,"p_viewer": string }; Returns: boolean
+                           },
+"world_host_ineligible_reason":
+{ Args: { "p_user"?: string }; Returns: string
+                           },
+"world_job_club_nights":
+{ Args: { "p_at"?: string }; Returns: Json
                            },
 "world_job_earned_expiry_notice":
 { Args: { "p_at"?: string }; Returns: Json
@@ -2696,7 +3053,7 @@ isOneToOne: true
                            }
           }
           Enums: {
-            "account_type": "individual"|"shop","catalog_status": "proposed"|"verified","club_join_mode": "open"|"apply"|"invite","club_member_role": "owner"|"admin"|"member","club_member_status": "active"|"pending"|"banned","entitlement_grant_kind": "listing_slot"|"scan_pack"|"pro_30d"|"world_level"|"world_item"|"meetup_host","feedback_kind": "bug"|"idea"|"other","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed"|"reserved"|"expired","listing_type": "sale"|"trade"|"both","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","meetup_kind": "virtual"|"in_person","meetup_rsvp_status": "going"|"waitlist"|"declined"|"checked_in","meetup_status": "draft"|"scheduled"|"live"|"ended"|"cancelled","meetup_visibility": "public"|"followers"|"club"|"invite","model_status": "proposed"|"verified"|"merged","notification_type": "offer_received"|"offer_accepted"|"offer_declined"|"message"|"listing_sold"|"review_received"|"badge_unlocked"|"wishlist_match"|"system"|"world_visit"|"world_kudos"|"world_guestbook"|"world_invite"|"tokens_expiring"|"listing_expired"|"offer_expired"|"meetup_invite"|"meetup_reminder"|"meetup_live"|"meetup_cancelled","offer_status": "pending"|"accepted"|"declined"|"withdrawn"|"expired"|"completed"|"cancelled","offer_type": "cash"|"buy_now"|"trade","plan_tier": "free"|"pro","quest_cadence": "daily"|"weekly","report_status": "open"|"reviewed"|"dismissed","scan_kind": "single"|"group"|"visual_search","scan_status": "queued"|"running"|"done"|"failed","token_ledger_reason": "purchase"|"spend_listing_slot"|"spend_scan_pack"|"spend_pro_30d"|"refund"|"admin_adjust"|"promo"|"earn_quest"|"earn_daily"|"earn_race_participation"|"earn_host"|"earn_attend"|"earn_achievement"|"earn_referral"|"earn_season"|"expire_earned"|"spend_garage_level"|"spend_world_item"|"spend_meetup_host"|"spend_race_entry"|"spend_spotlight"|"spend_rename","token_ledger_source": "purchased"|"earned"|"promo"|"adjust"|"mixed","token_purchase_provider": "stripe"|"razorpay","token_purchase_status": "created"|"paid"|"failed"|"refunded","user_role": "user"|"admin","world_acquired_via": "purchase"|"earn"|"promo","world_item_kind": "decor"|"theme"|"tune"|"trophy"|"consumable"|"signage","world_open_mode": "public"|"followers"|"invite"
+            "account_type": "individual"|"shop","catalog_status": "proposed"|"verified","club_join_mode": "open"|"apply"|"invite","club_member_role": "owner"|"admin"|"member","club_member_status": "active"|"pending"|"banned","entitlement_grant_kind": "listing_slot"|"scan_pack"|"pro_30d"|"world_level"|"world_item"|"meetup_host","feedback_kind": "bug"|"idea"|"other","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed"|"reserved"|"expired","listing_type": "sale"|"trade"|"both","media_kind": "item"|"avatar"|"banner"|"listing"|"chat"|"meetup_photo","media_status": "uploading"|"ready"|"flagged"|"removed","meetup_kind": "virtual"|"in_person","meetup_rsvp_status": "going"|"waitlist"|"declined"|"checked_in","meetup_status": "draft"|"scheduled"|"live"|"ended"|"cancelled","meetup_visibility": "public"|"followers"|"club"|"invite","model_status": "proposed"|"verified"|"merged","notification_type": "offer_received"|"offer_accepted"|"offer_declined"|"message"|"listing_sold"|"review_received"|"badge_unlocked"|"wishlist_match"|"system"|"world_visit"|"world_kudos"|"world_guestbook"|"world_invite"|"tokens_expiring"|"listing_expired"|"offer_expired"|"meetup_invite"|"meetup_reminder"|"meetup_live"|"meetup_cancelled"|"club_invite"|"club_approved"|"club_night_ready"|"hosting_suspended","offer_status": "pending"|"accepted"|"declined"|"withdrawn"|"expired"|"completed"|"cancelled","offer_type": "cash"|"buy_now"|"trade","plan_tier": "free"|"pro","quest_cadence": "daily"|"weekly","report_status": "open"|"reviewed"|"dismissed","scan_kind": "single"|"group"|"visual_search","scan_status": "queued"|"running"|"done"|"failed","token_ledger_reason": "purchase"|"spend_listing_slot"|"spend_scan_pack"|"spend_pro_30d"|"refund"|"admin_adjust"|"promo"|"earn_quest"|"earn_daily"|"earn_race_participation"|"earn_host"|"earn_attend"|"earn_achievement"|"earn_referral"|"earn_season"|"expire_earned"|"spend_garage_level"|"spend_world_item"|"spend_meetup_host"|"spend_race_entry"|"spend_spotlight"|"spend_rename","token_ledger_source": "purchased"|"earned"|"promo"|"adjust"|"mixed","token_purchase_provider": "stripe"|"razorpay","token_purchase_status": "created"|"paid"|"failed"|"refunded","user_role": "user"|"admin","world_acquired_via": "purchase"|"earn"|"promo","world_item_kind": "decor"|"theme"|"tune"|"trophy"|"consumable"|"signage","world_open_mode": "public"|"followers"|"invite"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -2812,7 +3169,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "account_type": ["individual", "shop"],"catalog_status": ["proposed", "verified"],"club_join_mode": ["open", "apply", "invite"],"club_member_role": ["owner", "admin", "member"],"club_member_status": ["active", "pending", "banned"],"entitlement_grant_kind": ["listing_slot", "scan_pack", "pro_30d", "world_level", "world_item", "meetup_host"],"feedback_kind": ["bug", "idea", "other"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed", "reserved", "expired"],"listing_type": ["sale", "trade", "both"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"meetup_kind": ["virtual", "in_person"],"meetup_rsvp_status": ["going", "waitlist", "declined", "checked_in"],"meetup_status": ["draft", "scheduled", "live", "ended", "cancelled"],"meetup_visibility": ["public", "followers", "club", "invite"],"model_status": ["proposed", "verified", "merged"],"notification_type": ["offer_received", "offer_accepted", "offer_declined", "message", "listing_sold", "review_received", "badge_unlocked", "wishlist_match", "system", "world_visit", "world_kudos", "world_guestbook", "world_invite", "tokens_expiring", "listing_expired", "offer_expired", "meetup_invite", "meetup_reminder", "meetup_live", "meetup_cancelled"],"offer_status": ["pending", "accepted", "declined", "withdrawn", "expired", "completed", "cancelled"],"offer_type": ["cash", "buy_now", "trade"],"plan_tier": ["free", "pro"],"quest_cadence": ["daily", "weekly"],"report_status": ["open", "reviewed", "dismissed"],"scan_kind": ["single", "group", "visual_search"],"scan_status": ["queued", "running", "done", "failed"],"token_ledger_reason": ["purchase", "spend_listing_slot", "spend_scan_pack", "spend_pro_30d", "refund", "admin_adjust", "promo", "earn_quest", "earn_daily", "earn_race_participation", "earn_host", "earn_attend", "earn_achievement", "earn_referral", "earn_season", "expire_earned", "spend_garage_level", "spend_world_item", "spend_meetup_host", "spend_race_entry", "spend_spotlight", "spend_rename"],"token_ledger_source": ["purchased", "earned", "promo", "adjust", "mixed"],"token_purchase_provider": ["stripe", "razorpay"],"token_purchase_status": ["created", "paid", "failed", "refunded"],"user_role": ["user", "admin"],"world_acquired_via": ["purchase", "earn", "promo"],"world_item_kind": ["decor", "theme", "tune", "trophy", "consumable", "signage"],"world_open_mode": ["public", "followers", "invite"]
+            "account_type": ["individual", "shop"],"catalog_status": ["proposed", "verified"],"club_join_mode": ["open", "apply", "invite"],"club_member_role": ["owner", "admin", "member"],"club_member_status": ["active", "pending", "banned"],"entitlement_grant_kind": ["listing_slot", "scan_pack", "pro_30d", "world_level", "world_item", "meetup_host"],"feedback_kind": ["bug", "idea", "other"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed", "reserved", "expired"],"listing_type": ["sale", "trade", "both"],"media_kind": ["item", "avatar", "banner", "listing", "chat", "meetup_photo"],"media_status": ["uploading", "ready", "flagged", "removed"],"meetup_kind": ["virtual", "in_person"],"meetup_rsvp_status": ["going", "waitlist", "declined", "checked_in"],"meetup_status": ["draft", "scheduled", "live", "ended", "cancelled"],"meetup_visibility": ["public", "followers", "club", "invite"],"model_status": ["proposed", "verified", "merged"],"notification_type": ["offer_received", "offer_accepted", "offer_declined", "message", "listing_sold", "review_received", "badge_unlocked", "wishlist_match", "system", "world_visit", "world_kudos", "world_guestbook", "world_invite", "tokens_expiring", "listing_expired", "offer_expired", "meetup_invite", "meetup_reminder", "meetup_live", "meetup_cancelled", "club_invite", "club_approved", "club_night_ready", "hosting_suspended"],"offer_status": ["pending", "accepted", "declined", "withdrawn", "expired", "completed", "cancelled"],"offer_type": ["cash", "buy_now", "trade"],"plan_tier": ["free", "pro"],"quest_cadence": ["daily", "weekly"],"report_status": ["open", "reviewed", "dismissed"],"scan_kind": ["single", "group", "visual_search"],"scan_status": ["queued", "running", "done", "failed"],"token_ledger_reason": ["purchase", "spend_listing_slot", "spend_scan_pack", "spend_pro_30d", "refund", "admin_adjust", "promo", "earn_quest", "earn_daily", "earn_race_participation", "earn_host", "earn_attend", "earn_achievement", "earn_referral", "earn_season", "expire_earned", "spend_garage_level", "spend_world_item", "spend_meetup_host", "spend_race_entry", "spend_spotlight", "spend_rename"],"token_ledger_source": ["purchased", "earned", "promo", "adjust", "mixed"],"token_purchase_provider": ["stripe", "razorpay"],"token_purchase_status": ["created", "paid", "failed", "refunded"],"user_role": ["user", "admin"],"world_acquired_via": ["purchase", "earn", "promo"],"world_item_kind": ["decor", "theme", "tune", "trophy", "consumable", "signage"],"world_open_mode": ["public", "followers", "invite"]
           }
         }
 } as const

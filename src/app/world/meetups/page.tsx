@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getHostCapacity, listMeetups, type MeetupListItem } from '@/domain/meetups';
+import { getHostIneligibleReason } from '@/domain/clubs';
 import {
+  MEETUP_ERROR_COPY,
   STATUS_LABEL,
   STATUS_PILL_CLASS,
   VISIBILITY_SHORT,
@@ -28,16 +30,21 @@ export default async function MeetupsPage({
 
   let rows: MeetupListItem[];
   let canHost: boolean;
+  let hostBlocked: string | null = null;
   if (gate.harness) {
     rows = tab === 'mine' ? FIXTURE_MEETUPS.filter((m) => m.isHost || m.myRsvp) : FIXTURE_MEETUPS;
     canHost = FIXTURE_HOST_CAPACITY.cap > 0;
   } else {
-    const [list, cap] = await Promise.all([
+    const [list, cap, reason] = await Promise.all([
       listMeetups(gate.supabase, gate.userId, tab).catch((): MeetupListItem[] => []),
       getHostCapacity(gate.supabase, gate.userId).catch(() => null),
+      getHostIneligibleReason(gate.supabase).catch(() => null),
     ]);
     rows = list;
     canHost = (cap?.cap ?? 0) > 0;
+    // F-28 (MV-W07-05): a garage that can host is not enough — level 2, no recent upheld report,
+    // no suspension. Shown instead of the button so the host learns why before filling the form.
+    hostBlocked = canHost && reason ? MEETUP_ERROR_COPY[reason] : null;
   }
 
   return (
@@ -111,7 +118,11 @@ export default async function MeetupsPage({
       )}
 
       <div style={{ marginTop: 14 }}>
-        {canHost ? (
+        {hostBlocked ? (
+          <p className="muted" style={{ fontSize: 13 }}>
+            {hostBlocked} Joining is free.
+          </p>
+        ) : canHost ? (
           <Link
             href={harnessHref(sp, '/world/meetups/new')}
             className="btn-primary"
