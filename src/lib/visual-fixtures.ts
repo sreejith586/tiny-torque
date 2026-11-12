@@ -7,6 +7,7 @@ import type { NotificationRow } from '@/domain/notifications';
 import type { TokenPackRow, TokenLedgerRow } from '@/domain/tokens';
 import type { QuestBoard, QuestStatus, SeasonRow, SeasonTrackView } from '@/domain/quests';
 import type { DealMessageRow } from '@/domain/messaging';
+import type { ClubDetail, ClubListItem, ClubRow } from '@/domain/clubs';
 import {
   hostFee,
   type HostCapacity,
@@ -1089,7 +1090,7 @@ export function fixtureMeetupDetail(
       invites: [{ user: MEERA, createdAt: '2026-11-11T10:00:00.000Z' }],
       myVoteShowcaseId: null,
       bestInShow: null,
-      photos: [],
+      wallPhotos: [],
       club: null,
     };
   }
@@ -1143,7 +1144,7 @@ export function fixtureMeetupDetail(
     invites: [],
     myVoteShowcaseId: status === 'live' || status === 'ended' ? 'sc-4' : null,
     bestInShow: status === 'ended' ? { showcaseId: 'sc-4', votes: 3, entry: showcase[2]! } : null,
-    photos: [],
+    wallPhotos: [],
     club:
       status === 'ended' ? { id: FIXTURE_CLUB_ID, slug: 'jdm_club', name: 'JDM Collectors' } : null,
   };
@@ -1355,4 +1356,139 @@ export const FIXTURE_WISHLIST: WishlistItemRow[] = [
     created_at: '2026-10-12T08:00:00.000Z',
     updated_at: '2026-10-12T08:00:00.000Z',
   },
+];
+
+// ---------- W07 clubs (MV-W07-03/04, F-22) — dark until `world_clubs` turns on ----------
+const clubRow = (over: Partial<ClubRow> & Pick<ClubRow, 'id' | 'slug' | 'name'>): ClubRow => ({
+  owner_id: VISITOR_A,
+  join_mode: 'open',
+  country_code: 'AE',
+  description: null,
+  banner_media_id: null,
+  created_at: '2026-11-09T09:00:00.000Z',
+  updated_at: '2026-11-09T09:00:00.000Z',
+  ...over,
+});
+const FIXTURE_CLUB_A = clubRow({
+  id: FIXTURE_CLUB_ID,
+  slug: 'jdm_club',
+  name: 'JDM Collectors',
+  description: 'Skylines, Supras and Silvias in 1:64. Club night every Saturday.',
+});
+const FIXTURE_CLUB_B = clubRow({
+  id: '00000000-0000-4000-8000-00000000c002',
+  slug: 'th_hunters',
+  name: 'Treasure Hunters',
+  owner_id: VISITOR_B,
+  join_mode: 'apply',
+  country_code: 'IN',
+});
+const FIXTURE_CLUB_C = clubRow({
+  id: '00000000-0000-4000-8000-00000000c003',
+  slug: 'vault_circle',
+  name: 'Vault Circle',
+  owner_id: VISITOR_B,
+  join_mode: 'invite',
+  country_code: null,
+});
+
+export const FIXTURE_CLUBS: ClubListItem[] = [
+  { club: FIXTURE_CLUB_A, memberCount: 12, myStatus: 'active', myRole: 'member', invited: false },
+  { club: FIXTURE_CLUB_B, memberCount: 31, myStatus: 'pending', myRole: null, invited: false },
+  { club: FIXTURE_CLUB_C, memberCount: 6, myStatus: null, myRole: null, invited: false },
+];
+
+/** The clubhouse in three seats: `owner` (the viewer runs the club: requests, invites, bans, club
+ *  night form, settings), `member` (roster + feed + leave) and `visitor` (join button; an open club
+ *  still shows its roster and feed). `slug` is echoed back so in-app links keep working. */
+export function fixtureClubDetail(slug: string, seat: 'owner' | 'member' | 'visitor'): ClubDetail {
+  const club: ClubRow = { ...FIXTURE_CLUB_A, slug, owner_id: seat === 'owner' ? OWNER : VISITOR_A };
+  const joined = '2026-11-09T09:00:00.000Z';
+  const member = (
+    user: PublicIdentity,
+    role: ClubDetail['members'][number]['role'],
+    status: ClubDetail['members'][number]['status'] = 'active',
+    invited = false
+  ) => ({ user, role, status, invited, joinedAt: joined });
+  const members =
+    seat === 'owner'
+      ? [member(ME, 'owner'), member(RAFIQ, 'admin'), member(MEERA, 'member')]
+      : seat === 'member'
+        ? [member(RAFIQ, 'owner'), member(MEERA, 'admin'), member(ME, 'member')]
+        : [member(RAFIQ, 'owner'), member(MEERA, 'admin')];
+  const applicant: PublicIdentity = {
+    id: '00000000-0000-4000-8000-000000000013',
+    handle: 'pune_wheels',
+    displayName: 'Arjun',
+  };
+  return {
+    club,
+    owner: seat === 'owner' ? ME : RAFIQ,
+    viewer: {
+      id: OWNER,
+      role: seat === 'owner' ? 'owner' : seat === 'member' ? 'member' : null,
+      status: seat === 'visitor' ? null : 'active',
+      invited: false,
+      isMember: seat !== 'visitor',
+      isStaff: seat === 'owner',
+      isOwner: seat === 'owner',
+    },
+    memberCount: 12,
+    members,
+    applications: seat === 'owner' ? [member(applicant, 'member', 'pending')] : [],
+    invitations: [],
+    banned: [],
+    featured: [
+      { owner: RAFIQ, item: FIXTURE_ITEMS[3]! },
+      { owner: MEERA, item: FIXTURE_ITEMS[1]! },
+    ],
+    feed: [
+      {
+        id: 3,
+        type: 'club.meetup_scheduled',
+        actor: RAFIQ,
+        payload: { title: 'JDM night' },
+        occurredAt: '2026-11-11T10:00:00.000Z',
+      },
+      {
+        id: 2,
+        type: 'club.joined',
+        actor: MEERA,
+        payload: { via: 'open' },
+        occurredAt: '2026-11-10T10:00:00.000Z',
+      },
+      {
+        id: 1,
+        type: 'club.created',
+        actor: RAFIQ,
+        payload: {},
+        occurredAt: '2026-11-09T09:00:00.000Z',
+      },
+    ],
+    meetups: [{ ...FIXTURE_MEETUP_A, club_id: club.id }],
+    night:
+      seat === 'visitor'
+        ? null
+        : {
+            id: '00000000-0000-4000-8000-00000000d001',
+            club_id: club.id,
+            host_id: seat === 'owner' ? OWNER : VISITOR_A,
+            title: 'JDM Saturday',
+            theme: null,
+            cadence: 'weekly',
+            next_starts_at: '2026-11-28T18:00:00.000Z',
+            duration_minutes: 120,
+            capacity: 10,
+            visibility: 'club',
+            active: true,
+            last_meetup_id: null,
+            created_at: joined,
+            updated_at: joined,
+          },
+  };
+}
+
+/** Clubs the fixture viewer can host for (the create form's "Host as" options). */
+export const FIXTURE_STAFF_CLUBS = [
+  { id: FIXTURE_CLUB_ID, slug: 'jdm_club', name: 'JDM Collectors' },
 ];

@@ -201,7 +201,7 @@ export async function getMeetupDetail(
           entry: entries.find((e) => e.id === meetup.best_in_show_id) ?? null,
         }
       : null;
-  const photos: MeetupPhoto[] = photoRows
+  const wallPhotos: MeetupPhoto[] = photoRows
     .filter((p) => p.status === 'ready')
     .map((p) => ({
       id: p.id,
@@ -248,7 +248,7 @@ export async function getMeetupDetail(
     })),
     myVoteShowcaseId: myVote,
     bestInShow,
-    photos,
+    wallPhotos,
     club,
   };
 }

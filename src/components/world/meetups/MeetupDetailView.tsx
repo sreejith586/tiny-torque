@@ -74,7 +74,7 @@ export default function MeetupDetailView({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [photos, setPhotos] = useState<MeetupPhoto[]>(detail.photos);
+  const [photos, setPhotos] = useState<MeetupPhoto[]>(detail.wallPhotos);
   const [uploading, setUploading] = useState(false);
   const photoInput = useRef<HTMLInputElement>(null);
 

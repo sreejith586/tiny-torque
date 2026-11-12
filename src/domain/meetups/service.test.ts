@@ -353,7 +353,7 @@ describe('meetups service — best-in-show, attendance, photo wall (MV-W07-01)',
     ]);
     expect(d!.myVoteShowcaseId).toBe(SC2);
     expect(d!.bestInShow).toMatchObject({ showcaseId: SC2, votes: 3, entry: { id: SC2 } });
-    expect(d!.photos.map((p) => [p.id, p.owner?.handle])).toEqual([
+    expect(d!.wallPhotos.map((p) => [p.id, p.owner?.handle])).toEqual([
       ['new', 'host'],
       ['old', 'guest'],
     ]);

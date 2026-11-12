@@ -126,7 +126,7 @@ export interface MeetupDetail {
   /** Stamped by transition_meetup('end'); null while running or when nobody voted. */
   bestInShow: BestInShow | null;
   /** The photo wall (media rows, newest first). */
-  photos: MeetupPhoto[];
+  wallPhotos: MeetupPhoto[];
   /** The club hosting this meetup, when there is one. */
   club: MeetupClub | null;
 }
