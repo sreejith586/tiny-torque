@@ -2,7 +2,7 @@
 
 Reviewed 2026-11-12 against `staging` @ `434c004` (= what prod runs since #116). Scope: every table and view in `public`, the SECURITY DEFINER functions, rate limits, response headers, dependencies, service-role usage, secrets. Method: migrations applied to the CI pgTAP image (`supabase/postgres:15.14.1.178`), then each claim tested as `anon`, as an unrelated signed-in collector, as the owner and as an admin.
 
-The fixes are in `supabase/migrations/20261112090000_s10_security_hardening.sql`; the tests that pin them are `supabase/tests/0031_s10_rls_matrix.sql` (83 assertions).
+The fixes are in `supabase/migrations/20261112100000_s10_security_hardening.sql`; the tests that pin them are `supabase/tests/0031_s10_rls_matrix.sql` (83 assertions).
 
 ## 1. Findings
 
