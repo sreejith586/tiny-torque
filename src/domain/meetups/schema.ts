@@ -38,6 +38,7 @@ export const createMeetupSchema = z
     if (Date.parse(v.startsAt) <= Date.now()) {
       ctx.addIssue({ code: 'custom', path: ['startsAt'], message: 'Start must be in the future' });
     }
+    // a club id with another visibility = "hosted by the club" (staff only, checked by the RPC)
     if (v.visibility === 'club' && !v.clubId) {
       ctx.addIssue({ code: 'custom', path: ['clubId'], message: 'Pick a club' });
     }

@@ -10,8 +10,10 @@ export interface BlockedUser {
   created_at: string;
 }
 
-/** `garage` → target_id is the owner's user id; `guestbook` → the world_guestbook row (W03, F-28). */
-export type ReportTargetType = 'listing' | 'user' | 'message' | 'garage' | 'guestbook';
+/** `garage` → target_id is the owner's user id; `guestbook` → the world_guestbook row (W03, F-28);
+ *  `meetup` → the meetup (resolves against its host); `club` → the club (its owner) — W07, F-28. */
+export type ReportTargetType =
+  'listing' | 'user' | 'message' | 'garage' | 'guestbook' | 'meetup' | 'club';
 
 export type AdminReportAction =
   'dismiss' | 'remove_listing' | 'warn' | 'suspend' | 'hide_guestbook';

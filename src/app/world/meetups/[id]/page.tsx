@@ -14,7 +14,8 @@ export const metadata: Metadata = {
 // Meetup detail (MV-W06-03, F-23): title / when / host / status, RSVP (going ↔ not going, waitlist
 // when full), the attendee list, the showcase grid (CarCard) with the viewer's ≤ 3-car picker, and
 // the host panel (schedule with the fee, cancel with the refund rule, open / end the room, invite by
-// handle, co-hosts, mute / kick). 404 for anything the viewer may not see, and while dark.
+// handle, co-hosts, mute / kick). W07: the best-in-show result once ended, the photo wall, the hosting
+// club. 404 for anything the viewer may not see, and while dark.
 export default async function MeetupDetailPage({
   params,
   searchParams,
@@ -29,7 +30,12 @@ export default async function MeetupDetailPage({
   let detail: MeetupDetail | null;
   let myItems: GarageItem[];
   if (gate.harness) {
-    detail = fixtureMeetupDetail(id, sp.as === 'host' ? 'host' : 'attendee');
+    // `&state=ended` shows the frozen best-in-show card + photo wall, `&state=live` the open room
+    detail = fixtureMeetupDetail(
+      id,
+      sp.as === 'host' ? 'host' : 'attendee',
+      sp.state === 'ended' ? 'ended' : sp.state === 'live' ? 'live' : null
+    );
     myItems = FIXTURE_ITEMS.filter((i) => i.is_public);
   } else {
     detail = await getMeetupDetail(gate.supabase, id, gate.userId);

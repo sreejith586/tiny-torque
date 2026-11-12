@@ -11,11 +11,13 @@ import {
   createMeetup,
   inviteToMeetup,
   moderateAttendee,
+  removeMeetupPhoto,
   rsvpMeetup,
   setCohost,
   setShowcase,
   transitionMeetup,
   updateMeetup,
+  voteBestInShow,
   type MeetupErrorCode,
   type MeetupRow,
   type MeetupRsvpRow,
@@ -186,6 +188,38 @@ export async function moderateAttendeeAction(
     const row = await moderateAttendee(g.supabase, id, userId, action);
     done(id);
     return { ok: true, data: { muted: row.muted_at !== null, removed: row.removed_at !== null } };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+// ---------- W07 (MV-W07-01): best-in-show + photo wall ----------
+
+export async function voteBestInShowAction(
+  id: string,
+  showcaseId: string
+): Promise<MeetupActionResult<{ showcaseId: string; votes: number }>> {
+  const g = await gate();
+  if (!g.ok) return g;
+  try {
+    const r = await voteBestInShow(g.supabase, id, showcaseId);
+    done(id);
+    return { ok: true, data: r };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function removeMeetupPhotoAction(
+  id: string,
+  mediaId: string
+): Promise<MeetupActionResult<{ mediaId: string }>> {
+  const g = await gate();
+  if (!g.ok) return g;
+  try {
+    await removeMeetupPhoto(g.supabase, mediaId);
+    done(id);
+    return { ok: true, data: { mediaId } };
   } catch (e) {
     return fail(e);
   }

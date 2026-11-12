@@ -939,6 +939,7 @@ export const FIXTURE_SEASON_TRACK: SeasonTrackView = {
 const MEETUP_A = '00000000-0000-4000-8000-00000000a001'; // Rafiq hosts, the viewer is going
 const MEETUP_B = '00000000-0000-4000-8000-00000000a002'; // the viewer hosts (draft → scheduled)
 const MEETUP_C = '00000000-0000-4000-8000-00000000a003'; // Meera hosts, followers only, viewer waitlisted
+const FIXTURE_CLUB_ID = '00000000-0000-4000-8000-00000000c001';
 const RAFIQ: PublicIdentity = { id: VISITOR_A, handle: 'diecast_dxb', displayName: 'Rafiq' };
 const MEERA: PublicIdentity = { id: VISITOR_B, handle: 'blr_castings', displayName: 'Meera' };
 const ME: PublicIdentity = { id: OWNER, handle: 'varun', displayName: 'Varun' };
@@ -968,6 +969,8 @@ const meetupRow = (
   started_at: null,
   ended_at: null,
   cancelled_at: null,
+  best_in_show_id: null,
+  best_in_show_votes: null,
   created_at: '2026-11-10T09:00:00.000Z',
   updated_at: '2026-11-10T09:00:00.000Z',
   ...over,
@@ -1025,6 +1028,10 @@ const rsvpRow = (
   muted_at: null,
   removed_at: null,
   checked_in_at: null,
+  room_joined_at: null,
+  room_seen_at: null,
+  room_seconds: 0,
+  attended_at: null,
   created_at: '2026-11-11T10:00:00.000Z',
   updated_at: '2026-11-11T10:00:00.000Z',
   ...over,
@@ -1060,6 +1067,7 @@ export function fixtureMeetupDetail(
         rsvp: null,
         isMember: true,
         muted: false,
+        attended: false,
       },
       attendees: [
         { user: RAFIQ, status: 'going', role: 'cohost', muted: false, removed: false },
@@ -1068,14 +1076,52 @@ export function fixtureMeetupDetail(
       goingCount: 2,
       waitlistCount: 0,
       showcase: [
-        { id: 'sc-1', userId: VISITOR_A, itemId: itemC.id, position: 0, item: itemC, owner: RAFIQ },
+        {
+          id: 'sc-1',
+          userId: VISITOR_A,
+          itemId: itemC.id,
+          position: 0,
+          votes: 0,
+          item: itemC,
+          owner: RAFIQ,
+        },
       ],
       invites: [{ user: MEERA, createdAt: '2026-11-11T10:00:00.000Z' }],
+      myVoteShowcaseId: null,
+      bestInShow: null,
+      photos: [],
+      club: null,
     };
   }
-  const mine = rsvpRow({ meetup_id: id, user_id: OWNER });
+  const mine = rsvpRow({
+    meetup_id: id,
+    user_id: OWNER,
+    attended_at: status === 'ended' ? '2026-11-21T18:12:00.000Z' : null,
+  });
+  const showcase: MeetupDetail['showcase'] = [
+    { id: 'sc-2', userId: OWNER, itemId: itemA.id, position: 0, votes: 1, item: itemA, owner: ME },
+    { id: 'sc-3', userId: OWNER, itemId: itemB.id, position: 1, votes: 0, item: itemB, owner: ME },
+    {
+      id: 'sc-4',
+      userId: VISITOR_B,
+      itemId: itemC.id,
+      position: 0,
+      votes: 3,
+      item: itemC,
+      owner: MEERA,
+    },
+  ];
   return {
-    meetup,
+    meetup:
+      status === 'ended'
+        ? {
+            ...meetup,
+            ended_at: '2026-11-21T20:00:00.000Z',
+            best_in_show_id: 'sc-4',
+            best_in_show_votes: 3,
+            club_id: FIXTURE_CLUB_ID,
+          }
+        : meetup,
     host: RAFIQ,
     viewer: {
       id: OWNER,
@@ -1085,6 +1131,7 @@ export function fixtureMeetupDetail(
       rsvp: mine,
       isMember: true,
       muted: false,
+      attended: mine.attended_at !== null,
     },
     attendees: [
       { user: ME, status: 'going', role: 'attendee', muted: false, removed: false },
@@ -1092,12 +1139,13 @@ export function fixtureMeetupDetail(
     ],
     goingCount: 6,
     waitlistCount: 1,
-    showcase: [
-      { id: 'sc-2', userId: OWNER, itemId: itemA.id, position: 0, item: itemA, owner: ME },
-      { id: 'sc-3', userId: OWNER, itemId: itemB.id, position: 1, item: itemB, owner: ME },
-      { id: 'sc-4', userId: VISITOR_B, itemId: itemC.id, position: 0, item: itemC, owner: MEERA },
-    ],
+    showcase,
     invites: [],
+    myVoteShowcaseId: status === 'live' || status === 'ended' ? 'sc-4' : null,
+    bestInShow: status === 'ended' ? { showcaseId: 'sc-4', votes: 3, entry: showcase[2]! } : null,
+    photos: [],
+    club:
+      status === 'ended' ? { id: FIXTURE_CLUB_ID, slug: 'jdm_club', name: 'JDM Collectors' } : null,
   };
 }
 

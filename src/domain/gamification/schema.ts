@@ -4,7 +4,11 @@ export const FEEDBACK_KINDS = ['bug', 'idea', 'other'] as const;
 
 export const feedbackSchema = z.object({
   kind: z.enum(FEEDBACK_KINDS),
-  message: z.string().trim().min(3, 'Tell us a little more').max(2000, 'Keep it under 2000 characters'),
+  message: z
+    .string()
+    .trim()
+    .min(3, 'Tell us a little more')
+    .max(2000, 'Keep it under 2000 characters'),
   page: z.string().trim().max(200).nullish(),
 });
 export type FeedbackInput = z.infer<typeof feedbackSchema>;

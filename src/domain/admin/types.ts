@@ -2,6 +2,10 @@ import type { Database, Tables } from '@/lib/supabase/types';
 
 export type AdminProfileRow = Tables<'profiles'>;
 export type EarnFreezeRow = Tables<'world_earn_freezes'>;
+/** One hosting suspension (world_host_suspensions, MV-W07-05) — automatic at two upheld reports or
+ *  set by an admin; `lifted_at` null = in force. */
+export type HostSuspensionRow = Tables<'world_host_suspensions'>;
+export type HostSuspensionAction = 'suspend' | 'lift' | 'note';
 /** One scheduled-job run (job_runs, 03 §2.42) — written only by run_world_job (MV-W04-04). */
 export type JobRunRow = Tables<'job_runs'>;
 

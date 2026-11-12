@@ -6,7 +6,7 @@
 import type { Client } from '@/lib/supabase/types';
 import { emitEvent } from '@/domain/events';
 import { listPublicProfilesByIds } from '@/domain/identity';
-import { listMediaForEntities } from '@/domain/media';
+import { listMediaForEntities, listMediaForEntity, uploadMeetupPhoto } from '@/domain/media';
 import type { GarageItem } from '@/domain/garage';
 import { getOwnGarage } from '@/domain/world';
 import { isProActive } from '@/domain/entitlements';
@@ -26,11 +26,13 @@ import {
 } from './schema';
 import { hostFee, isEditable } from './state';
 import type {
+  BestInShow,
   HostCapacity,
   MeetupAttendee,
   MeetupDetail,
   MeetupInviteRow,
   MeetupListItem,
+  MeetupPhoto,
   MeetupRow,
   MeetupRsvpRow,
   MeetupShowcaseEntry,
@@ -80,6 +82,9 @@ function isActiveSeat(r: MeetupRsvpRow): boolean {
 }
 
 // ---------- reads ----------
+
+/** Meetups by id under the caller's RLS (admins see every one) — the admin hosting queue's previews. */
+export const getMeetupsByIds = repo.listMeetupsByIds;
 
 /** `/world/meetups`: upcoming (scheduled / live, soonest first) or mine (hosted ∪ rsvp'd, latest first). */
 export async function listMeetups(
@@ -154,6 +159,7 @@ async function attachItems(
     userId: s.user_id,
     itemId: s.item_id,
     position: s.position,
+    votes: s.votes,
     item: byId.get(s.item_id) ?? null,
     owner: who.get(s.user_id) ?? null,
   }));
@@ -171,17 +177,39 @@ export async function getMeetupDetail(
   const meetup = await repo.getMeetup(supabase, parsed.data);
   if (!meetup) return null;
 
-  const [rsvps, showcase, invites] = await Promise.all([
+  const [rsvps, showcase, invites, myVote, photoRows, club] = await Promise.all([
     repo.listRsvps(supabase, meetup.id),
     repo.listShowcase(supabase, meetup.id),
     repo.listInvites(supabase, meetup.id).catch((): MeetupInviteRow[] => []),
+    viewerId ? repo.getMyVote(supabase, meetup.id, viewerId).catch(() => null) : null,
+    listMediaForEntity(supabase, 'meetup_photo', meetup.id).catch(() => []),
+    meetup.club_id ? repo.getClub(supabase, meetup.club_id).catch(() => null) : null,
   ]);
   const who = await identities(supabase, [
     meetup.host_id,
     ...rsvps.map((r) => r.user_id),
     ...showcase.map((s) => s.user_id),
     ...invites.map((i) => i.user_id),
+    ...photoRows.map((p) => p.owner_id),
   ]);
+  const entries = await attachItems(supabase, showcase, who);
+  const bestInShow: BestInShow | null =
+    meetup.best_in_show_id && meetup.best_in_show_votes
+      ? {
+          showcaseId: meetup.best_in_show_id,
+          votes: meetup.best_in_show_votes,
+          entry: entries.find((e) => e.id === meetup.best_in_show_id) ?? null,
+        }
+      : null;
+  const photos: MeetupPhoto[] = photoRows
+    .filter((p) => p.status === 'ready')
+    .map((p) => ({
+      id: p.id,
+      ownerId: p.owner_id,
+      owner: who.get(p.owner_id) ?? null,
+      createdAt: p.created_at,
+    }))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   const attendees: MeetupAttendee[] = rsvps
     .filter((r) => r.removed_at === null && r.status !== 'declined')
@@ -208,15 +236,20 @@ export async function getMeetupDetail(
       rsvp: mine,
       isMember,
       muted: mine?.muted_at != null,
+      attended: mine?.attended_at != null,
     },
     attendees,
     goingCount: rsvps.filter(isActiveSeat).length,
     waitlistCount: rsvps.filter((r) => r.removed_at === null && r.status === 'waitlist').length,
-    showcase: await attachItems(supabase, showcase, who),
+    showcase: entries,
     invites: invites.map((i) => ({
       user: who.get(i.user_id) ?? UNKNOWN(i.user_id),
       createdAt: i.created_at,
     })),
+    myVoteShowcaseId: myVote,
+    bestInShow,
+    photos,
+    club,
   };
 }
 
@@ -258,7 +291,8 @@ export async function createMeetup(supabase: Client, input: unknown): Promise<Me
       endsAt: endFrom(v.startsAt, v.durationMinutes),
       capacity: v.capacity,
       visibility: v.visibility,
-      clubId: v.visibility === 'club' ? (v.clubId ?? null) : null,
+      // a club id with any visibility = hosted by the club (the RPC requires club staff)
+      clubId: v.clubId ?? null,
     });
   } catch (e) {
     rethrowAsMeetupError(e);
@@ -399,6 +433,73 @@ export async function moderateAttendee(
   const action = moderateActionSchema.parse(actionInput);
   try {
     return await repo.moderate(supabase, id, userId, action);
+  } catch (e) {
+    rethrowAsMeetupError(e);
+  }
+}
+
+// ---------- W07: best-in-show, attendance clock, photo wall ----------
+
+/** Puts (or moves) the caller's one ballot on a showcase entry while the meetup is live. Throws
+ *  MeetupError: voting_closed / not_attending / own_entry / entry_not_found. Returns the new tally. */
+export async function voteBestInShow(
+  supabase: Client,
+  idInput: unknown,
+  showcaseIdInput: unknown
+): Promise<{ showcaseId: string; votes: number }> {
+  const id = meetupIdSchema.parse(idInput);
+  const showcaseId = meetupIdSchema.parse(showcaseIdInput); // any uuid
+  try {
+    const row = await repo.vote(supabase, id, showcaseId);
+    return { showcaseId: row.id, votes: row.votes };
+  } catch (e) {
+    rethrowAsMeetupError(e);
+  }
+}
+
+/** One tick of the attendance clock (the room calls it on open and once a minute). The server keeps
+ *  the time; this only reports whether the caller has attended. Never throws for a closed room. */
+export async function pingRoom(supabase: Client, idInput: unknown): Promise<boolean> {
+  const parsed = meetupIdSchema.safeParse(idInput);
+  if (!parsed.success) return false;
+  try {
+    return await repo.pingRoom(supabase, parsed.data);
+  } catch {
+    return false;
+  }
+}
+
+/** Posts one (already compressed) photo on the wall. The DB guard decides (room member, wall open,
+ *  ≤ 6 each); this emits meetup.photo_added (D-009). */
+export async function addMeetupPhoto(
+  supabase: Client,
+  userId: string,
+  idInput: unknown,
+  blob: Blob
+): Promise<MeetupPhoto> {
+  const id = meetupIdSchema.parse(idInput);
+  let row: Awaited<ReturnType<typeof uploadMeetupPhoto>>;
+  try {
+    row = await uploadMeetupPhoto(supabase, userId, id, blob, { bytes: blob.size });
+  } catch (e) {
+    rethrowAsMeetupError(e);
+  }
+  await emitEvent(supabase, {
+    actorId: userId,
+    type: 'meetup.photo_added',
+    entity: 'meetup',
+    entityId: id,
+    payload: { media_id: row.id },
+  });
+  return { id: row.id, ownerId: userId, owner: null, createdAt: row.created_at };
+}
+
+/** Takes a photo off the wall: its owner, the host / a co-host, or an admin (the RPC decides and
+ *  emits meetup.photo_removed). */
+export async function removeMeetupPhoto(supabase: Client, mediaIdInput: unknown): Promise<void> {
+  const mediaId = meetupIdSchema.parse(mediaIdInput);
+  try {
+    await repo.removePhoto(supabase, mediaId);
   } catch (e) {
     rethrowAsMeetupError(e);
   }
