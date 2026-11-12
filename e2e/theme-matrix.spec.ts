@@ -59,6 +59,9 @@ const ROUTES: Array<{ name: string; path: string; harness?: boolean }> = [
   { name: 'world-shop', path: '/world/shop', harness: true },
   { name: 'world-season', path: '/world/season', harness: true },
   { name: 'legal-terms', path: '/legal/terms' },
+  { name: 'legal-offline-deals', path: '/legal/offline-deals' },
+  { name: 'legal-abuse', path: '/legal/abuse' },
+  { name: 'legal-known-issues', path: '/legal/known-issues' },
   { name: 'offline', path: '/offline' },
   // An unknown path is non-public, so without the harness flag the proxy sends an anonymous visitor
   // to /login; the flag lets the real 404 page render (proxy behaviour for anon users unchanged).
