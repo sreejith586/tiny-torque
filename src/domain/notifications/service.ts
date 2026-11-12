@@ -24,6 +24,14 @@ const NOTIFICATION_TEXT: Record<NotificationType, string> = {
   world_invite: 'You were invited to a garage.',
   // T-14 d earned-credit expiry notice (F-26, D-070; jobs runner MV-W04-04)
   tokens_expiring: 'Some of your earned credits expire soon.',
+  // H1 housekeeping jobs (MV-S9-01, F-19): hourly expire_listings / expire_offers
+  listing_expired: 'One of your listings expired. Renew it to keep it on the market.',
+  offer_expired: 'Your offer expired before the seller responded.',
+  // Virtual meetups (W06, F-23)
+  meetup_invite: 'You were invited to a meetup.',
+  meetup_reminder: 'A meetup you joined starts soon.',
+  meetup_live: 'A meetup you joined is live now.',
+  meetup_cancelled: 'A meetup you joined was cancelled.',
 };
 
 /** Pure: what the notification says. No DB access, unit-testable in isolation. */
@@ -54,6 +62,20 @@ export function notificationLink(n: Pick<NotificationRow, 'type' | 'payload'>): 
       return typeof payload.handle === 'string' ? `/world/g/${payload.handle}` : '/world';
     case 'tokens_expiring':
       return '/tokens/history';
+    case 'listing_expired': // the Expired tab + Renew live on My listings (MV-S4-07)
+      return '/market/mine';
+    case 'offer_expired':
+      return '/offers';
+    case 'meetup_invite':
+    case 'meetup_reminder':
+    case 'meetup_cancelled':
+      return typeof payload.meetup_id === 'string'
+        ? `/world/meetups/${payload.meetup_id}`
+        : '/world/meetups';
+    case 'meetup_live':
+      return typeof payload.meetup_id === 'string'
+        ? `/world/meetups/${payload.meetup_id}/room`
+        : '/world/meetups';
     default:
       return null;
   }

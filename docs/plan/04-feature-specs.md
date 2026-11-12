@@ -161,6 +161,8 @@ Role-gated. Pages: Overview (users, items, listings, offers, scans, cost this mo
 
 Manifest, icons, install prompt (deferred until 2nd visit), service worker caching app shell + last-viewed garage (read-only offline banner), `next/image` with Supabase transforms, route-level loading states, skeletons; Lighthouse ≥ 90 perf/a11y on mid-tier Android profile; contrast check script over all 6 themes; focus management in dialogs; reduced-motion respect.
 
+**AC (S9, ticked 2026-11-08):** [x] installable (manifest + icons + iOS meta/splash, install prompt from the 2nd visit — `e2e/pwa.spec.ts`) · [x] service worker = app shell + last garage page read-only + offline banner, nothing else cached (D-100) · [x] route-level `loading.tsx` / `error.tsx` + skeletons on every segment, app-wide 404 / global error, retry affordances (D-103) · [x] Supabase image renders for thumbnails (`?w=`) + lazy loading (D-101) · [x] Lighthouse CI in GitHub Actions on the mobile profile (`lighthouse` job): a11y ≥ 0.9 everywhere; perf gate 0.75 (D-104; was 0.8 — measured 0.79–0.81 / 0.84 on the fixture-data pages, ≥ 0.9 elsewhere) — the ≥ 0.9 perf target is checked on staging, D-101 · [x] contrast script over all 6 themes in CI, all AA (D-102) · [x] focus management in dialogs/dropdowns, labels, reduced-motion · [x] axe in Playwright · [x] theme QA matrix artifact every route × 6 themes × 2 widths (D-056 review aid).
+
 ## F-18 Analytics & pilot instrumentation
 
 PostHog events mirroring key domain events (client-side identify with `user_id`, country, plan; server-side capture from event consumer for money/scan events); funnels defined for 01 §6 metrics; weekly SQL report (materialised view `pilot_kpis_weekly`).
@@ -168,6 +170,8 @@ PostHog events mirroring key domain events (client-side identify with `user_id`,
 ## F-19 Ops readiness
 
 Runbook (incidents, rollback, restore from PITR, rotating keys), backups verified by restore drill in Sprint 10, status page (Vercel + Supabase status links in-app footer), Sentry alert routing to your email/Slack, cost alerts (Anthropic spend, Supabase usage).
+
+**AC (S9 part, ticked 2026-11-08):** [x] scheduled expiry runs itself — `expire_listings` / `expire_offers` hourly, `purge_trash` + `ensure_event_partitions` daily via pg_cron, logged in `job_runs` (D-099) · [x] delete-account purge of `auth.users` + storage objects (`purge_accounts`, `purge_media`, 7-day grace) · [x] alert on failure = the daily `h1-jobs.yml` run fails on any errored `job_runs` row of either track (GitHub notifies the owner) · [x] `/admin/world/economy` › Job runs shows the H1 jobs. Still open for S10: runbook, PITR restore drill, status links, Sentry alert routing, cost alerts.
 
 ## Collectors World (H3) — F-20…F-28
 
@@ -227,7 +231,9 @@ Runbook (incidents, rollback, restore from PITR, rotating keys), backups verifie
 - A `meetups` row (kind `virtual`) hosted at a garage or clubhouse: title, theme, start/end, capacity (by host garage level `host_cap`), visibility (public/followers/club/invite), showcase (each attendee brings ≤ N public cars), live room (Realtime chat, deal-chat pattern), reactions, best-in-show vote (one per attendee, frozen at end), photo wall (`media` rows), reminders (notifications + Resend).
 - Lifecycle only via `transition_meetup(id, action)`: draft → scheduled → live → ended → cancelled (D-021 pattern). **Hosting fee** in credits scaled by capacity (`spend_meetup_host`, placeholder 5/10/20) is a platform fee, refunded on cancel ≥ 24 h before start; attending is free. Co-hosts allowed. Recurring club nights spawn instances via the jobs runner.
   **AC** `rsvp_meetup` past capacity fails; a non-attendee cannot read the room; best-in-show result cannot change after `ended`; cancel < 24 h keeps the fee (pgTAP).
-  **Events** `meetup.created`, `meetup.scheduled`, `meetup.started`, `meetup.ended`, `meetup.cancelled`, `meetup.rsvp`, `meetup.best_in_show`
+  ✅ MV-W06-01/02/06 — `rsvp_meetup` past capacity → `waitlist` (never a seat), a non-attendee / kicked attendee reads 0 room rows and cannot post, cancel < 24 h keeps the fee while ≥ 24 h refunds it through `credit_tokens`, the room is closed before `live` and after `ended`, lifecycle / fee / moderation only through the RPCs: `supabase/tests/0029_clubs_meetups.sql` (112 assertions, replicated locally with the CI image); state machine + capacity / fee / refund / reminder mirrors: `src/domain/meetups/state.test.ts`; service boundaries: `src/domain/meetups/service.test.ts`; D-098. **Still open (W07):** best-in-show vote + freeze at `ended`, photo wall (`media` rows), attend / host rewards (`earn_attend` / `earn_host`), recurring club nights. Reminders are in-app only until a transactional-mail path exists (D-098 §5).
+  ✅ MV-W06-03/04 — `/world/meetups` (upcoming / mine), detail with RSVP + ≤ 3-car showcase picker + host controls, single-page create form (virtual only), live room reusing the deal-thread pieces with reactions, showcase grid and host mute / kick / end (D-096 / D-097 proposed); fixture harness + `e2e/world.spec.ts` checks; the real two-identity flow is `e2e/meetup-flow.spec.ts` (opt-in, `E2E_ENABLE_MEETUPS=1`).
+  **Events** `meetup.created`, `meetup.scheduled`, `meetup.started`, `meetup.ended`, `meetup.cancelled`, `meetup.rsvp`, `meetup.best_in_show` (+ W06: `meetup.updated`, `meetup.invited`, `meetup.showcase_updated`, `meetup.moderated`, `meetup.reminder`)
   **Flags** `world_meetups`
 
 ## F-24 In-person meetups

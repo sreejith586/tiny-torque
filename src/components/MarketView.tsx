@@ -68,8 +68,25 @@ export default function MarketView({
         setSellerTypePanelOpen(false);
       }
     }
+    // MV-S9-04: Escape closes the open dropdown and hands focus back to its trigger button.
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      if (brandPanelOpen) {
+        setBrandPanelOpen(false);
+        brandPanelRef.current?.querySelector('button')?.focus();
+      }
+      if (sellerTypePanelOpen) {
+        setSellerTypePanelOpen(false);
+        sellerTypePanelRef.current?.querySelector('button')?.focus();
+      }
+    }
     document.addEventListener('click', onOutsideClick);
-    return () => document.removeEventListener('click', onOutsideClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('click', onOutsideClick);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [brandPanelOpen, sellerTypePanelOpen]);
   const [favoriteIds, setFavoriteIds] = useState(() => new Set(initialFavoriteIds));
 
@@ -161,7 +178,13 @@ export default function MarketView({
   return (
     <div>
       <div className={styles.searchBar}>
-        <input placeholder="Search listings…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input
+          type="search"
+          aria-label="Search listings"
+          placeholder="Search listings…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
         <button
           type="button"
           className={`btn-secondary ${styles.viewToggle}`}
@@ -185,7 +208,11 @@ export default function MarketView({
       </div>
 
       <div className={styles.selectRow}>
-        <select value={condition} onChange={(e) => setCondition(e.target.value)}>
+        <select
+          aria-label="Condition"
+          value={condition}
+          onChange={(e) => setCondition(e.target.value)}
+        >
           <option value="all">Any condition</option>
           {CONDITIONS.map((c) => (
             <option key={c} value={c}>

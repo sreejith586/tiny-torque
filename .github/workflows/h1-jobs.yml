@@ -1,0 +1,74 @@
+name: H1 jobs — daily purge + alert
+
+# MV-S9-01 (F-19 ops readiness). pg_cron runs the SQL housekeeping jobs inside the database
+# (run_h1_job / run_world_job, migrations 0011 / 0014d). The two jobs that need the Storage and
+# Auth admin APIs — purge_media (storage objects of removed media) and purge_accounts (the
+# auth.users rows of accounts anonymised by delete_account(), D-080) — run in the Edge Function
+# `jobs`, which this workflow fires once a day. The call also returns every job_runs row of either
+# track that failed in the last 24 h, pg_cron's included, and the function answers 207 when there
+# is one — the step fails, GitHub notifies the repo owner: that is the "alert on failure" channel.
+#
+# Required repo secrets:  JOBS_SECRET (the Edge Function's shared secret, `supabase secrets set`)
+# Required repo variable: JOBS_FUNCTION_URL (https://<ref>.functions.supabase.co/jobs — prod)
+# Optional:               JOBS_FUNCTION_URL_STAGING to also run against the staging project.
+
+on:
+  schedule:
+    - cron: '0 4 * * *' # 04:00 UTC, after the 03:35 trash purge / 03:50 partition job
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "H1 job to run (all | expire_listings | expire_offers | purge_trash | ensure_event_partitions | purge_media | purge_accounts)"
+        default: all
+        required: false
+
+concurrency:
+  group: h1-jobs
+  cancel-in-progress: false
+
+jobs:
+  run:
+    name: jobs → h1 ${{ inputs.job || 'all' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check configuration
+        env:
+          URL: ${{ vars.JOBS_FUNCTION_URL }}
+          SECRET: ${{ secrets.JOBS_SECRET }}
+        run: |
+          if [ -z "$URL" ] || [ -z "$SECRET" ]; then
+            echo "::error::JOBS_FUNCTION_URL (variable) and JOBS_SECRET (secret) must be set — see the header of this workflow"
+            exit 1
+          fi
+      - name: Run the H1 track on prod
+        env:
+          URL: ${{ vars.JOBS_FUNCTION_URL }}
+          SECRET: ${{ secrets.JOBS_SECRET }}
+          JOB: ${{ inputs.job || 'all' }}
+        run: |
+          set -o pipefail
+          body=$(printf '{"track":"h1","job":"%s"}' "$JOB")
+          code=$(curl -sS -o /tmp/jobs.json -w '%{http_code}' -X POST "$URL" \
+            -H "x-jobs-secret: $SECRET" -H "content-type: application/json" -d "$body")
+          echo "HTTP $code"
+          cat /tmp/jobs.json | head -c 20000; echo
+          summary=$(jq -r '.summary // empty | "ok \(.ok) · error \(.error)"' /tmp/jobs.json 2>/dev/null || true)
+          alert=$(jq -r '.alert // empty' /tmp/jobs.json 2>/dev/null || true)
+          { echo "## H1 jobs — $JOB"; echo; echo "HTTP $code — $summary"; [ -n "$alert" ] && echo && echo "⚠️ $alert"; } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$code" != "200" ]; then
+            echo "::error::jobs function answered $code — ${alert:-see the response above}"
+            exit 1
+          fi
+      - name: Run the H1 track on staging (optional)
+        if: vars.JOBS_FUNCTION_URL_STAGING != ''
+        env:
+          URL: ${{ vars.JOBS_FUNCTION_URL_STAGING }}
+          SECRET: ${{ secrets.JOBS_SECRET }}
+          JOB: ${{ inputs.job || 'all' }}
+        run: |
+          body=$(printf '{"track":"h1","job":"%s"}' "$JOB")
+          code=$(curl -sS -o /tmp/jobs-staging.json -w '%{http_code}' -X POST "$URL" \
+            -H "x-jobs-secret: $SECRET" -H "content-type: application/json" -d "$body")
+          echo "staging HTTP $code"; head -c 4000 /tmp/jobs-staging.json; echo
+          [ "$code" = "200" ] || echo "::warning::staging jobs function answered $code"

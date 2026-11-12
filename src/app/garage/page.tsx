@@ -22,7 +22,8 @@ async function loadFirstPage(searchParams: Record<string, string | string[] | un
     return {
       items: FIXTURE_ITEMS,
       cursor: null,
-      showTour: false,
+      // `&__tour=1` also mounts the first-run tour (MV-S9-04 keyboard/focus-trap e2e).
+      showTour: '__tour' in searchParams,
       unlocked: [] as Badge[],
       quest: null as DailyQuestStatus | null,
     };

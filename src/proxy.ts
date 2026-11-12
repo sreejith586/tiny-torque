@@ -7,14 +7,15 @@ import { isVisualHarness, harnessAllowed, VISUAL_COOKIE } from '@/lib/visual-fix
 // the routes that require a signed-in user.
 //
 // Public (no auth required): /, /login, /onboarding, /market (+ listing
-// detail, F-06), /u/{handle} public profiles, /legal/*, static assets. Everything else —
+// detail, F-06), /u/{handle} public profiles, /legal/*, /offline (the service worker's
+// fallback page, MV-S9-02), static assets. Everything else —
 // /garage, /profile, /offers, /deals, /notifications, /settings, /tokens,
 // /admin — requires a session. /admin additionally requires profiles.role =
 // 'admin' (MV-S1-06) —
 // the middleware redirect is the first gate, RLS on admin-only tables/RPCs
 // (identity_v2's is_admin() policies) is the backstop either way.
 
-const PUBLIC_PATHS = new Set(['/', '/login', '/onboarding', '/market']);
+const PUBLIC_PATHS = new Set(['/', '/login', '/onboarding', '/market', '/offline']);
 
 function isPublicPath(pathname: string) {
   if (PUBLIC_PATHS.has(pathname)) return true;

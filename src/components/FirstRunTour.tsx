@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { useFocusTrap } from '@/lib/use-focus-trap';
 import { AddIcon, GarageIcon, MarketIcon, TrophyIcon } from './icons';
 
 // MV-S8-06 (F-01): the 4-step skippable first-run tour, shown over the garage the first time a
@@ -34,24 +35,34 @@ const STEPS = [
 export default function FirstRunTour({ onDismiss }: { onDismiss: () => Promise<void> }) {
   const [step, setStep] = useState(0);
   const [open, setOpen] = useState(true);
+  const cardRef = useRef<HTMLDivElement | null>(null);
   const current = STEPS[step]!;
   const last = step === STEPS.length - 1;
 
-  async function dismiss() {
+  const dismiss = useCallback(async () => {
     setOpen(false); // hide immediately; the stamp is best-effort
     try {
       await onDismiss();
     } catch {
       // if the stamp fails the tour will show once more next time — harmless
     }
-  }
+  }, [onDismiss]);
+  // MV-S9-04: modal focus management — Tab cycles inside the card, Escape skips the tour.
+  useFocusTrap(cardRef, open, dismiss);
 
   if (!open) return null;
 
   return (
     <div className="tour-overlay" role="dialog" aria-modal="true" aria-labelledby="tour-title">
-      <div className="tour-card">
-        <div style={{ display: 'flex', gap: 6, marginBottom: 16 }} aria-label="Progress">
+      <div className="tour-card" ref={cardRef} tabIndex={-1}>
+        <div
+          style={{ display: 'flex', gap: 6, marginBottom: 16 }}
+          role="progressbar"
+          aria-label={`Step ${step + 1} of ${STEPS.length}`}
+          aria-valuemin={1}
+          aria-valuemax={STEPS.length}
+          aria-valuenow={step + 1}
+        >
           {STEPS.map((s, i) => (
             <div
               key={s.title}

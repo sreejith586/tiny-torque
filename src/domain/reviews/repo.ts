@@ -43,7 +43,8 @@ export async function listReviewsForSeller(
     .select('*')
     .eq('seller_id', sellerId)
     .is('deleted_at', null)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(100); // MV-S9-03: newest 100 reviews; rating_avg/count come from the profile row
   if (error) throw error;
   return data ?? [];
 }

@@ -78,8 +78,25 @@ export default function GarageView({
         setFiltersPanelOpen(false);
       }
     }
+    // MV-S9-04: Escape closes the open dropdown and hands focus back to its trigger button.
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      if (sortPanelOpen) {
+        setSortPanelOpen(false);
+        sortPanelRef.current?.querySelector('button')?.focus();
+      }
+      if (filtersPanelOpen) {
+        setFiltersPanelOpen(false);
+        filtersPanelRef.current?.querySelector('button')?.focus();
+      }
+    }
     document.addEventListener('click', onOutsideClick);
-    return () => document.removeEventListener('click', onOutsideClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('click', onOutsideClick);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [sortPanelOpen, filtersPanelOpen]);
 
   // Restore the grid/list choice (per-device). Read in an effect, not a lazy initializer, so SSR
@@ -244,6 +261,8 @@ export default function GarageView({
     <div>
       <div className="garage-toolbar">
         <input
+          type="search"
+          aria-label="Search your garage"
           placeholder="Search your garage…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -261,7 +280,7 @@ export default function GarageView({
           </button>
           {filtersPanelOpen && (
             <div className="filter-dropdown filter-dropdown-form">
-              <select value={brand} onChange={(e) => setBrand(e.target.value)}>
+              <select aria-label="Brand" value={brand} onChange={(e) => setBrand(e.target.value)}>
                 <option value="all">All brands</option>
                 {brands.map((b) => (
                   <option key={b} value={b}>
@@ -269,7 +288,11 @@ export default function GarageView({
                   </option>
                 ))}
               </select>
-              <select value={rarity} onChange={(e) => setRarity(e.target.value)}>
+              <select
+                aria-label="Rarity"
+                value={rarity}
+                onChange={(e) => setRarity(e.target.value)}
+              >
                 <option value="all">Any rarity</option>
                 {RARITIES.map((r) => (
                   <option key={r} value={r}>
@@ -277,7 +300,11 @@ export default function GarageView({
                   </option>
                 ))}
               </select>
-              <select value={condition} onChange={(e) => setCondition(e.target.value)}>
+              <select
+                aria-label="Condition"
+                value={condition}
+                onChange={(e) => setCondition(e.target.value)}
+              >
                 <option value="all">Any condition</option>
                 {CONDITIONS.map((c) => (
                   <option key={c} value={c}>
@@ -286,6 +313,7 @@ export default function GarageView({
                 ))}
               </select>
               <select
+                aria-label="Listing status"
                 value={listingStatus}
                 onChange={(e) => setListingStatus(e.target.value as ListingStatus)}
               >

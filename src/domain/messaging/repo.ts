@@ -49,3 +49,37 @@ export async function isBlockedPair(supabase: Client, a: string, b: string): Pro
   if (error) throw error;
   return data ?? false;
 }
+
+// ---------- meetup rooms (MV-W06-04): the same thread table, kind = 'meetup' (0015) ----------
+// RLS: members read; members post while the meetup is live, unless muted / blocked with the host.
+
+export async function listRoomMessages(
+  supabase: Client,
+  meetupId: string,
+  limit = 200
+): Promise<DealMessageRow[]> {
+  const { data, error } = await supabase
+    .from('deal_messages')
+    .select('*')
+    .eq('meetup_id', meetupId)
+    .order('created_at', { ascending: true })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function sendRoomMessage(
+  supabase: Client,
+  meetupId: string,
+  senderId: string,
+  body: string,
+  reaction: string | null = null
+): Promise<DealMessageRow> {
+  const { data, error } = await supabase
+    .from('deal_messages')
+    .insert({ kind: 'meetup', meetup_id: meetupId, sender_id: senderId, body, reaction })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data;
+}

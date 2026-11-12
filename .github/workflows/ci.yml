@@ -6,14 +6,25 @@ on:
   deployment_status: # Vercel preview ready → run Playwright against it (Supabase branch DB behind it, D-033)
 
 concurrency:
-  # Scoped per event, not just per ref: a `push` (checks/migrations) and a `deployment_status`
-  # (Playwright against the Vercel preview) for the same branch used to share one group, so
-  # every push cancelled whatever Playwright run was still going for an earlier commit -- it
-  # takes 5-10 min (Vercel deploy + browser install + tests), longer than a typical push cadence
-  # while iterating, so it kept getting killed before finishing. Confirmed via run history: every
-  # deployment_status run on sprint-1 was "cancelled", none had actually failed on its own merits.
-  group: ci-${{ github.event_name }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Scoped per event AND per branch. Two things went wrong with the old `ci-<event>-<ref>` key:
+  #  (1) a `push` (checks/migrations) and a `deployment_status` (Playwright against the Vercel
+  #      preview) for the same branch shared one group, so every push cancelled the 5-10 min
+  #      Playwright run still going for an earlier commit (every deployment_status run on sprint-1
+  #      was "cancelled", none had failed on its merits) — hence the event name in the key;
+  #  (2) for `deployment_status` events `github.ref` is the repository's DEFAULT branch, not the
+  #      deployed one, so previews of DIFFERENT PRs still collided: on 2026-10-20 PRs #95 and #96
+  #      cancelled each other's Playwright runs over and over. Deployment-triggered runs are now
+  #      keyed by the deployment's own ref (its branch; sha as the fallback), so only a newer
+  #      preview of the SAME branch supersedes a running one — which is the one case where
+  #      cancel-in-progress is wanted.
+  #  (3) Vercel sends one deployment_status event per state change (pending → success); a
+  #      `pending` run skips every job, yet as a new member of the group it would still cancel
+  #      the previous deploy's Playwright run. So only a run that will actually do work — a
+  #      `success` status, or any push / pull_request — may cancel an in-progress one. (The
+  #      "cancelled" e2e runs seen on #111 turned out to be the job's own timeout, fixed in the
+  #      theme-matrix step; this guard stays as the cheap belt-and-braces.)
+  group: ci-${{ github.event_name }}-${{ github.event_name == 'deployment_status' && (github.event.deployment.ref || github.event.deployment.sha) || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'deployment_status' || github.event.deployment_status.state == 'success' }}
 
 jobs:
   checks:
@@ -33,12 +44,60 @@ jobs:
       - run: pnpm test
       - name: Decision guard (D-023)
         run: bash docs/plan/tools/guard.sh
+      - name: Theme contrast (WCAG AA over the 6 themes, F-17 / MV-S9-04)
+        run: node scripts/contrast-check.mjs
       - name: Build
         run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: 1
           NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+
+  lighthouse:
+    name: lighthouse budget (F-17, MV-S9-03)
+    if: github.event_name != 'deployment_status'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: checks
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+      - name: Client bundle report (first-load JS per route)
+        # Budget = the ceiling measured in MV-S9-03 after the pass (heaviest route 368 KB gz; the
+        # remaining big items are zod v4 at ~88 KB on every service-using route and the React +
+        # Next + Sentry runtime at ~123 KB). Ratchet it down with each follow-up (zod/mini, …).
+        run: node scripts/bundle-report.mjs --budget 400 | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Lighthouse CI (mobile, 4G, 4x CPU — 05 S9 "mid-range Android over 4G")
+        # Public pages plus the signed-in screens rendered from the ?__visual=1 fixtures (no DB in
+        # CI, src/lib/visual-fixtures.ts). Budgets live in lighthouserc.json: a11y ≥ 0.9 and
+        # perf ≥ 0.75 fail the job (D-104; median of 3; /market measures 0.79–0.81, /garage 0.84 on
+        # the two fixture-data pages under the 4× CPU throttle — 0.9 is the staging target, measured
+        # on the preview, and the next ratchet); script ≤ 450 KB, total ≤ 1.2 MB per page.
+        run: |
+          pnpm start -p 3000 &
+          npx --yes wait-on@8 http://127.0.0.1:3000/login -t 60000
+          npx --yes @lhci/cli@0.14.0 autorun \
+            --collect.url=http://127.0.0.1:3000/ \
+            --collect.url=http://127.0.0.1:3000/login \
+            --collect.url=http://127.0.0.1:3000/market?__visual=1 \
+            --collect.url=http://127.0.0.1:3000/garage?__visual=1 \
+            --collect.url=http://127.0.0.1:3000/garage/add
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: lighthouse-report, path: .lighthouseci, retention-days: 7 }
 
   migrations:
     name: migrations apply cleanly (D-006)
@@ -140,7 +199,7 @@ jobs:
   e2e:
     name: playwright smoke on Vercel preview
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     # Vercel names the environment "Preview" / "Preview – <project>"; production deployments are skipped here.
     if: >-
       github.event_name == 'deployment_status' &&
@@ -170,3 +229,16 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with: { name: playwright-report, path: playwright-report, retention-days: 7 }
+      - name: Theme QA screenshot matrix (MV-S9-05, D-056 review aid — never a gate)
+        if: always()
+        continue-on-error: true
+        # Its own time box: the first version waited out the 3.5 s brand splash on each of the 336
+        # shots and ran past the job's 20 min — the whole e2e job came back "cancelled" (#111).
+        timeout-minutes: 12
+        run: THEME_MATRIX=1 pnpm exec playwright test e2e/theme-matrix.spec.ts --project=desktop --workers=3 --reporter=line
+        env:
+          BASE_URL: ${{ github.event.deployment_status.environment_url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: theme-matrix, path: playwright-report/theme-matrix, retention-days: 14, if-no-files-found: ignore }

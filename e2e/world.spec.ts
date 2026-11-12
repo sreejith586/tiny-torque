@@ -210,3 +210,127 @@ test('quests panel links to the season page; season 404s while dark (F-26, D-028
     '/world/season'
   );
 });
+
+// ---- W06 (MV-W06-03/04/06): virtual meetups — list, detail (attendee + host), create form, live room.
+// All dark behind `world_meetups` (404 for a signed-in user while OFF, login for anon); the fixture
+// harness renders them with deterministic data so every preview can be reviewed in six themes.
+
+test('meetups are guarded for anon (D-028)', async ({ page }) => {
+  await page.goto('/world/meetups');
+  await expect(page).toHaveURL(/\/login\?next=%2Fworld%2Fmeetups/);
+  await page.goto('/world/meetups/00000000-0000-4000-8000-00000000a001/room');
+  await expect(page).toHaveURL(/\/login\?next=%2Fworld%2Fmeetups/);
+});
+
+test('meetups list: upcoming / mine tabs, status pills, host CTA (F-23, fixture harness)', async ({
+  page,
+}) => {
+  const res = await page.goto('/world/meetups?__visual=1');
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByRole('heading', { name: 'Meetups' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /JDM night/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Matchbox Monday/ })).toBeVisible();
+  await expect(page.getByText('Scheduled', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(/6\/10 going · you’re in/)).toBeVisible();
+  await expect(page.getByText(/2\/2 going · waitlisted/)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Host a meetup' })).toBeVisible();
+  await page.getByRole('link', { name: 'Mine' }).click();
+  await expect(page.getByRole('link', { name: /Treasure Hunt show-and-tell/ })).toBeVisible();
+  await expect(page.getByText('Draft', { exact: true })).toBeVisible();
+});
+
+test('meetup detail as an attendee: RSVP, attendees, showcase picker + grid (F-23, fixture harness)', async ({
+  page,
+}) => {
+  const res = await page.goto('/world/meetups/00000000-0000-4000-8000-00000000a001?__visual=1');
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByRole('heading', { name: 'JDM night' })).toBeVisible();
+  await expect(page.getByText(/hosted by @diecast_dxb/)).toBeVisible();
+  await expect(page.getByText('6/10 going · 1 waitlisted')).toBeVisible();
+  await expect(page.getByText('You’re in.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Not going' })).toBeVisible();
+  await expect(page.getByText('Attendees', { exact: true })).toBeVisible();
+  await expect(page.getByText('Showcase', { exact: true })).toBeVisible();
+  // the picker: two of the viewer's cars are already on the table, the limit is three
+  const picker = page.getByRole('list', { name: 'Your cars' });
+  await expect(picker.getByRole('button', { pressed: true })).toHaveCount(2);
+  await expect(page.getByText('Yours', { exact: true })).toBeVisible();
+  await expect(page.getByText('@blr_castings').first()).toBeVisible();
+  // host controls are not there for an attendee
+  await expect(page.getByText('Host controls')).toHaveCount(0);
+});
+
+test('meetup detail as the host: schedule with the fee, invites, co-hosts, moderation (F-23, fixture harness)', async ({
+  page,
+}) => {
+  const res = await page.goto(
+    '/world/meetups/00000000-0000-4000-8000-00000000a002?__visual=1&as=host'
+  );
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByRole('heading', { name: 'Treasure Hunt show-and-tell' })).toBeVisible();
+  await expect(page.getByText(/hosted by you/)).toBeVisible();
+  await expect(page.getByText('Host controls')).toBeVisible();
+  await expect(page.getByText(/Scheduling charges the 5-credit hosting fee/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Schedule' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Cancel meetup' })).toBeVisible();
+  await expect(page.getByLabel('Add a co-host by handle')).toBeVisible();
+  await expect(page.getByText(/· co-host/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Unmute' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Remove', exact: true })).toBeVisible();
+  // a draft is not open for invites yet (scheduled / live only)
+  await expect(page.getByLabel('Invite a collector by handle')).toHaveCount(0);
+});
+
+test('create form is a single page with fee + capacity copy (F-23, D-027, fixture harness)', async ({
+  page,
+}) => {
+  const res = await page.goto('/world/meetups/new?__visual=1');
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByRole('heading', { name: 'Host a meetup' })).toBeVisible();
+  await expect(page.getByLabel('Title')).toBeVisible();
+  await expect(page.getByLabel('Starts')).toBeVisible();
+  await expect(page.getByLabel('Seats')).toHaveValue('10');
+  await expect(page.getByLabel('Who can join')).toBeVisible();
+  await expect(page.getByText(/hosts up to 10 seats/)).toBeVisible();
+  await expect(page.getByText(/Scheduling costs a 5-credit hosting fee/)).toBeVisible();
+  await expect(page.getByText(/In-person meetups arrive in a later update/)).toBeVisible();
+  const save = page.getByRole('button', { name: 'Save draft' });
+  await expect(save).toBeDisabled();
+  await page.getByLabel('Title').fill('Friday Skylines');
+  await expect(save).toBeEnabled();
+  // no step indicators — the prototype's forms are single-page (D-027)
+  await expect(page.getByRole('progressbar')).toHaveCount(0);
+});
+
+test('live room: thread, reactions, showcase, host controls at 360px (F-23, fixture harness)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 780 });
+  const res = await page.goto(
+    '/world/meetups/00000000-0000-4000-8000-00000000a001/room?__visual=1'
+  );
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByText(/Live room · 6 in/)).toBeVisible();
+  await expect(page.getByText('Welcome in! Show us what you brought.')).toBeVisible();
+  await expect(page.getByText('R34 first — the one from the Dubai swap meet.')).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Reactions' }).getByRole('button')).toHaveCount(5);
+  await expect(page.getByText(/On the table \(3\)/)).toBeVisible();
+  await expect(page.getByLabel('Message the room')).toBeVisible();
+  await expect(page.getByText('Host controls')).toHaveCount(0);
+  // the host's seat shows mute / remove / end
+  await page.goto('/world/meetups/00000000-0000-4000-8000-00000000a001/room?__visual=1&as=host');
+  await expect(page.getByText('Host controls')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'End meetup' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Unmute' })).toBeVisible();
+});
+
+test('world home lists the next meetups (F-23, fixture harness)', async ({ page }) => {
+  const res = await page.goto('/world?__visual=1');
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByText('Meetups', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: /JDM night/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'More meetups' })).toHaveAttribute(
+    'href',
+    '/world/meetups?__visual=1'
+  );
+});

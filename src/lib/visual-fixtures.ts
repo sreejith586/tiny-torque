@@ -1,9 +1,22 @@
 import type { ProfileRow, CountryRow, PublicProfileRow } from '@/types/database';
 import type { GarageItem } from '@/domain/garage';
 import type { Badge } from '@/domain/gamification/types';
-import type { Listing } from '@/domain/marketplace';
+import type { Listing, WishlistItemRow } from '@/domain/marketplace';
+import type { InboxGroup } from '@/domain/deals';
+import type { NotificationRow } from '@/domain/notifications';
 import type { TokenPackRow, TokenLedgerRow } from '@/domain/tokens';
 import type { QuestBoard, QuestStatus, SeasonRow, SeasonTrackView } from '@/domain/quests';
+import type { DealMessageRow } from '@/domain/messaging';
+import {
+  hostFee,
+  type HostCapacity,
+  type MeetupDetail,
+  type MeetupListItem,
+  type MeetupRow,
+  type MeetupRsvpRow,
+  type MeetupStatus,
+  type PublicIdentity,
+} from '@/domain/meetups';
 import type {
   GuestbookEntry,
   OwnGarage,
@@ -173,6 +186,7 @@ export const FIXTURE_PROFILE: ProfileRow = {
   scan_quota_reset_at: '2026-09-01T08:00:00.000Z',
   onboarding_completed_at: '2026-09-01T08:00:00.000Z',
   tutorial_dismissed_at: null,
+  purged_at: null,
   age_confirmed_at: '2026-09-01T08:00:00.000Z',
   terms_version: '1',
   suspended_until: null,
@@ -920,3 +934,377 @@ export const FIXTURE_SEASON_TRACK: SeasonTrackView = {
   daysLeft: 42,
   finisherItemSku: 'trophy_season_finisher',
 };
+
+// ---------- W06 virtual meetups (MV-W06-03/04, F-23) — dark until `world_meetups` turns on ----------
+const MEETUP_A = '00000000-0000-4000-8000-00000000a001'; // Rafiq hosts, the viewer is going
+const MEETUP_B = '00000000-0000-4000-8000-00000000a002'; // the viewer hosts (draft → scheduled)
+const MEETUP_C = '00000000-0000-4000-8000-00000000a003'; // Meera hosts, followers only, viewer waitlisted
+const RAFIQ: PublicIdentity = { id: VISITOR_A, handle: 'diecast_dxb', displayName: 'Rafiq' };
+const MEERA: PublicIdentity = { id: VISITOR_B, handle: 'blr_castings', displayName: 'Meera' };
+const ME: PublicIdentity = { id: OWNER, handle: 'varun', displayName: 'Varun' };
+/** Fixed instants (Nov 2026) so the rendered "when" never depends on the review date. */
+const MEETUP_A_START = '2026-11-21T18:00:00.000Z';
+const MEETUP_B_START = '2026-11-28T15:30:00.000Z';
+const MEETUP_C_START = '2026-11-22T14:00:00.000Z';
+
+const meetupRow = (
+  over: Partial<MeetupRow> & Pick<MeetupRow, 'id' | 'host_id' | 'title'>
+): MeetupRow => ({
+  club_id: null,
+  garage_user_id: over.host_id,
+  kind: 'virtual',
+  theme: null,
+  description: null,
+  starts_at: MEETUP_A_START,
+  ends_at: '2026-11-21T20:00:00.000Z',
+  capacity: 10,
+  showcase_limit: 3,
+  visibility: 'public',
+  status: 'scheduled',
+  fee_paid: 5,
+  fee_ledger_id: null,
+  refund_ledger_id: null,
+  scheduled_at: '2026-11-10T09:00:00.000Z',
+  started_at: null,
+  ended_at: null,
+  cancelled_at: null,
+  created_at: '2026-11-10T09:00:00.000Z',
+  updated_at: '2026-11-10T09:00:00.000Z',
+  ...over,
+});
+
+const FIXTURE_MEETUP_A = meetupRow({
+  id: MEETUP_A,
+  host_id: VISITOR_A,
+  title: 'JDM night',
+  theme: 'Skylines, Supras, Silvias',
+  description: 'Bring your best JDM castings. Three cars each, stories welcome.',
+  capacity: 10,
+});
+const FIXTURE_MEETUP_B = meetupRow({
+  id: MEETUP_B,
+  host_id: OWNER,
+  title: 'Treasure Hunt show-and-tell',
+  theme: 'TH & Super TH',
+  starts_at: MEETUP_B_START,
+  ends_at: '2026-11-28T17:00:00.000Z',
+  capacity: 8,
+  status: 'draft',
+  fee_paid: 0,
+  scheduled_at: null,
+});
+const FIXTURE_MEETUP_C = meetupRow({
+  id: MEETUP_C,
+  host_id: VISITOR_B,
+  title: 'Matchbox Monday',
+  starts_at: MEETUP_C_START,
+  ends_at: '2026-11-22T15:30:00.000Z',
+  capacity: 2,
+  visibility: 'followers',
+});
+
+export const FIXTURE_HOST_CAPACITY: HostCapacity = {
+  cap: 10,
+  level: 2,
+  levelName: 'Garage',
+  isPro: false,
+  fee: hostFee,
+};
+
+export const FIXTURE_MEETUPS: MeetupListItem[] = [
+  { meetup: FIXTURE_MEETUP_A, host: RAFIQ, goingCount: 6, myRsvp: 'going', isHost: false },
+  { meetup: FIXTURE_MEETUP_C, host: MEERA, goingCount: 2, myRsvp: 'waitlist', isHost: false },
+  { meetup: FIXTURE_MEETUP_B, host: ME, goingCount: 0, myRsvp: null, isHost: true },
+];
+
+const rsvpRow = (
+  over: Partial<MeetupRsvpRow> & Pick<MeetupRsvpRow, 'meetup_id' | 'user_id'>
+): MeetupRsvpRow => ({
+  status: 'going',
+  role: 'attendee',
+  muted_at: null,
+  removed_at: null,
+  checked_in_at: null,
+  created_at: '2026-11-11T10:00:00.000Z',
+  updated_at: '2026-11-11T10:00:00.000Z',
+  ...over,
+});
+
+/** The detail page in two seats: `attendee` = the viewer is going to Rafiq's JDM night (showcase
+ *  picker, RSVP); `host` = the viewer's own draft (host controls, schedule + fee). `live` flips the
+ *  status so the room renders. `id` is echoed back so in-app links keep working. */
+export function fixtureMeetupDetail(
+  id: string,
+  seat: 'host' | 'attendee',
+  status: MeetupStatus | null = null
+): MeetupDetail {
+  const base = seat === 'host' ? FIXTURE_MEETUP_B : FIXTURE_MEETUP_A;
+  const meetup: MeetupRow = {
+    ...base,
+    id,
+    status: status ?? base.status,
+    started_at: status === 'live' ? '2026-11-21T18:00:00.000Z' : base.started_at,
+  };
+  const itemA = FIXTURE_ITEMS[0]!;
+  const itemB = FIXTURE_ITEMS[1]!;
+  const itemC = FIXTURE_ITEMS[3]!;
+  if (seat === 'host') {
+    return {
+      meetup,
+      host: ME,
+      viewer: {
+        id: OWNER,
+        isHost: true,
+        isCohost: false,
+        isStaff: true,
+        rsvp: null,
+        isMember: true,
+        muted: false,
+      },
+      attendees: [
+        { user: RAFIQ, status: 'going', role: 'cohost', muted: false, removed: false },
+        { user: MEERA, status: 'going', role: 'attendee', muted: true, removed: false },
+      ],
+      goingCount: 2,
+      waitlistCount: 0,
+      showcase: [
+        { id: 'sc-1', userId: VISITOR_A, itemId: itemC.id, position: 0, item: itemC, owner: RAFIQ },
+      ],
+      invites: [{ user: MEERA, createdAt: '2026-11-11T10:00:00.000Z' }],
+    };
+  }
+  const mine = rsvpRow({ meetup_id: id, user_id: OWNER });
+  return {
+    meetup,
+    host: RAFIQ,
+    viewer: {
+      id: OWNER,
+      isHost: false,
+      isCohost: false,
+      isStaff: false,
+      rsvp: mine,
+      isMember: true,
+      muted: false,
+    },
+    attendees: [
+      { user: ME, status: 'going', role: 'attendee', muted: false, removed: false },
+      { user: MEERA, status: 'going', role: 'attendee', muted: false, removed: false },
+    ],
+    goingCount: 6,
+    waitlistCount: 1,
+    showcase: [
+      { id: 'sc-2', userId: OWNER, itemId: itemA.id, position: 0, item: itemA, owner: ME },
+      { id: 'sc-3', userId: OWNER, itemId: itemB.id, position: 1, item: itemB, owner: ME },
+      { id: 'sc-4', userId: VISITOR_B, itemId: itemC.id, position: 0, item: itemC, owner: MEERA },
+    ],
+    invites: [],
+  };
+}
+
+const roomLine = (
+  id: string,
+  sender: string,
+  body: string,
+  reaction: string | null,
+  at: string
+): DealMessageRow => ({
+  id,
+  kind: 'meetup',
+  meetup_id: MEETUP_A,
+  offer_id: null,
+  sender_id: sender,
+  body,
+  reaction,
+  read_at: null,
+  created_at: at,
+});
+export const FIXTURE_ROOM_MESSAGES: DealMessageRow[] = [
+  roomLine(
+    'rm-1',
+    VISITOR_A,
+    'Welcome in! Show us what you brought.',
+    null,
+    '2026-11-21T18:00:30.000Z'
+  ),
+  roomLine(
+    'rm-2',
+    OWNER,
+    'R34 first — the one from the Dubai swap meet.',
+    null,
+    '2026-11-21T18:01:10.000Z'
+  ),
+  roomLine('rm-3', VISITOR_B, 'fire', 'fire', '2026-11-21T18:01:20.000Z'),
+  roomLine(
+    'rm-4',
+    VISITOR_B,
+    'That paint is unreal. Is it the 2019 release?',
+    null,
+    '2026-11-21T18:01:45.000Z'
+  ),
+];
+
+// MV-S9-05 follow-up: fixtures for the signed-in screens the theme matrix was rendering as /login
+// (offers inbox, notifications, trash, my listings, wishlist). Small, deterministic, no DB.
+
+/** /garage/trash — one soft-deleted car (TrashView shows brand/model + Restore). */
+export const FIXTURE_TRASH_ITEMS: GarageItem[] = [
+  {
+    ...FIXTURE_ITEMS[1]!,
+    id: '10000000-0000-4000-8000-000000000009',
+    deleted_at: '2026-10-30T10:00:00.000Z',
+  },
+];
+
+/** /market/mine — the browse fixtures (seller = fixture owner) plus one sold and one reserved. */
+export const FIXTURE_MY_LISTINGS: Listing[] = [
+  ...FIXTURE_LISTINGS,
+  {
+    ...listingBase,
+    id: '20000000-0000-4000-8000-000000000004',
+    brand: 'Matchbox',
+    model: 'Land Rover Defender 110',
+    variant: 'Green',
+    price: 25,
+    status: 'reserved',
+    offer_count: 1,
+    media: [{ id: 'fix-l4', url: PHOTO }],
+  },
+  {
+    ...listingBase,
+    id: '20000000-0000-4000-8000-000000000005',
+    brand: 'Hot Wheels',
+    model: 'Datsun 510 Wagon',
+    variant: 'Orange',
+    price: 80,
+    status: 'sold',
+    sold_at: '2026-10-25T08:00:00.000Z',
+    media: [{ id: 'fix-l5', url: PHOTO }],
+  },
+];
+
+const BUYER = '00000000-0000-4000-8000-000000000002';
+
+const offerBase = {
+  seller_id: OWNER,
+  buyer_id: BUYER,
+  currency: 'AED' as string | null,
+  decline_reason: null as string | null,
+  message: null as string | null,
+  responded_at: null as string | null,
+  completed_at: null as string | null,
+  trade_item_ids: [] as string[],
+  created_at: '2026-11-01T09:00:00.000Z',
+  expires_at: '2026-11-15T09:00:00.000Z',
+};
+
+/** /offers — Received tab: two offers on the featured listing, one pending cash + one accepted
+ * trade with cash top-up; Sent tab: one withdrawn offer on another seller's listing. */
+export const FIXTURE_INBOX_RECEIVED: InboxGroup[] = [
+  {
+    listing: FIXTURE_LISTINGS[0]!,
+    offers: [
+      {
+        ...offerBase,
+        id: '40000000-0000-4000-8000-000000000001',
+        listing_id: FIXTURE_LISTINGS[0]!.id,
+        type: 'cash',
+        status: 'pending',
+        amount: 40,
+        message: 'Would you take 40 for it? Can collect this weekend.',
+        counterpartyName: 'Aisha',
+      },
+      {
+        ...offerBase,
+        id: '40000000-0000-4000-8000-000000000002',
+        listing_id: FIXTURE_LISTINGS[0]!.id,
+        type: 'trade',
+        status: 'accepted',
+        amount: 10,
+        trade_item_ids: [FIXTURE_ITEMS[3]!.id],
+        created_at: '2026-10-28T09:00:00.000Z',
+        responded_at: '2026-10-29T09:00:00.000Z',
+        counterpartyName: 'Rahul',
+      },
+    ],
+  },
+];
+
+export const FIXTURE_INBOX_SENT: InboxGroup[] = [
+  {
+    listing: { ...FIXTURE_LISTINGS[1]!, seller_id: BUYER, seller_name: 'Aisha' },
+    offers: [
+      {
+        ...offerBase,
+        id: '40000000-0000-4000-8000-000000000003',
+        listing_id: FIXTURE_LISTINGS[1]!.id,
+        seller_id: BUYER,
+        buyer_id: OWNER,
+        type: 'cash',
+        status: 'withdrawn',
+        amount: 25,
+        created_at: '2026-10-20T09:00:00.000Z',
+        responded_at: '2026-10-21T09:00:00.000Z',
+      },
+    ],
+  },
+];
+
+/** /notifications — one unread, two read, covering a deep link per surface. */
+export const FIXTURE_NOTIFICATIONS: NotificationRow[] = [
+  {
+    id: '50000000-0000-4000-8000-000000000001',
+    user_id: OWNER,
+    type: 'offer_received',
+    payload: { offer_id: '40000000-0000-4000-8000-000000000001' },
+    read_at: null,
+    created_at: '2026-11-01T09:05:00.000Z',
+  },
+  {
+    id: '50000000-0000-4000-8000-000000000002',
+    user_id: OWNER,
+    type: 'badge_unlocked',
+    payload: { badge: 'first_car' },
+    read_at: '2026-10-30T12:00:00.000Z',
+    created_at: '2026-10-30T11:00:00.000Z',
+  },
+  {
+    id: '50000000-0000-4000-8000-000000000003',
+    user_id: OWNER,
+    type: 'listing_expired',
+    payload: { listing_id: FIXTURE_LISTINGS[2]!.id },
+    read_at: '2026-10-28T12:00:00.000Z',
+    created_at: '2026-10-28T04:00:00.000Z',
+  },
+];
+
+/** /profile/wishlist — two wanted cars, one with a price cap. */
+export const FIXTURE_WISHLIST: WishlistItemRow[] = [
+  {
+    id: '60000000-0000-4000-8000-000000000001',
+    owner_id: OWNER,
+    catalog_model_id: null,
+    brand: 'Hot Wheels',
+    model: 'Datsun Bluebird 510',
+    notes: 'Super Treasure Hunt, any colour',
+    max_price: 150,
+    currency: 'AED',
+    notify: true,
+    deleted_at: null,
+    created_at: '2026-10-10T08:00:00.000Z',
+    updated_at: '2026-10-10T08:00:00.000Z',
+  },
+  {
+    id: '60000000-0000-4000-8000-000000000002',
+    owner_id: OWNER,
+    catalog_model_id: null,
+    brand: 'Tomica',
+    model: 'Nissan GT-R Nismo',
+    notes: null,
+    max_price: null,
+    currency: 'AED',
+    notify: false,
+    deleted_at: null,
+    created_at: '2026-10-12T08:00:00.000Z',
+    updated_at: '2026-10-12T08:00:00.000Z',
+  },
+];

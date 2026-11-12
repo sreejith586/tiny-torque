@@ -90,6 +90,9 @@ export default function DealThreadView({
     const optimistic: PendingMessage = {
       id: tempId,
       offer_id: offerId,
+      kind: 'deal',
+      meetup_id: null,
+      reaction: null,
       sender_id: viewerId,
       body,
       read_at: null,

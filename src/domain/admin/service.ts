@@ -53,6 +53,19 @@ export const WORLD_JOB_NAMES = [
   'score_recompute',
 ] as const;
 
+/** Pure: the H1 housekeeping jobs (MV-S9-01, 03 §3 run_h1_job + the two Edge purges), in run order. */
+export const H1_JOB_NAMES = [
+  'expire_listings',
+  'expire_offers',
+  'purge_trash',
+  'ensure_event_partitions',
+  'purge_media',
+  'purge_accounts',
+] as const;
+
+/** Every known job, World first then H1 — the "never ran" rows of the admin health table. */
+export const KNOWN_JOB_NAMES = [...WORLD_JOB_NAMES, ...H1_JOB_NAMES] as const;
+
 /** Pure: one row per job seen in `runs` (plus the known World jobs that never ran are left out —
  *  the caller shows them as "never ran"), with its newest run and the error count. Order: World
  *  jobs first in dispatcher order, then any other job (S9's) alphabetically. */
@@ -69,8 +82,8 @@ export function jobHealth(runs: JobRunRow[]): JobHealthRow[] {
     if (Date.parse(r.started_at) > Date.parse(cur.latest.started_at)) cur.latest = r;
   }
   const rank = (job: string) => {
-    const i = (WORLD_JOB_NAMES as readonly string[]).indexOf(job);
-    return i === -1 ? WORLD_JOB_NAMES.length : i;
+    const i = (KNOWN_JOB_NAMES as readonly string[]).indexOf(job);
+    return i === -1 ? KNOWN_JOB_NAMES.length : i;
   };
   return [...byJob.values()].sort((a, b) =>
     rank(a.job) === rank(b.job) ? a.job.localeCompare(b.job) : rank(a.job) - rank(b.job)
