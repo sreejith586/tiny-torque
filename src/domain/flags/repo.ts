@@ -15,15 +15,28 @@ export async function listFlags(supabase: Client): Promise<FlagRow[]> {
 export async function listFlagsForAdmin(supabase: Client): Promise<FlagAdminRow[]> {
   const { data, error } = await supabase
     .from('feature_flags')
-    .select('key, enabled, audience, description, updated_at')
+    .select('key, enabled, audience, description, updated_at, updated_by')
     .order('key');
   if (error) throw error;
-  return (data ?? []).map((row) => ({
+  const rows = data ?? [];
+  // Audit line (MV-S10-04): who last saved each flag — handles via public_profiles, best effort.
+  const ids = [...new Set(rows.map((r) => r.updated_by).filter((id): id is string => !!id))];
+  const handles = new Map<string, string | null>();
+  if (ids.length > 0) {
+    const { data: people } = await supabase
+      .from('public_profiles')
+      .select('id, handle')
+      .in('id', ids);
+    for (const p of people ?? []) if (p.id) handles.set(p.id, p.handle);
+  }
+  return rows.map((row) => ({
     key: row.key,
     enabled: row.enabled,
     audience: (row.audience ?? {}) as FlagAudience,
     description: row.description,
     updated_at: row.updated_at,
+    updated_by: row.updated_by,
+    updated_by_handle: row.updated_by ? (handles.get(row.updated_by) ?? null) : null,
   }));
 }
 

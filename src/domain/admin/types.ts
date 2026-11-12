@@ -32,3 +32,61 @@ export interface JobHealthRow {
   /** Total runs of this job in the window. */
   runs: number;
 }
+
+// ---------- S10: Overview, pilot KPIs, invites, feedback (MV-S10-03/04/05, F-16 / F-18) ----------
+/** One row of counts + this month's costs and revenue (admin_overview()). */
+export type AdminOverviewRow = Database['public']['Functions']['admin_overview']['Returns'][number];
+/** One UTC week of pilot KPIs (pilot_kpis_weekly via admin_pilot_kpis()). */
+export type PilotKpiRow = Database['public']['Functions']['admin_pilot_kpis']['Returns'][number];
+export type InviteRow = Tables<'invites'>;
+export type FeedbackRow = Tables<'feedback'>;
+
+/** A feedback row with the submitter's public identity for the admin list. */
+export interface AdminFeedbackItem extends FeedbackRow {
+  handle: string | null;
+  display_name: string | null;
+}
+
+/** Money per currency code, e.g. { AED: 57 } — token revenue is never summed across currencies. */
+export type RevenueByCurrency = Record<string, number>;
+
+/** The three cost / revenue tiles of the Overview (05 MV-S10-04). */
+export interface OverviewCosts {
+  scanCostUsd: number;
+  scans: number;
+  tokenRevenue: RevenueByCurrency;
+  tokenPurchases: number;
+  /** phone users active this month × OTPs per user × unit price — an ESTIMATE, see SMS_* constants. */
+  smsEstimateUsd: number;
+  smsUsers: number;
+}
+
+/** The 01 §6 ratios derivable from one weekly row; null where the denominator is 0. */
+export interface PilotKpiRatios {
+  /** sign-ups with ≥ 5 items inside 7 days ÷ sign-ups (target ≥ 0.6). */
+  activation: number | null;
+  /** items added through an accepted scan candidate ÷ items added (target ≥ 0.4). */
+  scanShare: number | null;
+  /** accepted candidates ÷ candidates returned (proxy for "accepted without edits", target ≥ 0.6). */
+  scanAcceptance: number | null;
+  /** sign-ups who have published a listing ÷ sign-ups (target ≥ 0.35). */
+  publisherShare: number | null;
+  /** offers created ÷ live listings, for the week (target ≥ 0.5 per month ≈ 0.12 per week). */
+  offersPerListing: number | null;
+  /** token buyers ÷ weekly active users (target ≥ 0.08). */
+  tokenConversion: number | null;
+  /** sign-ups active in their 4th week ÷ sign-ups (target ≥ 0.4); meaningful 4 weeks on. */
+  retentionW4: number | null;
+  /** reports that needed action ÷ live listings (target < 0.02). */
+  reportsActionedShare: number | null;
+}
+
+/** Invites grouped by cohort for the admin page and the pilot ops kit. */
+export interface InviteCohortSummary {
+  cohort: string;
+  codes: number;
+  seats: number;
+  used: number;
+  /** Codes that can still be redeemed (not expired, seats left). */
+  open: number;
+}

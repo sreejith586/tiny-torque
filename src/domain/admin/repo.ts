@@ -3,11 +3,15 @@
 // RPC + /admin route guards, src/proxy.ts and src/app/admin/layout.tsx).
 import type { Client } from '@/lib/supabase/types';
 import type {
+  AdminFeedbackItem,
+  AdminOverviewRow,
   AdminProfileRow,
   EarnFreezeRow,
   EconomySummaryRow,
   EconomyWeeklyRow,
+  InviteRow,
   JobRunRow,
+  PilotKpiRow,
 } from './types';
 
 export async function searchUsers(
@@ -87,4 +91,86 @@ export async function listJobRuns(supabase: Client, limit = 50): Promise<JobRunR
     .limit(limit);
   if (error) throw error;
   return data ?? [];
+}
+
+// ---------- S10: Overview, pilot KPIs, invites, feedback (MV-S10-03/04/05) ----------
+/** admin_overview() — one row; the RPC re-checks is_admin(). */
+export async function getOverview(supabase: Client): Promise<AdminOverviewRow | null> {
+  const { data, error } = await supabase.rpc('admin_overview');
+  if (error) throw error;
+  return data?.[0] ?? null;
+}
+
+/** Newest week first. The materialised view itself is not API-readable; this RPC is the door. */
+export async function getPilotKpis(supabase: Client, weeks = 12): Promise<PilotKpiRow[]> {
+  const { data, error } = await supabase.rpc('admin_pilot_kpis', { p_weeks: weeks });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Rebuilds pilot_kpis_weekly now; returns the job_runs row it logged. */
+export async function refreshPilotKpis(supabase: Client): Promise<JobRunRow> {
+  const { data, error } = await supabase.rpc('refresh_pilot_kpis');
+  if (error) throw error;
+  return data as JobRunRow;
+}
+
+/** RLS: "Admins manage invites" (identity_v2) — a non-admin reads nothing. */
+export async function listInvites(supabase: Client, limit = 500): Promise<InviteRow[]> {
+  const { data, error } = await supabase
+    .from('invites')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function insertInvites(
+  supabase: Client,
+  rows: Array<Pick<InviteRow, 'code' | 'cohort' | 'max_uses' | 'expires_at' | 'created_by'>>
+): Promise<InviteRow[]> {
+  const { data, error } = await supabase.from('invites').insert(rows).select('*');
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Ends a code now (expires_at = now). used_count is never touched here — redeem_invite owns it. */
+export async function expireInvite(supabase: Client, code: string): Promise<InviteRow> {
+  const { data, error } = await supabase
+    .from('invites')
+    .update({ expires_at: new Date().toISOString() })
+    .eq('code', code)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+/** Newest first, with the submitter's handle from public_profiles (never the profiles row). */
+export async function listFeedback(supabase: Client, limit = 100): Promise<AdminFeedbackItem[]> {
+  const { data, error } = await supabase
+    .from('feedback')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  const rows = data ?? [];
+  const ids = [...new Set(rows.map((r) => r.user_id))];
+  const who = new Map<string, { handle: string | null; display_name: string | null }>();
+  if (ids.length > 0) {
+    const { data: people, error: peopleError } = await supabase
+      .from('public_profiles')
+      .select('id, handle, display_name')
+      .in('id', ids);
+    if (peopleError) throw peopleError;
+    for (const p of people ?? []) {
+      if (p.id) who.set(p.id, { handle: p.handle, display_name: p.display_name });
+    }
+  }
+  return rows.map((r) => ({
+    ...r,
+    handle: who.get(r.user_id)?.handle ?? null,
+    display_name: who.get(r.user_id)?.display_name ?? null,
+  }));
 }

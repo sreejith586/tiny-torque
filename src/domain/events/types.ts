@@ -66,6 +66,9 @@ export const EVENT_TYPES = [
   'report.resolved',
   'review.created',
   'invite.redeemed',
+  // admin invite codes (MV-S10-04, F-16): a batch minted for a cohort / one code ended early
+  'invite.created',
+  'invite.expired',
   'feedback.created',
   'flag.updated',
   // catalogue car specs (F-25 racing input, MV-W08-prep): member/AI proposal → admin verification
