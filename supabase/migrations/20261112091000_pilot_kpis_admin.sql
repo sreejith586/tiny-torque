@@ -8,6 +8,12 @@
 --     other job (D-095 / D-099).
 --   * `admin_overview()` — the /admin Overview tiles in one admin-only call.
 --   * `feedback` insert → one `feedback_received` notification per admin.
+--   * `claim_analytics_events()` — the PostHog mirror (F-18 "events mirroring key domain events").
+--     Until now PostHog only saw page views. The event log is the truth and most KPI events are
+--     written by triggers / RPCs the browser never sees, so the browser asks for the signed-in
+--     collector's own new KPI events and forwards them. A per-user cursor row makes each event
+--     come back exactly once across devices and tabs (at-most-once to PostHog; SQL stays the
+--     source of truth). Only id, type and time leave the database — no payloads.
 
 -- ---------- notification type (not usable until this migration commits — only the trigger
 --            body below references it, at run time) ----------
@@ -277,6 +283,67 @@ drop trigger if exists feedback_notify_admins on public.feedback;
 create trigger feedback_notify_admins
   after insert on public.feedback
   for each row execute function public.notify_admins_on_feedback();
+
+-- ---------- PostHog mirror: each collector claims their own new KPI events once ----------
+create table public.analytics_cursors (
+  user_id       uuid primary key references public.profiles(id) on delete cascade,
+  last_event_id bigint not null default 0,
+  updated_at    timestamptz not null default now()
+);
+alter table public.analytics_cursors enable row level security;
+create policy "Users read their own analytics cursor" on public.analytics_cursors for select
+  using (user_id = auth.uid());
+revoke all on public.analytics_cursors from public, anon, authenticated;
+grant select on public.analytics_cursors to authenticated;
+
+create or replace function public.claim_analytics_events(p_limit integer default 100)
+returns table (id bigint, type text, occurred_at timestamptz)
+language plpgsql security definer set search_path = public as $$
+declare
+  c_types constant text[] := array[
+    'user.onboarded', 'user.opened', 'invite.redeemed',
+    'item.created', 'scan.requested', 'scan.completed', 'scan.accepted', 'import.completed',
+    'listing.published', 'listing.sold',
+    'offer.created', 'offer.accepted', 'offer.completed', 'review.created',
+    'tokens.purchased', 'tokens.spent', 'pro.activated',
+    'report.created', 'feedback.created'];
+  v_uid   uuid := auth.uid();
+  v_after bigint;
+  v_max   bigint;
+begin
+  if v_uid is null or not exists (select 1 from public.profiles p where p.id = v_uid) then
+    return;
+  end if;
+  -- First call: start a week back, not at the beginning of time.
+  insert into public.analytics_cursors (user_id, last_event_id)
+  values (v_uid, coalesce((select max(e.id) from public.domain_events e
+                            where e.occurred_at < now() - interval '7 days'), 0))
+  on conflict (user_id) do nothing;
+
+  select c.last_event_id into v_after
+    from public.analytics_cursors c where c.user_id = v_uid for update;
+
+  select max(s.id) into v_max from (
+    select e.id from public.domain_events e
+     where e.actor_id = v_uid and e.id > v_after and e.type = any (c_types)
+     order by e.id
+     limit least(greatest(coalesce(p_limit, 100), 1), 500)) s;
+  if v_max is null then
+    return;
+  end if;
+
+  update public.analytics_cursors c
+     set last_event_id = v_max, updated_at = now()
+   where c.user_id = v_uid;
+
+  return query
+    select e.id, e.type, e.occurred_at
+      from public.domain_events e
+     where e.actor_id = v_uid and e.id > v_after and e.id <= v_max and e.type = any (c_types)
+     order by e.id;
+end; $$;
+revoke execute on function public.claim_analytics_events(integer) from public, anon;
+grant execute on function public.claim_analytics_events(integer) to authenticated;
 
 -- ---------- nightly refresh (guarded like the h1_* schedules; its own name so the h1_* set stays the four of D-099; 04:10 UTC is a free slot) ----------
 do $cron$

@@ -2,7 +2,7 @@
 -- admin_overview(), and the feedback → admin notification trigger. Run via CI's pgTAP job.
 
 begin;
-select plan(22);
+select plan(28);
 
 create schema if not exists tests;
 create or replace function tests.authenticate_as(p_user_id uuid) returns void language plpgsql as $$
@@ -128,6 +128,33 @@ select is(
   (select count(*)::int from public.notifications
     where type = 'feedback_received' and payload ->> 'kind' = 'idea' and user_id = 'b2000000-0000-0000-0000-00000000000c'),
   0, 'an admin submitting feedback is not notified about their own');
+
+-- ---------- PostHog mirror: claim_analytics_events (F-18) ----------
+select tests.authenticate_as('b2000000-0000-0000-0000-00000000000a');
+create temp table claimed as select * from public.claim_analytics_events(100);
+grant select on claimed to authenticated;
+select ok(
+  (select count(*) from claimed where type = 'item.created') = 5
+  and (select count(*) from claimed where type = 'feedback.created') = 1,
+  'a collector claims their own KPI events (5 item.created + 1 feedback.created)');
+select is(
+  (select count(*)::int from claimed c join public.domain_events e on e.id = c.id
+    where e.actor_id <> 'b2000000-0000-0000-0000-00000000000a'),
+  0, 'never another collector''s events');
+select is((select count(*)::int from public.claim_analytics_events(100)), 0,
+  'a second claim returns nothing — each event leaves once, across devices');
+insert into public.collection_items (owner_id, brand, model)
+  values ('b2000000-0000-0000-0000-00000000000a', 'Matchbox', 'After the cursor');
+select is(
+  (select array_agg(type) from public.claim_analytics_events(100)), array['item.created'],
+  'only events newer than the cursor come back next time');
+select is((select count(*)::int from public.analytics_cursors), 1,
+  'a collector sees only their own cursor row');
+select tests.clear_authentication();
+select set_config('role', 'anon', true);
+select throws_ok($$select * from public.claim_analytics_events(10)$$, '42501', null,
+  'anon cannot call claim_analytics_events');
+select tests.clear_authentication();
 
 select * from finish();
 rollback;

@@ -49,6 +49,31 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"analytics_cursors": {
+                  Row: {
+                    "last_event_id": number,"updated_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "last_event_id"?: number,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "last_event_id"?: number,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "analytics_cursors_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: true
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "analytics_cursors_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: true
+      referencedRelation: "public_profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"blocks": {
                   Row: {
                     "blocked_id": string,"blocker_id": string,"created_at": string
@@ -1954,6 +1979,11 @@ isOneToOne: true
       } },
 "catalog_specs_valid":
 { Args: { "p": Json }; Returns: boolean
+                           },
+"claim_analytics_events":
+{ Args: { "p_limit"?: number }; Returns: {
+              "id": number,"occurred_at": string,"type": string
+            }[]
                            },
 "create_meetup":
 { Args: { "p_capacity": number,"p_club_id"?: string,"p_description"?: string,"p_ends_at": string,"p_starts_at": string,"p_theme"?: string,"p_title": string,"p_visibility"?: Database["public"]['Enums']["meetup_visibility"] }; Returns: {
