@@ -1640,6 +1640,13 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"pilot_kpis_weekly": {
+                  Row: {
+                    "activated_7d": number | null,"deals_completed": number | null,"deals_reviewed": number | null,"items_added": number | null,"listings_live": number | null,"listings_published": number | null,"offers_created": number | null,"publishers": number | null,"reports_actioned": number | null,"reports_created": number | null,"retained_w4": number | null,"scan_accepted": number | null,"scan_candidates": number | null,"scan_cost_usd": number | null,"scans": number | null,"signups": number | null,"signups_published": number | null,"token_buyers": number | null,"token_purchases": number | null,"token_revenue": Json | null,"wau": number | null,"week_start": string | null
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"public_profiles": {
                   Row: {
                     "account_type": Database["public"]['Enums']["account_type"] | null,"avatar_media_id": string | null,"banner_media_id": string | null,"bio": string | null,"city": string | null,"country_code": string | null,"created_at": string | null,"display_name": string | null,"handle": string | null,"id": string | null,"is_pro": boolean | null,"level": number | null,"rating_avg": number | null,"rating_count": number | null,"store_name": string | null,"xp": number | null
@@ -1749,6 +1756,42 @@ isOneToOne: true
         to: "token_ledger"
         isOneToOne: true
         isSetofReturn: false
+      } },
+"admin_overview":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "deals_completed": number,"feedback_7d": number,"items": number,"listings_active": number,"offers_pending": number,"offers_total": number,"open_reports": number,"phone_users_active_month": number,"scan_cost_usd_month": number,"scans_month": number,"token_purchases_month": number,"token_revenue_month": Json,"users": number,"users_new_7d": number
+            }[]
+                           },
+"admin_pilot_kpis":
+{ Args: { "p_weeks"?: number }; Returns: {
+              "activated_7d": number | null,
+"deals_completed": number | null,
+"deals_reviewed": number | null,
+"items_added": number | null,
+"listings_live": number | null,
+"listings_published": number | null,
+"offers_created": number | null,
+"publishers": number | null,
+"reports_actioned": number | null,
+"reports_created": number | null,
+"retained_w4": number | null,
+"scan_accepted": number | null,
+"scan_candidates": number | null,
+"scan_cost_usd": number | null,
+"scans": number | null,
+"signups": number | null,
+"signups_published": number | null,
+"token_buyers": number | null,
+"token_purchases": number | null,
+"token_revenue": Json | null,
+"wau": number | null,
+"week_start": string | null
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "pilot_kpis_weekly"
+        isOneToOne: false
+        isSetofReturn: true
       } },
 "admin_search_users":
 { Args: { "p_limit"?: number,"p_query": string }; Returns: {
@@ -2198,6 +2241,9 @@ isOneToOne: true
               "error": string,"job": string,"started_at": string,"status": string
             }[]
                            },
+"lock_event_partitions":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
 "match_catalog_models":
 { Args: { "p_limit"?: number,"p_name": string }; Returns: {
               "brand_id": string,"id": string,"name": string,"score": number
@@ -2354,6 +2400,24 @@ isOneToOne: true
 "redeem_invite":
 { Args: { "p_code": string }; Returns: undefined
                            },
+"refresh_pilot_kpis":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "error": string | null,
+"finished_at": string | null,
+"id": number,
+"job": string,
+"result": NonNullable<Json>,
+"run_at": string,
+"started_at": string,
+"status": string,
+"triggered_by": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "job_runs"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "rename_world_garage":
 { Args: { "p_name": string }; Returns: {
               "created_at": string,
@@ -2696,7 +2760,7 @@ isOneToOne: true
                            }
           }
           Enums: {
-            "account_type": "individual"|"shop","catalog_status": "proposed"|"verified","club_join_mode": "open"|"apply"|"invite","club_member_role": "owner"|"admin"|"member","club_member_status": "active"|"pending"|"banned","entitlement_grant_kind": "listing_slot"|"scan_pack"|"pro_30d"|"world_level"|"world_item"|"meetup_host","feedback_kind": "bug"|"idea"|"other","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed"|"reserved"|"expired","listing_type": "sale"|"trade"|"both","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","meetup_kind": "virtual"|"in_person","meetup_rsvp_status": "going"|"waitlist"|"declined"|"checked_in","meetup_status": "draft"|"scheduled"|"live"|"ended"|"cancelled","meetup_visibility": "public"|"followers"|"club"|"invite","model_status": "proposed"|"verified"|"merged","notification_type": "offer_received"|"offer_accepted"|"offer_declined"|"message"|"listing_sold"|"review_received"|"badge_unlocked"|"wishlist_match"|"system"|"world_visit"|"world_kudos"|"world_guestbook"|"world_invite"|"tokens_expiring"|"listing_expired"|"offer_expired"|"meetup_invite"|"meetup_reminder"|"meetup_live"|"meetup_cancelled","offer_status": "pending"|"accepted"|"declined"|"withdrawn"|"expired"|"completed"|"cancelled","offer_type": "cash"|"buy_now"|"trade","plan_tier": "free"|"pro","quest_cadence": "daily"|"weekly","report_status": "open"|"reviewed"|"dismissed","scan_kind": "single"|"group"|"visual_search","scan_status": "queued"|"running"|"done"|"failed","token_ledger_reason": "purchase"|"spend_listing_slot"|"spend_scan_pack"|"spend_pro_30d"|"refund"|"admin_adjust"|"promo"|"earn_quest"|"earn_daily"|"earn_race_participation"|"earn_host"|"earn_attend"|"earn_achievement"|"earn_referral"|"earn_season"|"expire_earned"|"spend_garage_level"|"spend_world_item"|"spend_meetup_host"|"spend_race_entry"|"spend_spotlight"|"spend_rename","token_ledger_source": "purchased"|"earned"|"promo"|"adjust"|"mixed","token_purchase_provider": "stripe"|"razorpay","token_purchase_status": "created"|"paid"|"failed"|"refunded","user_role": "user"|"admin","world_acquired_via": "purchase"|"earn"|"promo","world_item_kind": "decor"|"theme"|"tune"|"trophy"|"consumable"|"signage","world_open_mode": "public"|"followers"|"invite"
+            "account_type": "individual"|"shop","catalog_status": "proposed"|"verified","club_join_mode": "open"|"apply"|"invite","club_member_role": "owner"|"admin"|"member","club_member_status": "active"|"pending"|"banned","entitlement_grant_kind": "listing_slot"|"scan_pack"|"pro_30d"|"world_level"|"world_item"|"meetup_host","feedback_kind": "bug"|"idea"|"other","item_condition": "mint"|"near-mint"|"good"|"played"|"damaged","item_packaging": "carded"|"blister"|"loose"|"boxed","item_rarity": "common"|"uncommon"|"rare"|"super-rare"|"treasure-hunt"|"chase","listing_status": "active"|"sold"|"removed"|"reserved"|"expired","listing_type": "sale"|"trade"|"both","media_kind": "item"|"avatar"|"banner"|"listing"|"chat","media_status": "uploading"|"ready"|"flagged"|"removed","meetup_kind": "virtual"|"in_person","meetup_rsvp_status": "going"|"waitlist"|"declined"|"checked_in","meetup_status": "draft"|"scheduled"|"live"|"ended"|"cancelled","meetup_visibility": "public"|"followers"|"club"|"invite","model_status": "proposed"|"verified"|"merged","notification_type": "offer_received"|"offer_accepted"|"offer_declined"|"message"|"listing_sold"|"review_received"|"badge_unlocked"|"wishlist_match"|"system"|"world_visit"|"world_kudos"|"world_guestbook"|"world_invite"|"tokens_expiring"|"listing_expired"|"offer_expired"|"meetup_invite"|"meetup_reminder"|"meetup_live"|"meetup_cancelled"|"feedback_received","offer_status": "pending"|"accepted"|"declined"|"withdrawn"|"expired"|"completed"|"cancelled","offer_type": "cash"|"buy_now"|"trade","plan_tier": "free"|"pro","quest_cadence": "daily"|"weekly","report_status": "open"|"reviewed"|"dismissed","scan_kind": "single"|"group"|"visual_search","scan_status": "queued"|"running"|"done"|"failed","token_ledger_reason": "purchase"|"spend_listing_slot"|"spend_scan_pack"|"spend_pro_30d"|"refund"|"admin_adjust"|"promo"|"earn_quest"|"earn_daily"|"earn_race_participation"|"earn_host"|"earn_attend"|"earn_achievement"|"earn_referral"|"earn_season"|"expire_earned"|"spend_garage_level"|"spend_world_item"|"spend_meetup_host"|"spend_race_entry"|"spend_spotlight"|"spend_rename","token_ledger_source": "purchased"|"earned"|"promo"|"adjust"|"mixed","token_purchase_provider": "stripe"|"razorpay","token_purchase_status": "created"|"paid"|"failed"|"refunded","user_role": "user"|"admin","world_acquired_via": "purchase"|"earn"|"promo","world_item_kind": "decor"|"theme"|"tune"|"trophy"|"consumable"|"signage","world_open_mode": "public"|"followers"|"invite"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -2812,7 +2876,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "account_type": ["individual", "shop"],"catalog_status": ["proposed", "verified"],"club_join_mode": ["open", "apply", "invite"],"club_member_role": ["owner", "admin", "member"],"club_member_status": ["active", "pending", "banned"],"entitlement_grant_kind": ["listing_slot", "scan_pack", "pro_30d", "world_level", "world_item", "meetup_host"],"feedback_kind": ["bug", "idea", "other"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed", "reserved", "expired"],"listing_type": ["sale", "trade", "both"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"meetup_kind": ["virtual", "in_person"],"meetup_rsvp_status": ["going", "waitlist", "declined", "checked_in"],"meetup_status": ["draft", "scheduled", "live", "ended", "cancelled"],"meetup_visibility": ["public", "followers", "club", "invite"],"model_status": ["proposed", "verified", "merged"],"notification_type": ["offer_received", "offer_accepted", "offer_declined", "message", "listing_sold", "review_received", "badge_unlocked", "wishlist_match", "system", "world_visit", "world_kudos", "world_guestbook", "world_invite", "tokens_expiring", "listing_expired", "offer_expired", "meetup_invite", "meetup_reminder", "meetup_live", "meetup_cancelled"],"offer_status": ["pending", "accepted", "declined", "withdrawn", "expired", "completed", "cancelled"],"offer_type": ["cash", "buy_now", "trade"],"plan_tier": ["free", "pro"],"quest_cadence": ["daily", "weekly"],"report_status": ["open", "reviewed", "dismissed"],"scan_kind": ["single", "group", "visual_search"],"scan_status": ["queued", "running", "done", "failed"],"token_ledger_reason": ["purchase", "spend_listing_slot", "spend_scan_pack", "spend_pro_30d", "refund", "admin_adjust", "promo", "earn_quest", "earn_daily", "earn_race_participation", "earn_host", "earn_attend", "earn_achievement", "earn_referral", "earn_season", "expire_earned", "spend_garage_level", "spend_world_item", "spend_meetup_host", "spend_race_entry", "spend_spotlight", "spend_rename"],"token_ledger_source": ["purchased", "earned", "promo", "adjust", "mixed"],"token_purchase_provider": ["stripe", "razorpay"],"token_purchase_status": ["created", "paid", "failed", "refunded"],"user_role": ["user", "admin"],"world_acquired_via": ["purchase", "earn", "promo"],"world_item_kind": ["decor", "theme", "tune", "trophy", "consumable", "signage"],"world_open_mode": ["public", "followers", "invite"]
+            "account_type": ["individual", "shop"],"catalog_status": ["proposed", "verified"],"club_join_mode": ["open", "apply", "invite"],"club_member_role": ["owner", "admin", "member"],"club_member_status": ["active", "pending", "banned"],"entitlement_grant_kind": ["listing_slot", "scan_pack", "pro_30d", "world_level", "world_item", "meetup_host"],"feedback_kind": ["bug", "idea", "other"],"item_condition": ["mint", "near-mint", "good", "played", "damaged"],"item_packaging": ["carded", "blister", "loose", "boxed"],"item_rarity": ["common", "uncommon", "rare", "super-rare", "treasure-hunt", "chase"],"listing_status": ["active", "sold", "removed", "reserved", "expired"],"listing_type": ["sale", "trade", "both"],"media_kind": ["item", "avatar", "banner", "listing", "chat"],"media_status": ["uploading", "ready", "flagged", "removed"],"meetup_kind": ["virtual", "in_person"],"meetup_rsvp_status": ["going", "waitlist", "declined", "checked_in"],"meetup_status": ["draft", "scheduled", "live", "ended", "cancelled"],"meetup_visibility": ["public", "followers", "club", "invite"],"model_status": ["proposed", "verified", "merged"],"notification_type": ["offer_received", "offer_accepted", "offer_declined", "message", "listing_sold", "review_received", "badge_unlocked", "wishlist_match", "system", "world_visit", "world_kudos", "world_guestbook", "world_invite", "tokens_expiring", "listing_expired", "offer_expired", "meetup_invite", "meetup_reminder", "meetup_live", "meetup_cancelled", "feedback_received"],"offer_status": ["pending", "accepted", "declined", "withdrawn", "expired", "completed", "cancelled"],"offer_type": ["cash", "buy_now", "trade"],"plan_tier": ["free", "pro"],"quest_cadence": ["daily", "weekly"],"report_status": ["open", "reviewed", "dismissed"],"scan_kind": ["single", "group", "visual_search"],"scan_status": ["queued", "running", "done", "failed"],"token_ledger_reason": ["purchase", "spend_listing_slot", "spend_scan_pack", "spend_pro_30d", "refund", "admin_adjust", "promo", "earn_quest", "earn_daily", "earn_race_participation", "earn_host", "earn_attend", "earn_achievement", "earn_referral", "earn_season", "expire_earned", "spend_garage_level", "spend_world_item", "spend_meetup_host", "spend_race_entry", "spend_spotlight", "spend_rename"],"token_ledger_source": ["purchased", "earned", "promo", "adjust", "mixed"],"token_purchase_provider": ["stripe", "razorpay"],"token_purchase_status": ["created", "paid", "failed", "refunded"],"user_role": ["user", "admin"],"world_acquired_via": ["purchase", "earn", "promo"],"world_item_kind": ["decor", "theme", "tune", "trophy", "consumable", "signage"],"world_open_mode": ["public", "followers", "invite"]
           }
         }
 } as const
