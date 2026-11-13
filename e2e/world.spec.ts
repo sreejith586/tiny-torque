@@ -334,3 +334,203 @@ test('world home lists the next meetups (F-23, fixture harness)', async ({ page 
     '/world/meetups?__visual=1'
   );
 });
+
+// ---- W07 (MV-W07-01/03/04/06): best-in-show + photo wall on meetups, clubs (list, clubhouse in three
+// seats, create form), club-hosted meetups. Dark behind `world_meetups` / `world_clubs` (404 for a
+// signed-in user while OFF, login for anon); the fixture harness renders them with deterministic data.
+// The role rules themselves (who may remove / ban / promote, banned cannot rejoin, members-only feed)
+// are pgTAP's: supabase/tests/0030_world_best_in_show_clubs.sql.
+
+test('clubs are guarded for anon (D-028)', async ({ page }) => {
+  await page.goto('/world/clubs');
+  await expect(page).toHaveURL(/\/login\?next=%2Fworld%2Fclubs/);
+  await page.goto('/world/clubs/jdm_club');
+  await expect(page).toHaveURL(/\/login\?next=%2Fworld%2Fclubs%2Fjdm_club/);
+});
+
+test('ended meetup: best-in-show result card, vote counts, photo wall (F-23, fixture harness)', async ({
+  page,
+}) => {
+  const res = await page.goto(
+    '/world/meetups/00000000-0000-4000-8000-00000000a001?__visual=1&state=ended'
+  );
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByText('Ended', { exact: true })).toBeVisible();
+  await expect(page.getByText('Best in show', { exact: true })).toBeVisible();
+  await expect(page.getByText('@blr_castings · 3 votes', { exact: true })).toBeVisible();
+  await expect(page.getByText(/frozen when the meetup ended/)).toBeVisible();
+  // the tally under the cars, and the viewer's own ballot marked
+  await expect(page.getByText(/@blr_castings · 3 votes · your vote/)).toBeVisible();
+  await expect(page.getByText('1 vote', { exact: true })).toBeVisible();
+  // attended + hosted by the club
+  await expect(page.getByText(/You attended/)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'JDM Collectors' })).toHaveAttribute(
+    'href',
+    '/world/clubs/jdm_club?__visual=1'
+  );
+  // the wall is open for a day after the end; RSVP is closed
+  await expect(page.getByText('Photo wall', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Add a photo' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Not going' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Report meetup' })).toBeVisible();
+});
+
+test('live room: one vote each, never for your own car; attendance line (F-23, fixture harness)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 780 });
+  const res = await page.goto(
+    '/world/meetups/00000000-0000-4000-8000-00000000a001/room?__visual=1'
+  );
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  // three cars on the table: two are the viewer's own (no vote button), one is votable and holds
+  // the viewer's ballot
+  await expect(page.getByText(/On the table \(3\)/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Your vote' })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Vote best in show' })).toHaveCount(0);
+  await expect(page.getByText(/One vote each/)).toBeVisible();
+  await expect(page.getByText(/Stay 10 minutes for your attendance to count/)).toBeVisible();
+});
+
+test('clubs list: all / mine tabs, role + request pills, start-a-club CTA (F-22, fixture harness)', async ({
+  page,
+}) => {
+  const res = await page.goto('/world/clubs?__visual=1');
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByRole('heading', { name: 'Clubs' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /JDM Collectors/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Treasure Hunters/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Vault Circle/ })).toBeVisible();
+  await expect(page.getByText('Requested', { exact: true })).toBeVisible();
+  await expect(page.getByText(/@vault_circle · Invite only/)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Start a club' })).toHaveAttribute(
+    'href',
+    '/world/clubs/new?__visual=1'
+  );
+  await page.getByRole('link', { name: 'Mine' }).click();
+  await expect(page.getByRole('link', { name: /Vault Circle/ })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /JDM Collectors/ })).toBeVisible();
+});
+
+test('clubhouse as a member: featured cars, meetups, club night, feed, roster — no staff tools (F-22, fixture harness)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 780 });
+  const res = await page.goto('/world/clubs/jdm_club?__visual=1');
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByRole('heading', { name: 'JDM Collectors' })).toBeVisible();
+  await expect(page.getByText(/@jdm_club · Open club · 12 members · AE/)).toBeVisible();
+  await expect(page.getByText('You are a member.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Leave' })).toBeVisible();
+  await expect(page.getByText('Clubhouse', { exact: true })).toBeVisible();
+  await expect(page.getByText('Club meetups', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: /JDM night/ })).toBeVisible();
+  await expect(page.getByText(/JDM Saturday/)).toBeVisible();
+  await expect(page.getByText('Meetup scheduled: JDM night')).toBeVisible();
+  await expect(page.getByText('@blr_castings joined')).toBeVisible();
+  await expect(page.getByText('Members (12)')).toBeVisible();
+  // a member sees no owner / admin tools
+  for (const name of ['Remove', 'Ban', 'Make admin', 'Hand over', 'Approve', 'Invite']) {
+    await expect(page.getByRole('button', { name, exact: true })).toHaveCount(0);
+  }
+  await expect(page.getByRole('form', { name: 'Club settings' })).toHaveCount(0);
+  await expect(page.getByRole('form', { name: 'Club night' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Host a club meetup' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Report club' })).toBeVisible();
+  // no horizontal scroll at 360px
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+});
+
+test('clubhouse as the owner: requests, roles, bans, club night form, settings (F-22, fixture harness)', async ({
+  page,
+}) => {
+  const res = await page.goto('/world/clubs/jdm_club?__visual=1&as=owner');
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByText('You are the club’s owner.')).toBeVisible();
+  // the owner cannot leave (they hand the club over first)
+  await expect(page.getByRole('button', { name: 'Leave' })).toHaveCount(0);
+  // roles: the admin can be demoted, the member promoted; both can be removed, banned, handed the club
+  await expect(page.getByRole('button', { name: 'Remove admin' })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Make admin' })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Hand over' })).toHaveCount(2);
+  await expect(page.getByRole('button', { name: 'Ban', exact: true })).toHaveCount(2);
+  // requests + invite
+  await expect(page.getByText('Requests (1)')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Approve' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Decline' })).toBeVisible();
+  await expect(page.getByLabel('Invite a collector by handle')).toBeVisible();
+  // club night: a single-panel form, the fee is the host's own spend
+  const night = page.getByRole('form', { name: 'Club night' });
+  await expect(night.getByLabel('Repeats')).toHaveValue('weekly');
+  await expect(night.getByLabel('Seats')).toHaveValue('10');
+  await expect(page.getByText(/charged then, never automatically/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Replace club night' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Host a club meetup' })).toHaveAttribute(
+    'href',
+    /\/world\/meetups\/new\?__visual=1&club=/
+  );
+  await expect(
+    page.getByRole('form', { name: 'Club settings' }).getByLabel('Club name')
+  ).toHaveValue('JDM Collectors');
+  // an owner does not report their own club
+  await expect(page.getByRole('button', { name: 'Report club' })).toHaveCount(0);
+});
+
+test('clubhouse as a visitor: join button, open roster and feed, no club night (F-22, fixture harness)', async ({
+  page,
+}) => {
+  const res = await page.goto('/world/clubs/jdm_club?__visual=1&as=visitor');
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByRole('button', { name: 'Join the club' })).toBeVisible();
+  await expect(page.getByText('@diecast_dxb started the club')).toBeVisible();
+  await expect(page.getByText('Club night', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Leave' })).toHaveCount(0);
+});
+
+test('start-a-club form is a single page; the address follows the name (F-22, D-027, fixture harness)', async ({
+  page,
+}) => {
+  const res = await page.goto('/world/clubs/new?__visual=1');
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByRole('heading', { name: 'Start a club' })).toBeVisible();
+  const submit = page.getByRole('button', { name: 'Start the club' });
+  await expect(submit).toBeDisabled();
+  await page.getByLabel('Club name').fill('Matchbox Mondays UAE');
+  await expect(page.getByLabel('Club address')).toHaveValue('matchbox_mondays_uae');
+  await expect(page.getByLabel('Who can join')).toHaveValue('open');
+  await expect(submit).toBeEnabled();
+  await page.getByLabel('Club address').fill('no');
+  await expect(submit).toBeDisabled();
+  await expect(page.getByRole('progressbar')).toHaveCount(0);
+});
+
+test('host a meetup as a club: "Host as" unlocks club-only visibility (F-22 / F-23, fixture harness)', async ({
+  page,
+}) => {
+  const res = await page.goto('/world/meetups/new?__visual=1');
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  const hostAs = page.getByLabel('Host as');
+  const who = page.getByLabel('Who can join');
+  await expect(hostAs).toHaveValue('');
+  await expect(who.locator('option')).toHaveCount(3);
+  await hostAs.selectOption({ label: 'JDM Collectors (club)' });
+  await expect(who.locator('option')).toHaveCount(4);
+  await who.selectOption('club');
+  // back to the garage: club-only falls back to public
+  await hostAs.selectOption('');
+  await expect(who).toHaveValue('public');
+  // the clubhouse's link preselects the club
+  await page.goto('/world/meetups/new?__visual=1&club=00000000-0000-4000-8000-00000000c001');
+  await expect(page.getByLabel('Host as')).toHaveValue('00000000-0000-4000-8000-00000000c001');
+});
+
+test('world home lists my clubs (F-22, fixture harness)', async ({ page }) => {
+  const res = await page.goto('/world?__visual=1');
+  test.skip(res?.status() !== 200, 'fixture harness is disabled on production deployments');
+  await expect(page.getByText('Clubs', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: /JDM Collectors/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'More clubs' })).toHaveAttribute(
+    'href',
+    '/world/clubs?__visual=1'
+  );
+});

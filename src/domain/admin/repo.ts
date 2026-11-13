@@ -7,6 +7,8 @@ import type {
   AdminOverviewRow,
   AdminProfileRow,
   EarnFreezeRow,
+  HostSuspensionAction,
+  HostSuspensionRow,
   EconomySummaryRow,
   EconomyWeeklyRow,
   InviteRow,
@@ -67,6 +69,36 @@ export async function setEarnFreeze(
   });
   if (error) throw error;
   return data ?? frozen;
+}
+
+/** Hosting suspensions, newest first (admin-read RLS; in force = lifted_at null). */
+export async function listHostSuspensions(
+  supabase: Client,
+  limit = 50
+): Promise<HostSuspensionRow[]> {
+  const { data, error } = await supabase
+    .from('world_host_suspensions')
+    .select('*')
+    .order('suspended_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** suspend / lift / note through admin_set_host_suspension (events + notification in the DB). */
+export async function setHostSuspension(
+  supabase: Client,
+  userId: string,
+  action: HostSuspensionAction,
+  note?: string | null
+): Promise<HostSuspensionRow> {
+  const { data, error } = await supabase.rpc('admin_set_host_suspension', {
+    p_user: userId,
+    p_action: action,
+    p_note: note ?? undefined,
+  });
+  if (error) throw error;
+  return data as unknown as HostSuspensionRow;
 }
 
 export async function getEconomyWeekly(supabase: Client, weeks = 8): Promise<EconomyWeeklyRow[]> {

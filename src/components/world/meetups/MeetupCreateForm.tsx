@@ -19,6 +19,8 @@ export default function MeetupCreateForm({
   levelName,
   isPro,
   defaultStartsAt,
+  clubs = [],
+  defaultClubId = null,
   harness = false,
 }: {
   cap: number;
@@ -27,6 +29,10 @@ export default function MeetupCreateForm({
   isPro: boolean;
   /** `datetime-local` value the Starts field opens with (computed by the page: two days out). */
   defaultStartsAt: string;
+  /** Clubs the caller is owner / admin of (W07): "Host as" lists them; empty = no such field. */
+  clubs?: { id: string; name: string }[];
+  /** Preselected club (the clubhouse's "Host a club meetup" link). */
+  defaultClubId?: string | null;
   /** Fixture harness: the submit button stays enabled but never calls the server. */
   harness?: boolean;
 }) {
@@ -38,12 +44,16 @@ export default function MeetupCreateForm({
   const [duration, setDuration] = useState(90);
   const [capacity, setCapacity] = useState(Math.min(10, Math.max(2, cap)));
   const [visibility, setVisibility] = useState<MeetupVisibility>('public');
+  const [clubId, setClubId] = useState(
+    defaultClubId && clubs.some((c) => c.id === defaultClubId) ? defaultClubId : ''
+  );
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const fee = hostFee(capacity);
   const canHost = cap > 0;
-  const options = MEETUP_VISIBILITIES.filter((v) => v !== 'club'); // clubs UI = W07
+  // "Club members only" needs a club to host for (the RPC requires owner / admin of it)
+  const options = MEETUP_VISIBILITIES.filter((v) => v !== 'club' || clubId !== '');
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -59,6 +69,7 @@ export default function MeetupCreateForm({
         durationMinutes: duration,
         capacity,
         visibility,
+        clubId: clubId || null,
       });
       if (!r.ok) {
         setError(r.error);
@@ -93,6 +104,26 @@ export default function MeetupCreateForm({
           minLength={3}
         />
       </div>
+      {clubs.length > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <label htmlFor="mt-club">Host as</label>
+          <select
+            id="mt-club"
+            value={clubId}
+            onChange={(e) => {
+              setClubId(e.target.value);
+              if (!e.target.value && visibility === 'club') setVisibility('public');
+            }}
+          >
+            <option value="">My garage</option>
+            {clubs.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} (club)
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div style={{ marginBottom: 12 }}>
         <label htmlFor="mt-theme">Theme (optional)</label>
         <input

@@ -3,14 +3,21 @@ import {
   MEETUP_TRANSITIONS,
   acceptsRsvps,
   allowedActions,
+  bestInShowWinner,
   canTransition,
+  canVoteFor,
+  hasAttended,
+  hostRewardDue,
   hostCap,
   hostFee,
   isEditable,
+  isPhotoWallOpen,
   isRoomOpen,
+  isVotingOpen,
   nextStatus,
   refundOnCancel,
   reminderHorizon,
+  roomSecondsAfterPing,
   rsvpOutcome,
   type MeetupAction,
   type MeetupViewer,
@@ -136,5 +143,60 @@ describe('meetup state machine (MV-W06-02, mirrors transition_meetup)', () => {
     expect(reminderHorizon(T0, new Date('2026-11-20T17:00:00Z'))).toBe('1h');
     expect(reminderHorizon(T0, new Date('2026-11-20T17:59:59Z'))).toBe('1h');
     expect(reminderHorizon(T0, new Date('2026-11-20T18:00:00Z'))).toBeNull();
+  });
+});
+
+describe('best-in-show, attendance, photo wall (MV-W07-01, mirrors 0015b)', () => {
+  it('ballots move only while live — the result is frozen at ended (F-23 AC)', () => {
+    expect(MEETUP_STATUSES.map((s) => isVotingOpen(s))).toEqual([false, false, true, false, false]);
+  });
+
+  it('a room member votes for anyone’s car but their own', () => {
+    expect(canVoteFor('live', true, 'me', 'them')).toBe(true);
+    expect(canVoteFor('live', true, 'me', 'me')).toBe(false);
+    expect(canVoteFor('live', false, 'me', 'them')).toBe(false);
+    expect(canVoteFor('live', true, null, 'them')).toBe(false);
+    expect(canVoteFor('ended', true, 'me', 'them')).toBe(false);
+    expect(canVoteFor('scheduled', true, 'me', 'them')).toBe(false);
+  });
+
+  it('the winner has the most votes; ties go to the earliest entry, then the lower id', () => {
+    const e = (id: string, votes: number, createdAt: string) => ({ id, votes, createdAt });
+    expect(bestInShowWinner([])).toBeNull();
+    expect(bestInShowWinner([e('a', 0, '1'), e('b', 0, '2')])).toBeNull();
+    expect(bestInShowWinner([e('a', 2, '1'), e('b', 3, '2')])!.id).toBe('b');
+    expect(bestInShowWinner([e('b', 3, '2'), e('a', 3, '1')])!.id).toBe('a');
+    expect(bestInShowWinner([e('z', 3, '1'), e('c', 3, '1')])!.id).toBe('c');
+  });
+
+  it('the room clock: the first ping starts it, a gap counts for at most 120 s, never negative', () => {
+    expect(roomSecondsAfterPing(0, null)).toBe(0);
+    expect(roomSecondsAfterPing(0, 60)).toBe(60);
+    expect(roomSecondsAfterPing(540, 100.9)).toBe(640);
+    expect(roomSecondsAfterPing(0, 3600)).toBe(120);
+    expect(roomSecondsAfterPing(300, -5)).toBe(300);
+  });
+
+  it('ten minutes on the clock = attended', () => {
+    expect(hasAttended(599)).toBe(false);
+    expect(hasAttended(600)).toBe(true);
+    // ten one-minute pings after the opening one
+    let s = roomSecondsAfterPing(0, null);
+    for (let i = 0; i < 10; i += 1) s = roomSecondsAfterPing(s, 60);
+    expect(hasAttended(s)).toBe(true);
+  });
+
+  it('the host reward needs five collectors who attended', () => {
+    expect([0, 4, 5, 9].map(hostRewardDue)).toEqual([false, false, true, true]);
+  });
+
+  it('the photo wall is open while live and for 24 h after the end', () => {
+    const ended = new Date('2026-11-20T20:00:00.000Z');
+    expect(isPhotoWallOpen('live', null, T0)).toBe(true);
+    expect(isPhotoWallOpen('scheduled', null, T0)).toBe(false);
+    expect(isPhotoWallOpen('ended', ended, new Date('2026-11-21T19:59:00.000Z'))).toBe(true);
+    expect(isPhotoWallOpen('ended', ended, new Date('2026-11-21T20:00:00.000Z'))).toBe(false);
+    expect(isPhotoWallOpen('ended', null, T0)).toBe(false);
+    expect(isPhotoWallOpen('cancelled', ended, ended)).toBe(false);
   });
 });

@@ -5,6 +5,7 @@
 import type { Client, Enums, TablesUpdate } from '@/lib/supabase/types';
 import type { CollectionItemRow } from '@/domain/garage/types';
 import type {
+  ClubRow,
   MeetupInviteRow,
   MeetupRow,
   MeetupRsvpRow,
@@ -256,4 +257,60 @@ export async function moderate(
   });
   if (error) throw error;
   return data as unknown as MeetupRsvpRow;
+}
+
+// ---------- W07: best-in-show, attendance clock, photo wall ----------
+
+/** The showcase entry the viewer's ballot is on (RLS: a voter reads only their own ballot). */
+export async function getMyVote(
+  supabase: Client,
+  meetupId: string,
+  userId: string
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('meetup_votes')
+    .select('showcase_id')
+    .eq('meetup_id', meetupId)
+    .eq('voter_id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.showcase_id ?? null;
+}
+
+export async function vote(
+  supabase: Client,
+  id: string,
+  showcaseId: string
+): Promise<MeetupShowcaseRow> {
+  const { data, error } = await supabase.rpc('vote_best_in_show', {
+    p_id: id,
+    p_showcase_id: showcaseId,
+  });
+  if (error) throw error;
+  return data as unknown as MeetupShowcaseRow;
+}
+
+/** One tick of the attendance clock; true once the caller has attended. */
+export async function pingRoom(supabase: Client, id: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('meetup_room_ping', { p_id: id });
+  if (error) throw error;
+  return data === true;
+}
+
+export async function removePhoto(supabase: Client, mediaId: string): Promise<void> {
+  const { error } = await supabase.rpc('remove_meetup_photo', { p_media_id: mediaId });
+  if (error) throw error;
+}
+
+export async function getClub(
+  supabase: Client,
+  clubId: string
+): Promise<Pick<ClubRow, 'id' | 'slug' | 'name'> | null> {
+  const { data, error } = await supabase
+    .from('clubs')
+    .select('id, slug, name')
+    .eq('id', clubId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ?? null;
 }

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { getEconomySummary, getEconomyWeekly, listJobRuns } from '@/domain/admin';
 import AdminEconomyView from '@/components/AdminEconomyView';
@@ -22,7 +23,8 @@ export default async function AdminWorldEconomyPage() {
         <h2 style={{ fontSize: 18 }}>World economy</h2>
         <p className="muted" style={{ fontSize: 13, marginBottom: 0 }}>
           Sinks vs sources, earned vs purchased, ceiling hits and breakage — straight from the
-          ledger&apos;s <code>source</code> / <code>reason</code> columns.
+          ledger&apos;s <code>source</code> / <code>reason</code> columns.{' '}
+          <Link href="/admin/world/hosting">World hosting: meetup &amp; club reports</Link>
         </p>
       </div>
       <AdminEconomyView weekly={weekly} summary={summary} />

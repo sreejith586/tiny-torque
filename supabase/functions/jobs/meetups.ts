@@ -6,7 +6,7 @@
 // the same lines.
 
 /** The meetup dispatcher's job names, in the order `run_meetup_jobs('all')` runs them. */
-export const MEETUP_JOB_NAMES = ['meetup_transitions', 'meetup_reminders'] as const;
+export const MEETUP_JOB_NAMES = ['meetup_transitions', 'meetup_reminders', 'club_nights'] as const;
 export type MeetupJobName = (typeof MEETUP_JOB_NAMES)[number];
 
 export function isMeetupJobName(value: string): value is MeetupJobName {

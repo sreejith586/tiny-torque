@@ -23,6 +23,17 @@ export type MeetupErrorCode =
   | 'message_rate_limit'
   | 'rsvp_rate_limit'
   | 'rpc_only_column'
+  | 'voting_closed'
+  | 'entry_not_found'
+  | 'own_entry'
+  | 'photo_wall_closed'
+  | 'photo_limit'
+  | 'photo_not_found'
+  | 'invalid_photo'
+  | 'not_club_staff'
+  | 'host_level_too_low'
+  | 'host_recent_report'
+  | 'hosting_suspended'
   | 'language_not_allowed'
   | 'room_closed'
   | 'invalid_input';
@@ -59,6 +70,17 @@ const RPC_CODES: MeetupErrorCode[] = [
   'message_rate_limit',
   'rsvp_rate_limit',
   'rpc_only_column',
+  'voting_closed',
+  'entry_not_found',
+  'own_entry',
+  'photo_wall_closed',
+  'photo_limit',
+  'photo_not_found',
+  'invalid_photo',
+  'not_club_staff',
+  'host_level_too_low',
+  'host_recent_report',
+  'hosting_suspended',
 ];
 
 /** Maps a PostgREST/Postgres error whose message carries one of the RPCs' codes to a MeetupError; an

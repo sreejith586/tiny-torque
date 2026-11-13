@@ -17,7 +17,9 @@ const START = new Date('2026-11-21T18:00:00Z');
 Deno.test(
   'MEETUP_JOB_NAMES is the dispatcher order from migration 0015 and routes to run_meetup_jobs',
   () => {
-    assertEquals([...MEETUP_JOB_NAMES], ['meetup_transitions', 'meetup_reminders']);
+    assertEquals([...MEETUP_JOB_NAMES], ['meetup_transitions', 'meetup_reminders', 'club_nights']);
+    assert(isMeetupJobName('club_nights'));
+    assertEquals(dispatcherFor('club_nights'), 'run_meetup_jobs');
     assert(isMeetupJobName('meetup_reminders'));
     assert(!isMeetupJobName('quest_reset'));
     assertEquals(dispatcherFor('meetup_transitions'), 'run_meetup_jobs');
