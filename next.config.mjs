@@ -1,4 +1,5 @@
 import { withSentryConfig } from '@sentry/nextjs/config';
+import { securityHeaders } from './src/lib/security-headers.mjs';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -18,12 +19,13 @@ const nextConfig = {
     },
     {
       source: '/(.*)',
-      headers: [
-        { key: 'X-Content-Type-Options', value: 'nosniff' },
-        { key: 'X-Frame-Options', value: 'DENY' },
-        { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-        { key: 'Permissions-Policy', value: 'camera=(self), geolocation=(), microphone=()' },
-      ],
+      // MV-S10-01: CSP + HSTS + COOP on top of the S0 set — src/lib/security-headers.mjs.
+      headers: securityHeaders({
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        posthogHost: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+        dev: process.env.NODE_ENV !== 'production',
+        preview: process.env.VERCEL_ENV === 'preview',
+      }),
     },
   ],
 };

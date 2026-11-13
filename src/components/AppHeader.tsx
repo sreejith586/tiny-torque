@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getProfile } from '@/domain/identity';
 import { countUnread } from '@/domain/notifications';
 import AppHeaderClient from './AppHeaderClient';
+import AnalyticsUser from './AnalyticsUser';
 
 // Persistent app-shell header (garage-log-147.html, D-044) — missing from every sprint until now.
 // Server Component so it can read the session without forcing AppHeaderClient to do its own fetch;
@@ -30,13 +31,25 @@ export default async function AppHeader() {
     countUnread(supabase, user.id),
   ]);
   return (
-    <AppHeaderClient
-      signedIn
-      displayName={profile?.display_name ?? null}
-      photoMediaId={profile?.photo_url ?? null}
-      initialUnreadCount={unreadCount}
-      initialTokens={profile?.tokens ?? 0}
-      viewerId={user.id}
-    />
+    <>
+      <AppHeaderClient
+        signedIn
+        displayName={profile?.display_name ?? null}
+        photoMediaId={profile?.photo_url ?? null}
+        initialUnreadCount={unreadCount}
+        initialTokens={profile?.tokens ?? 0}
+        viewerId={user.id}
+      />
+      {/* MV-S10-03 (F-18): identify + mirror this collector's KPI events to PostHog. Renders
+          nothing; needs a profile row (the cursor hangs off it). */}
+      {profile && !profile.deleted_at && (
+        <AnalyticsUser
+          userId={user.id}
+          countryCode={profile.country_code}
+          plan={profile.plan}
+          accountType={profile.account_type}
+        />
+      )}
+    </>
   );
 }

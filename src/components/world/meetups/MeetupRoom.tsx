@@ -11,16 +11,25 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import CarCard from '@/components/CarCard';
 import { listRoomMessages, sendRoomMessage, sendRoomReaction } from '@/domain/messaging';
+
 import type { DealMessageRow } from '@/domain/messaging';
 import {
+  ATTEND_SECONDS,
   MEETUP_REACTIONS,
   REACTION_EMOJI,
+  ROOM_PING_SECONDS,
+  canVoteFor,
+  pingRoom,
   type MeetupDetail,
   type MeetupReaction,
   type MeetupRow,
   type MeetupStatus,
 } from '@/domain/meetups';
-import { moderateAttendeeAction, transitionMeetupAction } from '@/app/world/meetups/actions';
+import {
+  moderateAttendeeAction,
+  transitionMeetupAction,
+  voteBestInShowAction,
+} from '@/app/world/meetups/actions';
 
 type PendingMessage = DealMessageRow & { pending?: boolean; tempId?: string };
 
@@ -43,6 +52,11 @@ export default function MeetupRoom({
   const [sendError, setSendError] = useState<string | null>(null);
   const [online, setOnline] = useState(true);
   const [muted, setMuted] = useState(viewer.muted);
+  const [attended, setAttended] = useState(viewer.attended);
+  const [myVote, setMyVote] = useState<string | null>(detail.myVoteShowcaseId);
+  const [tally, setTally] = useState<Record<string, number>>(() =>
+    Object.fromEntries(detail.showcase.map((s) => [s.id, s.votes]))
+  );
   const [pending, startTransition] = useTransition();
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -137,6 +151,44 @@ export default function MeetupRoom({
     };
   }, [harness, meetup.id, router, viewerId]);
 
+  // Attendance clock (MV-W07-01): one ping on open, then one a minute while the room is live and
+  // this tab is open. The server keeps the time (a gap counts for at most two minutes); the room
+  // only learns whether the ten minutes are reached. Hosts have no clock.
+  const hasSeat = viewer.rsvp !== null && viewer.isMember;
+  useEffect(() => {
+    if (harness || !open || !hasSeat || attended) return;
+    const supabase = createClient();
+    let stopped = false;
+    const tick = () =>
+      pingRoom(supabase, meetup.id).then((done) => {
+        if (done && !stopped) setAttended(true);
+      });
+    void tick();
+    const timer = window.setInterval(tick, ROOM_PING_SECONDS * 1000);
+    return () => {
+      stopped = true;
+      window.clearInterval(timer);
+    };
+  }, [harness, open, hasSeat, attended, meetup.id]);
+
+  function vote(showcaseId: string) {
+    if (harness || myVote === showcaseId) return;
+    setSendError(null);
+    startTransition(async () => {
+      const r = await voteBestInShowAction(meetup.id, showcaseId);
+      if (!r.ok) {
+        setSendError(r.error);
+        return;
+      }
+      setTally((prev) => ({
+        ...prev,
+        ...(myVote ? { [myVote]: Math.max((prev[myVote] ?? 1) - 1, 0) } : {}),
+        [showcaseId]: r.data.votes,
+      }));
+      setMyVote(showcaseId);
+    });
+  }
+
   async function send(body: string, reaction: MeetupReaction | null, tempId: string) {
     if (sending || harness) return;
     const optimistic: PendingMessage = {
@@ -226,16 +278,41 @@ export default function MeetupRoom({
             On the table ({showcase.length})
           </summary>
           <div className="garage-grid">
-            {showcase.map((s) => (
-              <div key={s.id}>
-                <CarCard item={s.item!} view="grid" />
-                <p className="muted" style={{ fontSize: 11, marginTop: 4 }}>
-                  @{s.owner?.handle ?? 'collector'}
-                </p>
-              </div>
-            ))}
+            {showcase.map((s) => {
+              const votes = tally[s.id] ?? s.votes;
+              return (
+                <div key={s.id}>
+                  <CarCard item={s.item!} view="grid" />
+                  <p className="muted" style={{ fontSize: 11, marginTop: 4 }}>
+                    @{s.owner?.handle ?? 'collector'} · {votes} vote{votes === 1 ? '' : 's'}
+                  </p>
+                  {canVoteFor(status, viewer.isMember, viewer.id, s.userId) && (
+                    <button
+                      type="button"
+                      className={myVote === s.id ? 'btn-primary' : 'btn-secondary'}
+                      style={{ padding: '4px 10px', fontSize: 12, marginTop: 4 }}
+                      aria-pressed={myVote === s.id}
+                      onClick={() => vote(s.id)}
+                      disabled={pending}
+                    >
+                      {myVote === s.id ? 'Your vote' : 'Vote best in show'}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
+          <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
+            One vote each — you can move it until the meetup ends.
+          </p>
         </details>
+      )}
+      {open && hasSeat && (
+        <p className="muted" style={{ fontSize: 12, marginBottom: 8 }} role="status">
+          {attended
+            ? 'Attendance counted.'
+            : `Stay ${ATTEND_SECONDS / 60} minutes for your attendance to count.`}
+        </p>
       )}
 
       <div className="thread" aria-live="polite">

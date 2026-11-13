@@ -58,6 +58,9 @@ export interface FlagRow {
 export interface FlagAdminRow extends FlagRow {
   description: string | null;
   updated_at: string;
+  /** Audit (MV-S10-04): the admin who last saved the flag; null = still the seeded value. */
+  updated_by?: string | null;
+  updated_by_handle?: string | null;
 }
 
 /** What a flag is evaluated against. Fields are optional — omitted dimensions aren't filtered on. */

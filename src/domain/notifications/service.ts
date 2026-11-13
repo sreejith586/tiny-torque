@@ -32,6 +32,13 @@ const NOTIFICATION_TEXT: Record<NotificationType, string> = {
   meetup_reminder: 'A meetup you joined starts soon.',
   meetup_live: 'A meetup you joined is live now.',
   meetup_cancelled: 'A meetup you joined was cancelled.',
+  // Clubs + hosting rules (W07, F-22 / F-28)
+  club_invite: 'You were invited to a club.',
+  club_approved: 'Your request to join a club was approved.',
+  club_night_ready: 'Your next club night is ready to schedule.',
+  hosting_suspended: 'Your hosting rights are suspended. Contact support to appeal.',
+  // Feedback form → admins (MV-S10-05, F-15); only admins ever receive it
+  feedback_received: 'A collector sent feedback.',
 };
 
 /** Pure: what the notification says. No DB access, unit-testable in isolation. */
@@ -66,12 +73,23 @@ export function notificationLink(n: Pick<NotificationRow, 'type' | 'payload'>): 
       return '/market/mine';
     case 'offer_expired':
       return '/offers';
+    case 'feedback_received':
+      return '/admin/feedback';
     case 'meetup_invite':
     case 'meetup_reminder':
     case 'meetup_cancelled':
       return typeof payload.meetup_id === 'string'
         ? `/world/meetups/${payload.meetup_id}`
         : '/world/meetups';
+    case 'club_night_ready':
+      return typeof payload.meetup_id === 'string'
+        ? `/world/meetups/${payload.meetup_id}`
+        : '/world/meetups';
+    case 'club_invite':
+    case 'club_approved':
+      return typeof payload.slug === 'string' ? `/world/clubs/${payload.slug}` : '/world/clubs';
+    case 'hosting_suspended':
+      return '/legal/guidelines';
     case 'meetup_live':
       return typeof payload.meetup_id === 'string'
         ? `/world/meetups/${payload.meetup_id}/room`

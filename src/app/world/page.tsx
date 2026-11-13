@@ -7,6 +7,7 @@ import { isFlagEnabled } from '@/domain/flags';
 import { getProfile } from '@/domain/identity';
 import { getQuestBoard, type QuestBoard } from '@/domain/quests';
 import { listMeetups, type MeetupListItem } from '@/domain/meetups';
+import { listClubs, type ClubListItem } from '@/domain/clubs';
 import { STATUS_LABEL, formatWhen } from '@/components/world/meetups/copy';
 import {
   listOpenGarages,
@@ -15,6 +16,7 @@ import {
   type WorldOpenGarageRow,
 } from '@/domain/world';
 import {
+  FIXTURE_CLUBS,
   FIXTURE_MEETUPS,
   FIXTURE_PROFILE,
   FIXTURE_QUEST_BOARD,
@@ -77,6 +79,17 @@ async function loadMeetups(sp: SearchParams, userId: string): Promise<MeetupList
     .catch((): MeetupListItem[] | null => null);
 }
 
+/** "Clubs" (MV-W07-03): null while `world_clubs` is OFF for this user (D-028 — no section at all),
+ *  otherwise the clubs the viewer is in (or asked / was invited to join). Never the reason /world fails. */
+async function loadClubs(sp: SearchParams, userId: string): Promise<ClubListItem[] | null> {
+  if (isVisualHarness(sp)) return FIXTURE_CLUBS.filter((c) => c.myStatus).slice(0, 3);
+  const supabase = await createClient();
+  if (!(await isFlagEnabled(supabase, 'world_clubs', { userId }))) return null;
+  return listClubs(supabase, userId, 'mine')
+    .then((rows) => rows.slice(0, 3))
+    .catch((): ClubListItem[] | null => null);
+}
+
 // /world home (MV-W02-01, D-081) + Open garages and recent visitors (MV-W03-05, D-087) + quests
 // (MV-W04-05, D-090).
 export default async function WorldHomePage({
@@ -86,11 +99,13 @@ export default async function WorldHomePage({
 }) {
   const sp = await searchParams;
   const { own, items } = await loadWorldPage(sp, { next: '/world' });
-  const [social, quests, meetups] = await Promise.all([
+  const [social, quests, meetups, clubs] = await Promise.all([
     loadSocial(sp, own.garage.user_id),
     loadQuests(sp, own.garage.user_id),
     loadMeetups(sp, own.garage.user_id),
+    loadClubs(sp, own.garage.user_id),
   ]);
+  const clubsHref = isVisualHarness(sp) ? '/world/clubs?__visual=1' : '/world/clubs';
   const featured = own.garage.featured_item_id
     ? (items.find((i) => i.id === own.garage.featured_item_id) ?? null)
     : null;
@@ -265,6 +280,49 @@ export default async function WorldHomePage({
                 style={{ display: 'block', textAlign: 'center', marginTop: 10 }}
               >
                 More meetups
+              </Link>
+            </div>
+          )}
+        </>
+      )}
+
+      {clubs && (
+        <>
+          <div className="section-title">Clubs</div>
+          {clubs.length === 0 ? (
+            <div className="empty-state">
+              <p>
+                You are not in a club yet. <Link href={clubsHref}>Find one</Link>.
+              </p>
+            </div>
+          ) : (
+            <div className="panel">
+              {clubs.map(({ club, memberCount, myRole, myStatus, invited }) => (
+                <Link
+                  key={club.id}
+                  href={`/world/clubs/${club.slug}${isVisualHarness(sp) ? '?__visual=1' : ''}`}
+                  className="toggle-row"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <span>
+                    <span style={{ display: 'block', fontWeight: 600 }}>{club.name}</span>
+                    <span className="muted" style={{ display: 'block', fontSize: 12 }}>
+                      @{club.slug}
+                      {myRole && myRole !== 'member' ? ` · ${myRole}` : ''}
+                      {myStatus === 'pending' ? (invited ? ' · invited' : ' · requested') : ''}
+                    </span>
+                  </span>
+                  <span className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+                    {memberCount} member{memberCount === 1 ? '' : 's'}
+                  </span>
+                </Link>
+              ))}
+              <Link
+                href={clubsHref}
+                className="btn-secondary"
+                style={{ display: 'block', textAlign: 'center', marginTop: 10 }}
+              >
+                More clubs
               </Link>
             </div>
           )}

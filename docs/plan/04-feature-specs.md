@@ -157,6 +157,8 @@ Report (listing/user/message) with reason enum + notes; block user (hides their 
 
 Role-gated. Pages: Overview (users, items, listings, offers, scans, cost this month, token revenue), Reports queue (F-15), Users (search, view, grant tokens, suspend, set admin), Catalogue (F-05), Flags (toggle + audience JSON with validation), Invites (create codes/cohorts), Scan jobs (last 100 with cost). Read-only SQL views feed it; no custom BI.
 
+**AC (S10, 2026-11-12):** [x] Overview — users, items, listings, offers, deals, scans, scan cost / token revenue / SMS estimate this month (`admin_overview()`) · [x] Flags — toggle + validated audience (W01-09) + "Last changed … by" audit line (`updated_by`) · [x] Invites — batches of codes per cohort, seats, expiry, End, per-cohort summary (`/admin/invites`) · [x] Feedback list (`/admin/feedback`) · [x] Pilot KPIs (`/admin/kpis`). Not built: grant tokens / set admin from the Users page (SQL + `admin_adjust_tokens` for now).
+
 ## F-17 PWA, performance, a11y
 
 Manifest, icons, install prompt (deferred until 2nd visit), service worker caching app shell + last-viewed garage (read-only offline banner), `next/image` with Supabase transforms, route-level loading states, skeletons; Lighthouse ≥ 90 perf/a11y on mid-tier Android profile; contrast check script over all 6 themes; focus management in dialogs; reduced-motion respect.
@@ -167,11 +169,15 @@ Manifest, icons, install prompt (deferred until 2nd visit), service worker cachi
 
 PostHog events mirroring key domain events (client-side identify with `user_id`, country, plan; server-side capture from event consumer for money/scan events); funnels defined for 01 §6 metrics; weekly SQL report (materialised view `pilot_kpis_weekly`).
 
+**AC (S10, 2026-11-12):** [x] `pilot_kpis_weekly` (52 UTC weeks, nightly + on-demand refresh, logged in `job_runs`) read by `/admin/kpis` · [x] client identify (`user_id`, country, plan, account type — no PII) · [x] KPI events mirrored to PostHog from the event log via `claim_analytics_events()` (exactly-once hand-out per collector; replaces "server-side capture from the event consumer" for now — the ledger stays the money truth) · [x] every 01 §6 metric defined in SQL + as a PostHog insight (`docs/pilot/kpi-definitions.md`) · [ ] **owner:** build the insights / dashboard in the PostHog UI · gap: scan accuracy is "accepted ÷ proposed" until edits are recorded.
+
 ## F-19 Ops readiness
 
 Runbook (incidents, rollback, restore from PITR, rotating keys), backups verified by restore drill in Sprint 10, status page (Vercel + Supabase status links in-app footer), Sentry alert routing to your email/Slack, cost alerts (Anthropic spend, Supabase usage).
 
 **AC (S9 part, ticked 2026-11-08):** [x] scheduled expiry runs itself — `expire_listings` / `expire_offers` hourly, `purge_trash` + `ensure_event_partitions` daily via pg_cron, logged in `job_runs` (D-099) · [x] delete-account purge of `auth.users` + storage objects (`purge_accounts`, `purge_media`, 7-day grace) · [x] alert on failure = the daily `h1-jobs.yml` run fails on any errored `job_runs` row of either track (GitHub notifies the owner) · [x] `/admin/world/economy` › Job runs shows the H1 jobs. Still open for S10: runbook, PITR restore drill, status links, Sentry alert routing, cost alerts.
+
+**AC (S10 part, 2026-11-12):** [x] runbook — incident severity, rollback, restore procedure, key rotation, contacts (`docs/runbook.md`) · [x] security review with fixes + full RLS matrix in pgTAP (`docs/security-review.md`, `0031_s10_rls_matrix.sql`), CSP + security headers, `pnpm audit` gate · [x] release checklist gating `db push` + rollback rehearsal procedure (`docs/release-process.md`) · [x] status links in-app (Settings › Help and status) · [x] pilot ops kit (`docs/pilot/ops-kit.md`), known-issues page · [ ] **owner:** PITR restore drill run and timed · [ ] **owner:** rollback rehearsal run · [ ] **owner:** Sentry alert rules + cost alerts created in the dashboards (rules listed in the runbook §7).
 
 ## Collectors World (H3) — F-20…F-28
 
@@ -221,6 +227,7 @@ Runbook (incidents, rollback, restore from PITR, rotating keys), backups verifie
 - `clubs` (slug, name, owner, join mode open/apply/invite, optional country) with `club_members` roles owner/admin/member and status active/pending/banned. A **clubhouse** page shows members' featured cars + a club feed. Clubs can host meetups and club races; club leagues = season points per club (W09).
 - Host/owner eligibility and suspension follow F-28's rules; reports and blocks apply inside clubs.
   **AC** Only members read a non-open club's feed; owner/admin can remove members; a banned member cannot rejoin (pgTAP).
+  ✅ MV-W07-02/03/04/06 — `club_feed()` returns nothing to an applicant / outsider of an apply or invite club and the roster of a closed club is unreadable to them, an admin removes a member and nobody removes the owner, a banned member's `join_club` raises `banned_from_club` (and leaving does not clear the ban), roles / ownership transfer only by the owner, direct writes filtered: `supabase/tests/0030_world_best_in_show_clubs.sql` (150 assertions, replicated locally with the CI image); rule mirrors + service boundaries: `src/domain/clubs/{state,service}.test.ts`; screens `/world/clubs`, `/world/clubs/new`, `/world/clubs/[slug]`, club-hosted meetups ("Host as"), recurring club night (draft per occurrence via the `club_nights` job) — D-105 / D-106 proposed; fixture-harness checks in `e2e/world.spec.ts`, the real two-identity flow is `e2e/club-flow.spec.ts` (opt-in, `E2E_ENABLE_CLUBS=1`). **Still open:** club races / leagues (W09), club leaderboard (MV-W07-08 stretch), a banner image.
   **Events** `club.created`, `club.joined`, `club.left`, `club.role_changed`
   **Flags** `world_clubs`
 
@@ -233,7 +240,8 @@ Runbook (incidents, rollback, restore from PITR, rotating keys), backups verifie
   **AC** `rsvp_meetup` past capacity fails; a non-attendee cannot read the room; best-in-show result cannot change after `ended`; cancel < 24 h keeps the fee (pgTAP).
   ✅ MV-W06-01/02/06 — `rsvp_meetup` past capacity → `waitlist` (never a seat), a non-attendee / kicked attendee reads 0 room rows and cannot post, cancel < 24 h keeps the fee while ≥ 24 h refunds it through `credit_tokens`, the room is closed before `live` and after `ended`, lifecycle / fee / moderation only through the RPCs: `supabase/tests/0029_clubs_meetups.sql` (112 assertions, replicated locally with the CI image); state machine + capacity / fee / refund / reminder mirrors: `src/domain/meetups/state.test.ts`; service boundaries: `src/domain/meetups/service.test.ts`; D-098. **Still open (W07):** best-in-show vote + freeze at `ended`, photo wall (`media` rows), attend / host rewards (`earn_attend` / `earn_host`), recurring club nights. Reminders are in-app only until a transactional-mail path exists (D-098 §5).
   ✅ MV-W06-03/04 — `/world/meetups` (upcoming / mine), detail with RSVP + ≤ 3-car showcase picker + host controls, single-page create form (virtual only), live room reusing the deal-thread pieces with reactions, showcase grid and host mute / kick / end (D-096 / D-097 proposed); fixture harness + `e2e/world.spec.ts` checks; the real two-identity flow is `e2e/meetup-flow.spec.ts` (opt-in, `E2E_ENABLE_MEETUPS=1`).
-  **Events** `meetup.created`, `meetup.scheduled`, `meetup.started`, `meetup.ended`, `meetup.cancelled`, `meetup.rsvp`, `meetup.best_in_show` (+ W06: `meetup.updated`, `meetup.invited`, `meetup.showcase_updated`, `meetup.moderated`, `meetup.reminder`)
+  ✅ MV-W07-01 — best-in-show: one ballot per room member, own car refused, movable while live, and after `ended` neither the RPC nor a direct session can change a ballot or the tally (`voting_closed`); the winner is stamped on the meetup; attendance = 10 min on the server-side room clock; `earn_attend` / `earn_host` paid through `earn_tokens` on `meetup.ended` (per-recipient `world_earn`, 2/day, ≥ 5 attended, replay-safe); photo wall as `media` rows (members only, visibility, 6 each, take-down): pgTAP 0030; mirrors in `src/domain/meetups/state.test.ts`; results card, vote buttons, photo wall — D-106 proposed. **Still open:** reminder emails, local-time labels, an admin "cancel meetup with refund" (F-28 list), image moderation beyond host take-down.
+  **Events** `meetup.created`, `meetup.scheduled`, `meetup.started`, `meetup.ended`, `meetup.cancelled`, `meetup.rsvp`, `meetup.best_in_show` (+ W07: `meetup.voted`, `meetup.photo_added`, `meetup.photo_removed`; `meetup.checked_in` also marks virtual attendance) (+ W06: `meetup.updated`, `meetup.invited`, `meetup.showcase_updated`, `meetup.moderated`, `meetup.reminder`)
   **Flags** `world_meetups`
 
 ## F-24 In-person meetups
@@ -294,7 +302,8 @@ Runbook (incidents, rollback, restore from PITR, rotating keys), backups verifie
 - Runbook entries: "earn exploit", "race ran twice", "meetup room abuse" (06 §5 placeholders).
   **AC** Flag edits are admin-only (RLS) and logged as `flag.updated`; economy dashboard numbers are SQL over the ledger `source`/`reason` columns, no second balance. ✅ MV-W05-05/06 — `/admin/world/economy` (`world_economy_weekly` + `world_economy_summary`, admin/backend only — pgTAP 0027; ratios in `domain/admin` Vitest), earn freeze on `/admin/users` (`admin_set_earn_freeze`, events, `earn_tokens` → NULL), runbook 06 §5 "earn exploit" + weekly review; screens D-094 (proposed).
 - Reports with `target_type` `garage` resolve warn/suspend against the owner; `guestbook` reports resolve against the line's author and offer `hide_guestbook`, which hides through the same RPC the host uses (one `world.guestbook_hidden` event) — pgTAP 0024.
-  **Events** `flag.updated`, `report.created`, `report.resolved`, `user.suspended`
+- ✅ MV-W07-05 — host / club-owner eligibility (`world_host_ineligible_reason`: F-13 level ≥ 2, no upheld report in 90 days, no suspension), automatic hosting suspension at two upheld reports with `world.host_suspended` + a `hosting_suspended` notification (sent only where the World is on for that collector), admin lift + appeal note, `meetup` / `club` report targets, `/admin/world/hosting` (meetup + club report queues, suspensions table): pgTAP 0030, `src/domain/clubs/state.test.ts`; D-105 §5 / D-106 proposed.
+  **Events** `flag.updated`, `report.created`, `report.resolved`, `user.suspended`, `world.host_suspended`, `world.host_reinstated`, `world.host_appeal_noted`
   **Flags** all `world*`
 
 ## Stretch register (pull in only when a sprint has slack)

@@ -7,6 +7,8 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createCheckoutSession, TokenError } from '@/domain/tokens';
+import { isFlagEnabled } from '@/domain/flags';
+import { getProfile } from '@/domain/identity';
 
 export type BuyPackResult = { ok: true; url: string } | { ok: false; error: string };
 
@@ -16,6 +18,20 @@ export async function buyPackAction(packId: string): Promise<BuyPackResult> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect('/login?next=/tokens');
+
+  // D-018 kill switch (MV-S10-01 finding 7): `token_purchase` was seeded in S1 but never read, so
+  // the money path would have opened the moment real Stripe keys landed. Checked here, server
+  // side, before a checkout session is created; the webhook is deliberately NOT gated (a paid
+  // session must always be credited).
+  const profile = await getProfile(supabase, user.id).catch(() => null);
+  const open = await isFlagEnabled(supabase, 'token_purchase', {
+    userId: user.id,
+    plan: profile?.plan === 'pro' ? 'pro' : 'free',
+    countryCode: profile?.country_code ?? undefined,
+  }).catch(() => false);
+  if (!open) {
+    return { ok: false, error: 'Token purchases aren’t open yet. Nothing was charged.' };
+  }
 
   const h = await headers();
   const origin = h.get('origin') ?? `https://${h.get('host')}`;

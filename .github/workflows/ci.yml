@@ -44,6 +44,10 @@ jobs:
       - run: pnpm test
       - name: Decision guard (D-023)
         run: bash docs/plan/tools/guard.sh
+      - name: Dependency audit (production deps, high and above — MV-S10-01)
+        # Exceptions live in package.json › pnpm.auditConfig.ignoreGhsas, each one justified in
+        # docs/security-review.md §5. A new high / critical advisory fails this step.
+        run: pnpm audit:prod
       - name: Theme contrast (WCAG AA over the 6 themes, F-17 / MV-S9-04)
         run: node scripts/contrast-check.mjs
       - name: Build

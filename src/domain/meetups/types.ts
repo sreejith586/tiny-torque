@@ -49,6 +49,17 @@ export const PRO_HOST_CAP_MULTIPLIER = 1.5;
 export const HOST_EARLY_START_MINUTES = 15;
 export const CANCEL_REFUND_HOURS = 24;
 export const MAX_DURATION_MINUTES = 6 * 60;
+/** W07 (MV-W07-01), mirrored from 0015b: attendance = 10 min on the room clock, pinged once a minute
+ *  (a gap counts for at most 120 s); attend +3 (2/day), host +10 when ≥ 5 attended (2/week); the photo
+ *  wall takes 6 photos per attendee while live and for 24 h after the end. */
+export const ATTEND_SECONDS = 600;
+export const ROOM_PING_SECONDS = 60;
+export const ROOM_PING_MAX_GAP_SECONDS = 120;
+export const ATTEND_REWARD = 3;
+export const HOST_REWARD = 10;
+export const HOST_REWARD_MIN_ATTENDED = 5;
+export const PHOTO_LIMIT = 6;
+export const PHOTO_WALL_HOURS_AFTER_END = 24;
 
 export interface PublicIdentity {
   id: string;
@@ -69,6 +80,8 @@ export interface MeetupShowcaseEntry {
   userId: string;
   itemId: string;
   position: number;
+  /** Best-in-show tally (recounted from the ballots by vote_best_in_show; frozen at `ended`). */
+  votes: number;
   /** null when the car is no longer public / was deleted (RLS hides it); the grid shows a placeholder. */
   item: GarageItem | null;
   owner: PublicIdentity | null;
@@ -94,6 +107,8 @@ export interface MeetupViewerState {
   /** In the room: host / co-host, or going / checked in and not removed. */
   isMember: boolean;
   muted: boolean;
+  /** 10 minutes on the room clock reached (rsvp.attended_at) — hosts have no clock: false. */
+  attended: boolean;
 }
 
 export interface MeetupDetail {
@@ -106,6 +121,35 @@ export interface MeetupDetail {
   showcase: MeetupShowcaseEntry[];
   /** Direct invites — only filled for the host / co-hosts (RLS returns nothing to others). */
   invites: { user: PublicIdentity; createdAt: string }[];
+  /** The showcase entry the viewer's ballot is on, null when they have not voted. */
+  myVoteShowcaseId: string | null;
+  /** Stamped by transition_meetup('end'); null while running or when nobody voted. */
+  bestInShow: BestInShow | null;
+  /** The photo wall (media rows, newest first). */
+  wallPhotos: MeetupPhoto[];
+  /** The club hosting this meetup, when there is one. */
+  club: MeetupClub | null;
+}
+
+export interface BestInShow {
+  showcaseId: string;
+  votes: number;
+  /** null when the winning car is no longer visible to the viewer. */
+  entry: MeetupShowcaseEntry | null;
+}
+
+export interface MeetupPhoto {
+  /** media id — rendered through <MediaImage mediaId> (D-010). */
+  id: string;
+  owner: PublicIdentity | null;
+  ownerId: string;
+  createdAt: string;
+}
+
+export interface MeetupClub {
+  id: string;
+  slug: string;
+  name: string;
 }
 
 /** What the create form needs before it submits anything (07 §2.3 capacity by level, §3.2 fee). */
