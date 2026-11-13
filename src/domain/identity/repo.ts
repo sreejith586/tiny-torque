@@ -85,6 +85,18 @@ export async function redeemInvite(supabase: Client, code: string) {
   if (error) throw error;
 }
 
+/** Has this (possibly profile-less) user already been through the invite gate? Own row only,
+ *  by RLS (MV-S11, invite_redemptions). */
+export async function hasRedeemedInvite(supabase: Client, userId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('invite_redemptions')
+    .select('user_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  return !!data;
+}
+
 export async function listEnabledCountries(supabase: Client) {
   const { data, error } = await supabase
     .from('countries')

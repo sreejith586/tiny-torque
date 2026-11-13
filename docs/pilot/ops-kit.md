@@ -136,6 +136,6 @@ Decisions needed:
 
 Monday routine alongside it: World economy review if any `world*` flag is on (06 §5), `job_runs` errors in the last 7 days, Anthropic / Supabase / Vercel usage against the alerts in `docs/runbook.md` §7.
 
-## 6. Launch-day checklist (pointer)
+## 6. Launch-day checklist
 
-Seeding production, flag defaults and the launch itself are Sprint 11 (MV-S11-01). Before sending the first invite: `docs/release-process.md` §2 promotion done, the restore drill recorded (`docs/runbook.md` §5), Sentry rules tested, `invite_only` ON, the founders code redeemed by you on a clean browser.
+`docs/pilot/launch-checklist.md` — functions and secrets, admin account, flags, a full dry run on a clean browser, minimum alerting, then the first invites.
