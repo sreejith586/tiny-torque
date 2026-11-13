@@ -91,7 +91,9 @@ select is((select string_agg(job, ',' order by id) from run1),
   'quest_reset,earned_expiry_notice,earned_expiry,season_rollover,score_recompute',
   'the five jobs run in the documented order');
 select is((select count(*)::int from run1 where status = 'ok' and finished_at is not null), 5, 'every job finished ok');
-select is((select count(*)::int from public.job_runs), 5, 'one job_runs row per job');
+-- Only rows written since this transaction began: where pg_cron really runs (the CI image), a
+-- `meetups_tick` / hourly tick that fired before the test leaves committed rows in job_runs.
+select is((select count(*)::int from public.job_runs where started_at >= now()), 5, 'one job_runs row per job');
 select is((select distinct triggered_by from run1), 'cron', 'a direct session with no JWT is labelled cron');
 select is((select result from run1 where job = 'quest_reset'), jsonb_build_object('emitted', 2, 'skipped', 0, 'day', '2026-01-06'),
   'quest_reset announced the daily and the weekly window');

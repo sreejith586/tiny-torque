@@ -207,8 +207,13 @@ select is(
   5, 'the 7th consecutive day pays the +5 streak bonus');
 insert into public.domain_events (actor_id, type, entity, entity_id, payload) values
   ('74000000-0000-0000-0000-00000000000c', 'user.opened', 'profile', '74000000-0000-0000-0000-00000000000c', '{}');
-select is((select tokens from public.profiles where id = '74000000-0000-0000-0000-00000000000c'), 12,
-  'a second open the same day pays nothing more (7 × 1 + 5 = 12)');
+-- Login credits only (daily + streak), not the balance: from Friday to Sunday the seven seeded days
+-- include five in the current week, so `weekly_open_days` pays out too and the balance is higher.
+select is(
+  (select coalesce(sum(delta), 0)::int from public.token_ledger
+    where user_id = '74000000-0000-0000-0000-00000000000c'
+      and (reason = 'earn_daily' or idempotency_key like 'streak7:%')),
+  12, 'a second open the same day pays nothing more (7 × 1 + 5 = 12)');
 
 -- ---------- rotation: a pure function of the date ----------
 select is(public.quest_set_index('daily', date '2026-01-05'), 0, 'daily set 0 on the epoch Monday');

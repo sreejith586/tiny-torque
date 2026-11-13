@@ -398,7 +398,9 @@ select throws_ok(
   $$insert into public.clubs (slug, name, owner_id) values ('jdm_club', 'JDM Club', '77000000-0000-0000-0000-00000000000a')$$,
   '42501', null, 'clubs have no write policy yet (W07)');
 select tests.clear_authentication();
-select is((select count(*)::int from public.job_runs where job like 'meetup\_%'), 5, 'every dispatcher run wrote a job_runs row');
+-- started_at >= now(): rows of this transaction only — the real `meetups_tick` cron (every 5 min)
+-- may have committed its own meetup_* rows before the test began.
+select is((select count(*)::int from public.job_runs where job like 'meetup\_%' and started_at >= now()), 5, 'every dispatcher run wrote a job_runs row');
 select ok(tests.meetup_cron_jobs() in (-1, 1), 'the meetups_tick schedule exists wherever pg_cron does');
 
 select * from finish();
