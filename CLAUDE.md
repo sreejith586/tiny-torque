@@ -92,7 +92,7 @@ Migration on local+staging with pgTAP · deployable to prod dark behind its flag
 
 ## Current sprint
 
-S9 — PWA, performance, accessibility, scheduled jobs (one PR `[MV-S9-01…06]` into `staging`, branch `mv/S9-pwa-perf-a11y-jobs`). S0–S8 live on prod. Next: S10 hardening & pilot readiness. See PROGRESS.md.
+S10 — hardening & pilot readiness (one PR `[MV-S10-01…08]` into `staging`, branch `mv/S10-hardening-pilot-readiness`). S0–S9 live on prod. Next: S11 launch + buffer. Ops docs: `docs/runbook.md`, `docs/release-process.md`, `docs/security-review.md`, `docs/load-test.md`, `docs/pilot/`. See PROGRESS.md.
 
 ## Don't
 

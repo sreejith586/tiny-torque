@@ -37,6 +37,8 @@ const NOTIFICATION_TEXT: Record<NotificationType, string> = {
   club_approved: 'Your request to join a club was approved.',
   club_night_ready: 'Your next club night is ready to schedule.',
   hosting_suspended: 'Your hosting rights are suspended. Contact support to appeal.',
+  // Feedback form → admins (MV-S10-05, F-15); only admins ever receive it
+  feedback_received: 'A collector sent feedback.',
 };
 
 /** Pure: what the notification says. No DB access, unit-testable in isolation. */
@@ -71,6 +73,8 @@ export function notificationLink(n: Pick<NotificationRow, 'type' | 'payload'>): 
       return '/market/mine';
     case 'offer_expired':
       return '/offers';
+    case 'feedback_received':
+      return '/admin/feedback';
     case 'meetup_invite':
     case 'meetup_reminder':
     case 'meetup_cancelled':

@@ -66,6 +66,12 @@ function FlagRowEditor({ flag }: { flag: FlagAdminRow }) {
           <span className="muted" style={{ display: 'block', fontSize: 12 }}>
             {audienceSummary || 'everyone (once enabled)'}
           </span>
+          {flag.updated_by && (
+            <span className="muted" style={{ display: 'block', fontSize: 12 }}>
+              Last changed {flag.updated_at.slice(0, 10)} by{' '}
+              {flag.updated_by_handle ? `@${flag.updated_by_handle}` : 'an admin'}
+            </span>
+          )}
         </span>
         <input
           type="checkbox"

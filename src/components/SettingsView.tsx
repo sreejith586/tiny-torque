@@ -93,7 +93,14 @@ export default function SettingsView({
       setFbMessage('');
     } catch (err) {
       setFbState('error');
-      setFbError(err instanceof Error ? err.message : 'Could not send your feedback.');
+      // MV-S10-01: feedback is limited to 10 a day in the database (`rate_limited`).
+      const message =
+        err instanceof Error ? err.message : String((err as { message?: string })?.message ?? '');
+      setFbError(
+        message.includes('rate_limited')
+          ? 'That’s a lot of feedback for one day — thank you. Please send more tomorrow.'
+          : message || 'Could not send your feedback.'
+      );
     }
   }
 
@@ -333,6 +340,53 @@ export default function SettingsView({
           <Link href="/legal/guidelines" className="muted" style={{ fontSize: 13 }}>
             Read
           </Link>
+        </div>
+        <div className="toggle-row">
+          <span>Offline deals</span>
+          <Link href="/legal/offline-deals" className="muted" style={{ fontSize: 13 }}>
+            Read
+          </Link>
+        </div>
+        <div className="toggle-row">
+          <span>Abuse and reporting</span>
+          <Link href="/legal/abuse" className="muted" style={{ fontSize: 13 }}>
+            Read
+          </Link>
+        </div>
+      </div>
+
+      {/* MV-S10-08 / F-19: known issues + the two providers' status pages. */}
+      <div className="panel" style={{ marginBottom: 16 }}>
+        <h2 style={{ fontSize: 16 }}>Help and status</h2>
+        <div className="toggle-row">
+          <span>Known issues</span>
+          <Link href="/legal/known-issues" className="muted" style={{ fontSize: 13 }}>
+            Read
+          </Link>
+        </div>
+        <div className="toggle-row">
+          <span>App hosting status</span>
+          <a
+            href="https://www.vercel-status.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="muted"
+            style={{ fontSize: 13 }}
+          >
+            Open
+          </a>
+        </div>
+        <div className="toggle-row">
+          <span>Database and sign-in status</span>
+          <a
+            href="https://status.supabase.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="muted"
+            style={{ fontSize: 13 }}
+          >
+            Open
+          </a>
         </div>
       </div>
 

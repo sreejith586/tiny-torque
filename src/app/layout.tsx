@@ -94,6 +94,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <ThemeStyles />
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+        {/* MV-S10-01: zod probes `new Function("")` once to decide whether it may JIT-compile
+            schemas; under our CSP (no 'unsafe-eval') the probe is caught but still reported as a
+            violation on every page. zod reads this global before probing (its documented
+            `jitless` switch) — set here, without importing zod into routes that don't use it. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              'globalThis.__zod_globalConfig=Object.assign(globalThis.__zod_globalConfig||{},{jitless:true});',
+          }}
+        />
       </head>
       <body>
         <Splash />
