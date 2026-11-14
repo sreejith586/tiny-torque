@@ -55,9 +55,9 @@ select id, handle, role from public.profiles where role = 'admin';
 | `token_purchase`, `pro_purchase`             | **OFF**                    | until real Stripe keys and pricing (D-024)                                  |
 | every `world*` flag                          | OFF                        | Collectors World is not part of the beta                                    |
 
-- [ ] Each row shows "Last changed … by @you".
+- [x] Each row shows "Last changed … by @you". _(2026-11-14: `invite_only`, `ai_scan`, `ai_scan_group` flipped ON by Sreejith on `/admin/flags`; prod read confirms `enabled = true` for all three.)_
 
-> State read on 2026-11-14: `invite_only`, `ai_scan`, `ai_scan_group` still **OFF**; **all eight `world*` flags are ON** on prod (the table above expects OFF for the beta — decide before inviting). `token_purchase` / `pro_purchase` OFF as required. A direct SQL flip from the build session was refused by its permission classifier, so this step stays a dashboard action.
+> Still open from this step: **all eight `world*` flags are ON** on prod (set 2026-11-08 by @sreejith) while the table above expects OFF for the beta — decide before inviting. **`token_purchase` and `pro_purchase` were also switched ON on 2026-11-14 — they must go back OFF until real Stripe keys and pricing exist (D-024).** `csv_import` ON. The flag descriptions on `/admin/flags` still say "Not yet built" for shipped features — copy-only clean-up, follow-up.
 
 ## 4. Prove the whole path yourself, on a clean browser (≈ 10 min)
 
