@@ -4,9 +4,9 @@ import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { addCollectionItems } from '@/domain/garage';
-import { uploadItemMedia } from '@/domain/media';
+import { removeMedia, uploadItemMedia, uploadScanMedia } from '@/domain/media';
 import { compressImage } from '@/lib/image';
-import { scanPhotoForCars, type ScanCandidate } from '@/domain/ai';
+import { recordScanAccepted, scanErrorMessage, scanMedia, type ScanCandidate } from '@/domain/ai';
 import { CameraIcon } from '@/components/icons';
 
 // Editable review row: a scan candidate plus an "include" checkbox and the
@@ -34,6 +34,9 @@ export default function BatchScanPage() {
   const [rows, setRows] = useState<ReviewRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // The metered scan job behind the current review list (MV-S11-04) — told how many of its
+  // candidates were saved, for the scan-share / acceptance KPIs.
+  const [scanJobId, setScanJobId] = useState<string | null>(null);
 
   function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -41,6 +44,7 @@ export default function BatchScanPage() {
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
     setRows([]);
+    setScanJobId(null);
     setError(null);
   }
 
@@ -49,7 +53,23 @@ export default function BatchScanPage() {
     setScanning(true);
     setError(null);
     try {
-      const candidates = await scanPhotoForCars(supabase, photoFile);
+      // F-03 / MV-S11-04: the photo goes to private storage and the metered `ai-scan` Edge
+      // Function reads it by id — quota, kill switch and cost log live there. (The Phase-1
+      // base64 `scan-photo` call had none of the three.) Group scan = one scan, however many cars.
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) throw new Error('You need to be signed in.');
+      const blob = await compressImage(photoFile);
+      const upload = await uploadScanMedia(supabase, userId, blob, { bytes: blob.size });
+      let candidates: ScanCandidate[] = [];
+      try {
+        const result = await scanMedia(supabase, upload.id, 'group');
+        candidates = result.candidates;
+        setScanJobId(result.job_id);
+      } finally {
+        // The function has read it (or refused); the working copy is not kept either way.
+        await removeMedia(supabase, upload).catch(() => {});
+      }
       if (candidates.length === 0) {
         setError('No cars were recognizable in this photo. Try a clearer or closer shot.');
       }
@@ -62,9 +82,9 @@ export default function BatchScanPage() {
       );
     } catch (err) {
       // Never surface raw infrastructure errors (Edge Function / network) to users — log for
-      // diagnostics, show friendly copy. Photo scanning may also simply be unavailable yet.
+      // diagnostics, show friendly copy: out of scans, switched off, or try again.
       console.error('Photo scan failed:', err);
-      setError("We couldn't scan this photo right now. Please try again in a little while.");
+      setError(scanErrorMessage(err));
     } finally {
       setScanning(false);
     }
@@ -108,6 +128,11 @@ export default function BatchScanPage() {
         for (const item of items) {
           await uploadItemMedia(supabase, userId, item.id, blob, { bytes: blob.size });
         }
+      }
+
+      // Best-effort: a failed KPI write must not undo a successful save.
+      if (scanJobId && items.length > 0) {
+        await recordScanAccepted(supabase, scanJobId, items.length).catch(() => {});
       }
 
       router.push('/garage');

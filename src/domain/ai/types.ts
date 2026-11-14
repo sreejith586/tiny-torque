@@ -17,6 +17,15 @@ export interface AiScanResult {
   job_id: string | null;
 }
 
+/** Thrown when scanning is switched off (the `ai_scan` / `ai_scan_group` kill switch, D-018). */
+export class ScanUnavailableError extends Error {
+  readonly code = 'feature_disabled';
+  constructor(message = 'AI scan is currently unavailable.') {
+    super(message);
+    this.name = 'ScanUnavailableError';
+  }
+}
+
 /** Thrown when the scan is blocked by quota so the UI can show the paywall (F-03, S3-06). */
 export class ScanQuotaError extends Error {
   readonly code = 'scan_quota_exhausted';

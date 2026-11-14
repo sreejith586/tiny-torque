@@ -37,11 +37,10 @@ Use `occurred_at` (not PostHog's receive time) when an insight needs the real ti
 1. Check events arrive: Activity › filter `mirrored = true`.
 2. Create the insights in the table above; put them on one dashboard "Pilot KPIs".
 3. Add two cohorts: "Shops" (`account_type = shop`) and one per country; use them as breakdowns.
-4. Invite cohorts (`uae-collectors`, `india-shops`, …) are in the event log (`invite.redeemed` payload) and on `/admin/invites`, not in PostHog — split by cohort in SQL:
+4. Invite cohorts (`uae-collectors`, `india-shops`, …) are in `invite_redemptions` (one row per collector, since S11) and on `/admin/invites`, not in PostHog — split by cohort in SQL:
 
    ```sql
-   select e.payload ->> 'cohort' as cohort, count(distinct e.actor_id) as collectors
-   from domain_events e where e.type = 'invite.redeemed' group by 1 order by 2 desc;
+   select cohort, count(*) as collectors from invite_redemptions group by 1 order by 2 desc;
    ```
 
 ## 4. Gaps, stated plainly

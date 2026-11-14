@@ -2,7 +2,7 @@
 -- Run via CI's "pgTAP RLS matrix" job (supabase/postgres image) or `supabase test db` locally.
 
 begin;
-select plan(10);
+select plan(11);
 
 -- ---------- fixtures ----------
 insert into auth.users (id) values
@@ -103,17 +103,26 @@ select throws_ok(
   'redeem_invite: an expired code is rejected'
 );
 
--- redeeming GOODCODE a second time is allowed by design (max_uses=2, no per-user tracking column
--- in the invites schema, F-01/03 §2.23) -- confirms the cap, not per-user dedup, is what's enforced
+-- MV-S11 (20261113200000_invite_gate): redemption is tracked per collector now. The same
+-- collector re-entering GOODCODE spends no second seat; the seats go to DIFFERENT collectors, and
+-- the cap still holds once they are gone.
 select lives_ok(
   $$select public.redeem_invite('GOODCODE')$$,
-  'redeem_invite: the same code can be redeemed again up to max_uses'
+  'redeem_invite: the same collector redeeming again is a no-op, not a second seat'
 );
+select tests.authenticate_as('00000000-0000-0000-0000-0000000000ab');
+select lives_ok(
+  $$select public.redeem_invite('goodcode')$$,
+  'redeem_invite: a second collector takes the second seat (case-insensitive)'
+);
+select tests.clear_authentication();
+insert into auth.users (id) values ('00000000-0000-0000-0000-0000000000ac');
+select tests.authenticate_as('00000000-0000-0000-0000-0000000000ac');
 select throws_ok(
   $$select public.redeem_invite('GOODCODE')$$,
   'P0001',
   null,
-  'redeem_invite: the third attempt hits max_uses and is rejected'
+  'redeem_invite: a third collector hits max_uses and is rejected'
 );
 
 select tests.clear_authentication();

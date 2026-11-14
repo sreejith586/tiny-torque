@@ -12,7 +12,7 @@ export interface KnownIssueGroup {
   items: KnownIssue[];
 }
 
-export const KNOWN_ISSUES_UPDATED = '12 November 2026';
+export const KNOWN_ISSUES_UPDATED = '13 November 2026';
 
 export const KNOWN_ISSUES: KnownIssueGroup[] = [
   {
@@ -23,20 +23,15 @@ export const KNOWN_ISSUES: KnownIssueGroup[] = [
         detail:
           'sign-in is by a code sent to your email for now. Mobile-number sign-in comes later in the pilot.',
       },
-      {
-        title: 'You land on your garage after signing in',
-        detail:
-          'if you opened a link while signed out, you are taken to your garage after the code, not back to that link. Open the link again.',
-      },
     ],
   },
   {
     area: 'Scanning',
     items: [
       {
-        title: 'Out of scans',
+        title: 'Scans are limited',
         detail:
-          'when your scans run out the scan screen shows an error instead of the options to get more. Add the car by hand until your allowance comes back.',
+          'each photo scan counts against a monthly allowance. When it runs out the scan screen says so; add the car by hand until your scans come back.',
       },
       {
         title: 'Check what the scan suggests',

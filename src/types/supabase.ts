@@ -621,6 +621,25 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"invite_redemptions": {
+                  Row: {
+                    "code": string,"cohort": string | null,"redeemed_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "code": string,"cohort"?: string | null,"redeemed_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "code"?: string,"cohort"?: string | null,"redeemed_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "invite_redemptions_code_fkey"
+      columns: ["code"]
+isOneToOne: false
+      referencedRelation: "invites"
+      referencedColumns: ["code"]
+    }
+                  ]
                 },"invites": {
                   Row: {
                     "code": string,"cohort": string | null,"created_at": string,"created_by": string | null,"expires_at": string | null,"max_uses": number,"used_count": number
@@ -2668,6 +2687,9 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
+"record_scan_accepted":
+{ Args: { "p_count": number,"p_job": string }; Returns: number
+                           },
 "record_world_visit":
 { Args: { "p_garage": string }; Returns: {
               "created_at": string,

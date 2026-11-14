@@ -2,6 +2,7 @@
 import * as repo from './repo';
 
 export const uploadItemMedia = repo.uploadItemMedia;
+export const uploadScanMedia = repo.uploadScanMedia;
 export const uploadProfileMedia = repo.uploadProfileMedia;
 export const uploadMeetupPhoto = repo.uploadMeetupPhoto;
 export const listItemMedia = (supabase: Parameters<typeof repo.listForEntity>[0], itemId: string) =>
