@@ -4,27 +4,27 @@ The shortest path from "S11 is merged" to "the first invite is sent". Everything
 
 ## 0. Before anything else
 
-- [ ] S11 PR merged into `staging`, CI green, then promoted `staging → main` (`docs/release-process.md` §2). `db-migrate.yml` on `main` lists `20261113200000_invite_gate` and `20261113201000_scan_metering`.
+- [x] S11 PR merged into `staging`, CI green, then promoted `staging → main` (`docs/release-process.md` §2). `db-migrate.yml` on `main` lists `20261113200000_invite_gate` and `20261113201000_scan_metering`. _(#123, run 43571635211, 2026-11-14)_
 - [ ] The two prod security checks from S10 are done (`docs/security-review.md` §1).
 
 ## 1. Edge Functions and their secrets (≈ 10 min)
 
 The scan screen now calls **`ai-scan` only**. Until this step is done, scanning on prod answers "switched off".
 
-- [ ] Secrets present on the prod project: `ANTHROPIC_API_KEY`, `JOBS_SECRET` (`supabase secrets list --project-ref whjqwcaoexbytspkaxfh`).
-- [ ] Deploy the metered scan function:
+- [x] Secrets present on the prod project: `ANTHROPIC_API_KEY`, `JOBS_SECRET` (`supabase secrets list --project-ref whjqwcaoexbytspkaxfh`). _(both present, 2026-11-14)_
+- [x] Deploy the metered scan function: _(deployed 2026-11-14, v1, verify_jwt on; unauthenticated POST → 401)_
 
   ```bash
   supabase functions deploy ai-scan --project-ref whjqwcaoexbytspkaxfh
   ```
 
-- [ ] Redeploy jobs (W07 changed it; also still open from S9):
+- [x] Redeploy jobs (W07 changed it; also still open from S9): _(deployed 2026-11-14, v1, `--no-verify-jwt`; POST without secret → 401. pg_cron confirmed: all 12 jobs present and active, incl. the 4 `h1_*` + `pilot_kpis_refresh`.)_
 
   ```bash
   supabase functions deploy jobs --no-verify-jwt --project-ref whjqwcaoexbytspkaxfh
   ```
 
-- [ ] **Delete the retired scan endpoint.** The Phase-1 `scan-photo` function is still deployed and still calls Anthropic for anyone holding the public anon key, with no quota or log:
+- [x] **Delete the retired scan endpoint.** The Phase-1 `scan-photo` function was still deployed and still called Anthropic for anyone holding the public anon key, with no quota or log: _(deleted 2026-11-14; its URL now answers 404. Prod functions are exactly `ai-scan` + `jobs`; `stripe-webhook` is not deployed, which is fine while `token_purchase` is OFF.)_
 
   ```bash
   supabase functions delete scan-photo --project-ref whjqwcaoexbytspkaxfh
@@ -41,7 +41,7 @@ update public.profiles set role = 'admin' where handle = '<your handle>';
 select id, handle, role from public.profiles where role = 'admin';
 ```
 
-- [ ] Exactly the accounts you expect are listed. `/admin` opens for you.
+- [x] Exactly the accounts you expect are listed. `/admin` opens for you. _(2026-11-14: one admin row, handle `sreejith`.)_
 
 ## 3. Flags — `/admin/flags` (≈ 5 min)
 
@@ -56,6 +56,8 @@ select id, handle, role from public.profiles where role = 'admin';
 | every `world*` flag                          | OFF                        | Collectors World is not part of the beta                                    |
 
 - [ ] Each row shows "Last changed … by @you".
+
+> State read on 2026-11-14: `invite_only`, `ai_scan`, `ai_scan_group` still **OFF**; **all eight `world*` flags are ON** on prod (the table above expects OFF for the beta — decide before inviting). `token_purchase` / `pro_purchase` OFF as required. A direct SQL flip from the build session was refused by its permission classifier, so this step stays a dashboard action.
 
 ## 4. Prove the whole path yourself, on a clean browser (≈ 10 min)
 
