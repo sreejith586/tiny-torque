@@ -7,6 +7,7 @@ import {
   createProfile,
   patchProfile,
   redeemInvite,
+  inviteErrorMessage,
   suggestAvailableHandle,
   isHandleAvailable,
   CITIES_BY_COUNTRY,
@@ -165,7 +166,7 @@ export default function OnboardingWizard({
       setInviteRedeemed(true);
       setStepIndex((i) => i + 1);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not verify that invite code.');
+      setError(inviteErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -204,7 +205,18 @@ export default function OnboardingWizard({
       router.push('/garage');
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save your profile. Try again.');
+      // MV-S11: the database refuses onboarding without a redeemed invite while invite_only is on.
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: unknown }).message)
+          : '';
+      setError(
+        message.includes('invite_required')
+          ? inviteErrorMessage(err)
+          : err instanceof Error
+            ? err.message
+            : 'Could not save your profile. Try again.'
+      );
     } finally {
       setLoading(false);
     }

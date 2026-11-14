@@ -19,6 +19,25 @@ export const verifyEmailOtp = repo.verifyEmailOtp;
 export const signOut = repo.signOut;
 export const getProfile = repo.getProfile;
 export const redeemInvite = repo.redeemInvite;
+export const hasRedeemedInvite = repo.hasRedeemedInvite;
+
+/** Pure: what to tell a collector when the invite step or the gate refuses them. Supabase errors
+ *  are plain objects, not Error instances, so read `.message` defensively. */
+export function inviteErrorMessage(err: unknown): string {
+  const raw =
+    err && typeof err === 'object' && 'message' in err
+      ? String((err as { message: unknown }).message)
+      : '';
+  if (raw.includes('Invalid invite code'))
+    return 'That code isn’t one of ours. Check it against your invite message.';
+  if (raw.includes('expired')) return 'That invite code has expired. Ask for a new one.';
+  if (raw.includes('already used'))
+    return 'That invite code has already been used. Ask for a new one.';
+  if (raw.includes('invite_required'))
+    return 'Tiny Torque is invite-only right now. Enter your invite code to continue.';
+  if (raw.includes('Sign in required')) return 'Your session ended. Sign in again.';
+  return 'Could not verify that invite code. Try again.';
+}
 export const listEnabledCountries = repo.listEnabledCountries;
 export const isHandleAvailable = repo.isHandleAvailable;
 export const getPublicProfile = repo.getPublicProfile;

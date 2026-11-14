@@ -189,6 +189,12 @@ update public.feature_flags set enabled = true where key = 'world_earn';
 
 -- ---------- consumer: daily login + 7-day streak (07 §3.2) ----------
 -- six consecutive days before today, then today → streak 7 → +5 on top of the +1s
+-- `weekly_open_days` (5 open days in the current week, +8) is taken out of play for this section:
+-- the seven seeded days straddle a week boundary, so whether it completes — and whether its +8
+-- lands before the streak bonus and fills the 15-a-day earn ceiling — depends on the weekday the
+-- suite runs on (it failed Friday one way and Saturday another). This section is about the daily
+-- login and the streak only.
+update public.quests set active = false where key = 'weekly_open_days';
 insert into public.domain_events (actor_id, type, entity, entity_id, payload, occurred_at)
 select '74000000-0000-0000-0000-00000000000c', 'user.opened', 'profile', '74000000-0000-0000-0000-00000000000c', '{}',
        public.mv_utc_day_start(public.mv_utc_day(now()) - n) + interval '8 hours'
@@ -214,6 +220,7 @@ select is(
     where user_id = '74000000-0000-0000-0000-00000000000c'
       and (reason = 'earn_daily' or idempotency_key like 'streak7:%')),
   12, 'a second open the same day pays nothing more (7 × 1 + 5 = 12)');
+update public.quests set active = true where key = 'weekly_open_days';
 
 -- ---------- rotation: a pure function of the date ----------
 select is(public.quest_set_index('daily', date '2026-01-05'), 0, 'daily set 0 on the epoch Monday');

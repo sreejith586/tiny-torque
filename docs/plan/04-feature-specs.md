@@ -52,6 +52,7 @@
 - Group photo of 6 cars returns ≥ 5 candidates in staging fixture set; accepted candidates create rows with `catalog_model_id` when match ≥ 0.85.
 - Cost per scan logged; monthly cost view in admin.
   **Events** `scan.requested`, `scan.completed`, `scan.accepted` (count)
+  **S11 (2026-11-13, D-113):** `/garage/scan` now goes through `ai-scan` (quota, kill switch, cost log); `scan.completed` + `scan.accepted` are logged and `accepted_count` is set; quota / switched-off show a plain message (paywall wiring waits for token purchases); `scan-photo` retired. Still open: the single-car "Scan" tab in the add flow, `scan.requested`, proposing unknown brands to the catalogue on accept.
   **Flags** `ai_scan` (kill switch), `ai_scan_group`
 
 ## F-04 CSV / spreadsheet import

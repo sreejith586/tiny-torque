@@ -39,6 +39,42 @@ export async function uploadItemMedia(
 }
 
 /**
+ * Upload the (already-compressed) photo a scan will read (F-03): private item-media bucket, no
+ * parent item yet, status `uploading` so it never shows anywhere. The scan Edge Function reads it
+ * by media id; the caller removes it once the review is saved or abandoned.
+ */
+export async function uploadScanMedia(
+  supabase: Client,
+  userId: string,
+  blob: Blob,
+  meta: UploadMeta = {}
+): Promise<MediaRow> {
+  const path = `${userId}/scan/${crypto.randomUUID()}.jpg`;
+  const { error: upErr } = await supabase.storage
+    .from(ITEM_MEDIA_BUCKET)
+    .upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+  if (upErr) throw upErr;
+  const row: TablesInsert<'media'> = {
+    owner_id: userId,
+    kind: 'item',
+    entity_id: null,
+    bucket: ITEM_MEDIA_BUCKET,
+    path,
+    width: meta.width ?? null,
+    height: meta.height ?? null,
+    bytes: meta.bytes ?? null,
+    sort_order: 0,
+    status: 'uploading',
+  };
+  const { data, error } = await supabase.from('media').insert(row).select().single();
+  if (error) {
+    await supabase.storage.from(ITEM_MEDIA_BUCKET).remove([path]);
+    throw error;
+  }
+  return data;
+}
+
+/**
  * Upload a (already-compressed) avatar image to the private profile-media bucket and record its
  * row. `entity_id`/`owner_id` is the profiles row, so this must run after that row exists (unlike
  * item media, which can precede its parent — see MV-S1-04's onboarding flow).

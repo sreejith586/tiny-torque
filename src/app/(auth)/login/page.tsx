@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { safeNextPath } from '@/lib/safe-next';
 import { createClient } from '@/lib/supabase/client';
 import {
   sendOtp,
@@ -144,7 +145,11 @@ function LoginForm() {
           // see above
         }
       }
-      router.push(hasProfile ? '/garage' : '/onboarding');
+      // MV-S11-04: honour ?next= (set by the proxy when a signed-out visitor opened a deep link),
+      // same-origin paths only.
+      router.push(
+        hasProfile ? (safeNextPath(searchParams.get('next')) ?? '/garage') : '/onboarding'
+      );
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'That code did not work. Try again.');

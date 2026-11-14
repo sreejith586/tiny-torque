@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { listEnabledCountries, defaultCountryCode } from '@/domain/identity';
+import { listEnabledCountries, defaultCountryCode, hasRedeemedInvite } from '@/domain/identity';
 import { isFlagEnabled } from '@/domain/flags';
 import OnboardingWizard from '@/components/OnboardingWizard';
 import { FIXTURE_COUNTRIES, isVisualHarness } from '@/lib/visual-fixtures';
@@ -34,10 +34,13 @@ export default async function OnboardingPage({
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const [countries, inviteOnly] = await Promise.all([
+  const [countries, inviteFlag, redeemed] = await Promise.all([
     listEnabledCountries(supabase),
     isFlagEnabled(supabase, 'invite_only', { userId: user.id }),
+    // MV-S11: a collector who already redeemed (then closed the tab) is not asked again.
+    hasRedeemedInvite(supabase, user.id).catch(() => false),
   ]);
+  const inviteOnly = inviteFlag && !redeemed;
 
   return (
     <main style={{ padding: '48px 20px', flex: 1 }}>
