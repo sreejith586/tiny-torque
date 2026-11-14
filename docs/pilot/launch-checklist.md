@@ -57,7 +57,7 @@ select id, handle, role from public.profiles where role = 'admin';
 
 - [x] Each row shows "Last changed … by @you". _(2026-11-14: `invite_only`, `ai_scan`, `ai_scan_group` flipped ON by Sreejith on `/admin/flags`; prod read confirms `enabled = true` for all three.)_
 
-> Still open from this step: **all eight `world*` flags are ON** on prod (set 2026-11-08 by @sreejith) while the table above expects OFF for the beta — decide before inviting. **`token_purchase` and `pro_purchase` were also switched ON on 2026-11-14 — they must go back OFF until real Stripe keys and pricing exist (D-024).** `csv_import` ON. The flag descriptions on `/admin/flags` still say "Not yet built" for shipped features — copy-only clean-up, follow-up.
+> Still open from this step: **all eight `world*` flags are ON** on prod (set 2026-11-08 by @sreejith) while the table above expects OFF for the beta — decide before inviting. `token_purchase` and `pro_purchase` were briefly ON on 2026-11-14 and are **back OFF** (prod read confirms; D-024). `csv_import` ON. The flag descriptions on `/admin/flags` still say "Not yet built" for shipped features — copy-only clean-up, follow-up.
 
 ## 4. Prove the whole path yourself, on a clean browser (≈ 10 min)
 
