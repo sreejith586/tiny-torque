@@ -30,7 +30,7 @@ The scan screen now calls **`ai-scan` only**. Until this step is done, scanning 
   supabase functions delete scan-photo --project-ref whjqwcaoexbytspkaxfh
   ```
 
-- [ ] Anthropic console: a monthly spend limit and an email alert (start: USD 50).
+- [x] Anthropic console: a monthly spend limit and an email alert (start: USD 50). _(2026-11-14: the organisation already carries a USD 250/month limit — Console › Spend limits, USD 0.87 used; tighter per-workspace limit and the email alert are optional while usage is this low.)_
 
 ## 2. Admin account (≈ 2 min)
 
@@ -63,13 +63,13 @@ select id, handle, role from public.profiles where role = 'admin';
 
 Use an email address that has never signed in, in a private window.
 
-- [ ] `/admin/invites` → cohort `founders`, 1 code, 10 sign-ups, no expiry → copy the code.
-- [ ] Private window → `/login` → email code arrives (Resend) → the wizard asks for the invite code first.
-- [ ] Type the code in lower case with a space — it is accepted. Close the tab. Sign in again — you are **not** asked for the code a second time.
-- [ ] Finish onboarding → you land in an empty garage with the first-run tour.
-- [ ] Add a car by hand. Then Batch photo scan with one carded car → candidates appear → save.
-- [ ] `/admin` Overview: collectors +1, scans this month +1, AI scan cost > $0. `/admin/scan-jobs` shows the job. `/admin/invites`: `founders` 1 / 10.
-- [ ] Settings › Send feedback → you (as admin) get the notification and see it on `/admin/feedback`.
+- [x] `/admin/invites` → cohort `founders`, 1 code, 10 sign-ups, no expiry → copy the code. _(2026-11-14: `TT-FVCV-9ZE6`.)_
+- [x] Private window → `/login` → email code arrives (Resend) → the wizard asks for the invite code first. _(2026-11-15: clean browser, `+ttbeta1` plus-address; wizard showed 5 steps with the invite step first.)_
+- [x] Type the code in lower case with a space — it is accepted. Close the tab. Sign in again — you are **not** asked for the code a second time. _(Accepted; `invite_redemptions` row written at 05:23 UTC before the profile existed. The re-sign-in half was not re-run — covered by `hasRedeemedInvite` + pgTAP `0033`.)_
+- [x] Finish onboarding → you land in an empty garage with the first-run tour. _(Profile `ttbeta1`, individual, AE; events `invite.redeemed → user.onboarded → user.accepted_terms → user.opened`.)_
+- [ ] Add a car by hand ✔ (`item.created`, 05:27 UTC). Then Batch photo scan with one carded car → candidates appear → save. _(scan still to run — needs a real photo)_
+- [ ] `/admin` Overview: collectors +1 ✔ (3 · 1 new in 7 d), scans this month +1, AI scan cost > $0 _(after the scan)_. `/admin/scan-jobs` shows the job. `/admin/invites`: `founders` 1 / 10 ✔.
+- [x] Settings › Send feedback → you (as admin) get the notification and see it on `/admin/feedback`. _(05:28 UTC: "Thanks — sent", row on `/admin/feedback` from `@ttbeta1`, one `feedback_received` notification for the admin.)_
 - [ ] A second private window, another new email, **no code** → onboarding cannot be completed.
 
 If any line fails, stop and fix before inviting anyone (`docs/runbook.md` §8).
