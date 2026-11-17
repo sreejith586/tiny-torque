@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -38,12 +38,15 @@ export default function OnboardingWizard({
   countries,
   inviteOnly,
   defaultCountry,
+  publicHost = 'tinytorque.hypermaxsolutions.com',
 }: {
   userId: string;
   userPhone?: string | null;
   countries: CountryRow[];
   inviteOnly: boolean;
   defaultCountry: string;
+  /** Host shown in the handle preview (`<host>/u/<handle>`), from the request headers. */
+  publicHost?: string;
 }) {
   const supabase = createClient();
   const router = useRouter();
@@ -95,26 +98,34 @@ export default function OnboardingWizard({
     }
   }
 
-  async function checkHandle() {
+  // One in-flight availability check at a time; goNext awaits it instead of asking the user to
+  // press Next again (dry run 2026-11-15: blur + Next in quick succession needed two presses).
+  const handleCheck = useRef<Promise<HandleStatus> | null>(null);
+
+  function checkHandle(): Promise<HandleStatus> {
     const candidate = handle.trim().toLowerCase();
     if (!candidate) {
       // Blank is valid: createProfile auto-suggests one from displayName.
       setHandleStatus('idle');
-      return;
+      return Promise.resolve('idle');
     }
     if (!HANDLE_RE.test(candidate)) {
       setHandleStatus('invalid');
-      return;
+      return Promise.resolve('invalid');
     }
     setHandleStatus('checking');
-    try {
-      setHandleStatus((await isHandleAvailable(supabase, candidate)) ? 'available' : 'taken');
-    } catch {
-      setHandleStatus('idle');
-    }
+    const check = isHandleAvailable(supabase, candidate)
+      .then((free): HandleStatus => (free ? 'available' : 'taken'))
+      .catch((): HandleStatus => 'idle')
+      .then((status) => {
+        setHandleStatus(status);
+        return status;
+      });
+    handleCheck.current = check;
+    return check;
   }
 
-  function goNext(e: FormEvent) {
+  async function goNext(e: FormEvent) {
     e.preventDefault();
     setError(null);
 
@@ -127,15 +138,19 @@ export default function OnboardingWizard({
         setError('Tell us what to call you.');
         return;
       }
-      if (handleStatus === 'checking') {
-        setError('Still checking that handle — one moment.');
-        return;
+      // Resolve the handle before moving on: wait for a check in flight, or run one if the
+      // field was edited but never blurred.
+      let status = handleStatus;
+      if (status === 'checking' && handleCheck.current) {
+        status = await handleCheck.current;
+      } else if (status === 'idle' && handle.trim()) {
+        status = await checkHandle();
       }
-      if (handleStatus === 'invalid') {
+      if (status === 'invalid') {
         setError('Handle must be 3-24 characters: lowercase letters, numbers, underscores only.');
         return;
       }
-      if (handleStatus === 'taken') {
+      if (status === 'taken') {
         setError('That handle is already taken.');
         return;
       }
@@ -381,7 +396,9 @@ export default function OnboardingWizard({
             </p>
           )}
           {handleStatus === 'available' && handle && (
-            <p className="muted">mini-vault.app/u/{handle}</p>
+            <p className="muted">
+              {publicHost}/u/{handle}
+            </p>
           )}
 
           {error && <p className="field-error">{error}</p>}

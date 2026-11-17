@@ -76,6 +76,9 @@ export default function BatchScanPage() {
       setRows(
         candidates.map((c, i) => ({
           ...c,
+          // The function answers "Unknown" when it can't read a brand (ai-scan/lib.ts). Show an
+          // empty field instead so the car is saved with a real brand, not the placeholder.
+          brand: /^unknown$/i.test(c.brand.trim()) ? '' : c.brand,
           id: `${Date.now()}-${i}`,
           include: true,
         }))
@@ -101,14 +104,18 @@ export default function BatchScanPage() {
   const includedCount = rows.filter((r) => r.include).length;
 
   async function handleSaveAll() {
-    setSaving(true);
     setError(null);
+    const toSave = rows.filter((r) => r.include);
+    if (toSave.some((r) => !r.brand.trim())) {
+      setError("Add a brand for every car you want to save — or untick the ones you can't place.");
+      return;
+    }
+    setSaving(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       if (!userId) throw new Error('You need to be signed in.');
 
-      const toSave = rows.filter((r) => r.include);
       const items = await addCollectionItems(
         supabase,
         userId,
@@ -263,6 +270,7 @@ export default function BatchScanPage() {
                       <label style={{ fontSize: 12 }}>Brand</label>
                       <input
                         value={row.brand}
+                        placeholder="e.g. Hot Wheels"
                         onChange={(e) => updateRow(row.id, { brand: e.target.value })}
                       />
                     </div>
