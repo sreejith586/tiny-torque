@@ -388,18 +388,22 @@ export default function OnboardingWizard({
             onBlur={checkHandle}
             placeholder="e.g. varun"
           />
-          {handleStatus === 'checking' && <p className="muted">Checking availability…</p>}
-          {handleStatus === 'taken' && <p className="field-error">That handle is already taken.</p>}
-          {handleStatus === 'invalid' && (
-            <p className="field-error">
-              3-24 characters: lowercase letters, numbers, underscores only.
-            </p>
-          )}
-          {handleStatus === 'available' && handle && (
-            <p className="muted">
-              {publicHost}/u/{handle}
-            </p>
-          )}
+          {/* One always-present status line: when it appeared only on blur it pushed the buttons
+              down between mouse-down and mouse-up, and the first press of Next was lost. */}
+          <p
+            className={
+              handleStatus === 'taken' || handleStatus === 'invalid' ? 'field-error' : 'muted'
+            }
+            style={{ minHeight: '1.5em' }}
+            aria-live="polite"
+          >
+            {handleStatus === 'checking' && 'Checking availability…'}
+            {handleStatus === 'taken' && 'That handle is already taken.'}
+            {handleStatus === 'invalid' &&
+              '3-24 characters: lowercase letters, numbers, underscores only.'}
+            {handleStatus === 'available' && handle && `${publicHost}/u/${handle}`}
+            {(handleStatus === 'idle' || (handleStatus === 'available' && !handle)) && ' '}
+          </p>
 
           {error && <p className="field-error">{error}</p>}
           <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
