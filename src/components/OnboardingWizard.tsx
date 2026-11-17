@@ -88,10 +88,16 @@ export default function OnboardingWizard({
 
   const cityOptions = CITIES_BY_COUNTRY[countryCode] ?? [];
 
+  // Mirror of `handleEdited` that an in-flight suggestion can read after its await — state in
+  // the closure is stale, and a late suggestion used to overwrite a handle typed meanwhile.
+  const handleEditedRef = useRef(false);
+
   async function suggestHandleFor(name: string) {
     if (handleEdited || !name.trim()) return;
     try {
-      setHandle(await suggestAvailableHandle(supabase, name.trim()));
+      const suggestion = await suggestAvailableHandle(supabase, name.trim());
+      if (handleEditedRef.current) return;
+      setHandle(suggestion);
       setHandleStatus('available');
     } catch {
       // Auto-suggestion is a convenience; the blur check below still catches a bad manual entry.
@@ -383,6 +389,7 @@ export default function OnboardingWizard({
             onChange={(e) => {
               setHandle(e.target.value);
               setHandleEdited(true);
+              handleEditedRef.current = true;
               setHandleStatus('idle');
             }}
             onBlur={checkHandle}
