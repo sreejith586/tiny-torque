@@ -843,7 +843,7 @@ export const FIXTURE_QUEST_BOARD: QuestBoard = {
   weekly: [
     quest('weekly_visits', 'weekly', 'Visit 10 garages this week', 'world.visited', 10, 4, 8, 40),
     quest('weekly_kudos', 'weekly', 'Give kudos 5 times', 'world.kudos_given', 5, 5, 8, 40),
-    quest('weekly_open_days', 'weekly', 'Open TinyTorque on 5 days', 'user.opened', 5, 3, 8, 40),
+    quest('weekly_open_days', 'weekly', 'Open Diecast Crew on 5 days', 'user.opened', 5, 3, 8, 40),
   ],
   streak: 3,
   season: {

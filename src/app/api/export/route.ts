@@ -19,7 +19,7 @@ export async function GET() {
 
   const items = await listCollectionItems(supabase, user.id);
   const payload = buildExportPayload(profile, items);
-  const filename = `mini-vault-export-${profile.handle ?? user.id}.json`;
+  const filename = `diecast-crew-export-${profile.handle ?? user.id}.json`;
 
   return new NextResponse(JSON.stringify(payload, null, 2), {
     headers: {

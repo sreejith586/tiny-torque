@@ -76,14 +76,14 @@ export default function PwaInit() {
     <div
       className="unlock-toast"
       role="dialog"
-      aria-label="Install Tiny Torque"
+      aria-label="Install Diecast Crew"
       data-install-prompt=""
     >
       <div className="badge-icon" style={{ width: 40, height: 40 }}>
         <ShareIcon size={20} />
       </div>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontWeight: 700, fontSize: 14 }}>Add Tiny Torque to your home screen</div>
+        <div style={{ fontWeight: 700, fontSize: 14 }}>Add Diecast Crew to your home screen</div>
         <div className="muted" style={{ fontSize: 12 }}>
           {mode === 'ios'
             ? 'Tap Share, then "Add to Home Screen" for the full-screen app.'

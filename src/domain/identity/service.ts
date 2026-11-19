@@ -34,7 +34,7 @@ export function inviteErrorMessage(err: unknown): string {
   if (raw.includes('already used'))
     return 'That invite code has already been used. Ask for a new one.';
   if (raw.includes('invite_required'))
-    return 'Tiny Torque is invite-only right now. Enter your invite code to continue.';
+    return 'Diecast Crew is invite-only right now. Enter your invite code to continue.';
   if (raw.includes('Sign in required')) return 'Your session ended. Sign in again.';
   return 'Could not verify that invite code. Try again.';
 }
