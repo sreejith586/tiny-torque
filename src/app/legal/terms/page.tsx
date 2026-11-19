@@ -15,7 +15,7 @@ export default function TermsPage() {
       <p className="page-sub">Pilot draft · last updated 20 October 2026</p>
       <div className="panel legal-body">
         <p>
-          Diecast Crew (previously Diecast Crew / Mini Vault) is operated by Hypermax FZE and is
+          Diecast Crew (previously Tiny Torque / Mini Vault) is operated by Hypermax FZE and is
           currently an invite-only pilot for diecast collectors in the UAE and India. By creating an
           account you agree to these terms.
         </p>
