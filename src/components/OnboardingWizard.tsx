@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -38,12 +38,15 @@ export default function OnboardingWizard({
   countries,
   inviteOnly,
   defaultCountry,
+  publicHost = 'tinytorque.hypermaxsolutions.com',
 }: {
   userId: string;
   userPhone?: string | null;
   countries: CountryRow[];
   inviteOnly: boolean;
   defaultCountry: string;
+  /** Host shown in the handle preview (`<host>/u/<handle>`), from the request headers. */
+  publicHost?: string;
 }) {
   const supabase = createClient();
   const router = useRouter();
@@ -85,36 +88,50 @@ export default function OnboardingWizard({
 
   const cityOptions = CITIES_BY_COUNTRY[countryCode] ?? [];
 
+  // Mirror of `handleEdited` that an in-flight suggestion can read after its await — state in
+  // the closure is stale, and a late suggestion used to overwrite a handle typed meanwhile.
+  const handleEditedRef = useRef(false);
+
   async function suggestHandleFor(name: string) {
     if (handleEdited || !name.trim()) return;
     try {
-      setHandle(await suggestAvailableHandle(supabase, name.trim()));
+      const suggestion = await suggestAvailableHandle(supabase, name.trim());
+      if (handleEditedRef.current) return;
+      setHandle(suggestion);
       setHandleStatus('available');
     } catch {
       // Auto-suggestion is a convenience; the blur check below still catches a bad manual entry.
     }
   }
 
-  async function checkHandle() {
+  // One in-flight availability check at a time; goNext awaits it instead of asking the user to
+  // press Next again (dry run 2026-11-15: blur + Next in quick succession needed two presses).
+  const handleCheck = useRef<Promise<HandleStatus> | null>(null);
+
+  function checkHandle(): Promise<HandleStatus> {
     const candidate = handle.trim().toLowerCase();
     if (!candidate) {
       // Blank is valid: createProfile auto-suggests one from displayName.
       setHandleStatus('idle');
-      return;
+      return Promise.resolve('idle');
     }
     if (!HANDLE_RE.test(candidate)) {
       setHandleStatus('invalid');
-      return;
+      return Promise.resolve('invalid');
     }
     setHandleStatus('checking');
-    try {
-      setHandleStatus((await isHandleAvailable(supabase, candidate)) ? 'available' : 'taken');
-    } catch {
-      setHandleStatus('idle');
-    }
+    const check = isHandleAvailable(supabase, candidate)
+      .then((free): HandleStatus => (free ? 'available' : 'taken'))
+      .catch((): HandleStatus => 'idle')
+      .then((status) => {
+        setHandleStatus(status);
+        return status;
+      });
+    handleCheck.current = check;
+    return check;
   }
 
-  function goNext(e: FormEvent) {
+  async function goNext(e: FormEvent) {
     e.preventDefault();
     setError(null);
 
@@ -127,15 +144,19 @@ export default function OnboardingWizard({
         setError('Tell us what to call you.');
         return;
       }
-      if (handleStatus === 'checking') {
-        setError('Still checking that handle — one moment.');
-        return;
+      // Resolve the handle before moving on: wait for a check in flight, or run one if the
+      // field was edited but never blurred.
+      let status = handleStatus;
+      if (status === 'checking' && handleCheck.current) {
+        status = await handleCheck.current;
+      } else if (status === 'idle' && handle.trim()) {
+        status = await checkHandle();
       }
-      if (handleStatus === 'invalid') {
+      if (status === 'invalid') {
         setError('Handle must be 3-24 characters: lowercase letters, numbers, underscores only.');
         return;
       }
-      if (handleStatus === 'taken') {
+      if (status === 'taken') {
         setError('That handle is already taken.');
         return;
       }
@@ -368,21 +389,28 @@ export default function OnboardingWizard({
             onChange={(e) => {
               setHandle(e.target.value);
               setHandleEdited(true);
+              handleEditedRef.current = true;
               setHandleStatus('idle');
             }}
             onBlur={checkHandle}
             placeholder="e.g. varun"
           />
-          {handleStatus === 'checking' && <p className="muted">Checking availability…</p>}
-          {handleStatus === 'taken' && <p className="field-error">That handle is already taken.</p>}
-          {handleStatus === 'invalid' && (
-            <p className="field-error">
-              3-24 characters: lowercase letters, numbers, underscores only.
-            </p>
-          )}
-          {handleStatus === 'available' && handle && (
-            <p className="muted">mini-vault.app/u/{handle}</p>
-          )}
+          {/* One always-present status line: when it appeared only on blur it pushed the buttons
+              down between mouse-down and mouse-up, and the first press of Next was lost. */}
+          <p
+            className={
+              handleStatus === 'taken' || handleStatus === 'invalid' ? 'field-error' : 'muted'
+            }
+            style={{ minHeight: '1.5em' }}
+            aria-live="polite"
+          >
+            {handleStatus === 'checking' && 'Checking availability…'}
+            {handleStatus === 'taken' && 'That handle is already taken.'}
+            {handleStatus === 'invalid' &&
+              '3-24 characters: lowercase letters, numbers, underscores only.'}
+            {handleStatus === 'available' && handle && `${publicHost}/u/${handle}`}
+            {(handleStatus === 'idle' || (handleStatus === 'available' && !handle)) && ' '}
+          </p>
 
           {error && <p className="field-error">{error}</p>}
           <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
