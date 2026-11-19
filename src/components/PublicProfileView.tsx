@@ -158,7 +158,7 @@ export default function PublicProfileView({
         </div>
 
         <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
-          <ShareProfileButton url={shareUrl} title={`${name} on Tiny Torque`} />
+          <ShareProfileButton url={shareUrl} title={`${name} on Diecast Crew`} />
           {isOwnProfile && (
             <Link
               href="/profile"

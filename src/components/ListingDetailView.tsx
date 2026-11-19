@@ -226,7 +226,7 @@ export default function ListingDetailView({
 
   async function handleShare() {
     const url = typeof window !== 'undefined' ? window.location.href : '';
-    const title = `${listing.brand}${listing.model ? ' ' + listing.model : ''} on Tiny Torque`;
+    const title = `${listing.brand}${listing.model ? ' ' + listing.model : ''} on Diecast Crew`;
     try {
       if (navigator.share) {
         await navigator.share({ title, url });

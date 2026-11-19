@@ -1,4 +1,4 @@
-/* Tiny Torque service worker (MV-S9-02, F-17, 05 S9 risk note: "keep it to app shell + read-only
+/* Diecast Crew service worker (MV-S9-02, F-17, 05 S9 risk note: "keep it to app shell + read-only
    garage cache"). Deliberately small and conservative — three caches, nothing else:
 
    1. shell   : hashed build assets (/_next/static/*), the self-hosted fonts and the handful of

@@ -15,10 +15,10 @@ export default function OfflineDealsPage() {
       <p className="page-sub">Pilot draft · last updated 12 November 2026</p>
       <div className="panel legal-body">
         <p>
-          Tiny Torque helps collectors find each other. The deal itself — paying, handing over,
+          Diecast Crew helps collectors find each other. The deal itself — paying, handing over,
           shipping — happens between the two of you, outside the app.
         </p>
-        <h2>What Tiny Torque does</h2>
+        <h2>What Diecast Crew does</h2>
         <ul>
           <li>
             Shows listings, carries offers and trade proposals, and opens a chat once an offer is
@@ -27,7 +27,7 @@ export default function OfflineDealsPage() {
           <li>Lets the seller mark a car sold and the buyer leave a review afterwards.</li>
           <li>Reviews reports and can remove listings or suspend accounts.</li>
         </ul>
-        <h2>What Tiny Torque does not do</h2>
+        <h2>What Diecast Crew does not do</h2>
         <ul>
           <li>
             We never take, hold or pass on payment for a car. There is no escrow and no commission.

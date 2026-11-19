@@ -30,7 +30,7 @@ export default function GuidelinesPage() {
             kudos, sign your guestbook or message you — and vice versa.
           </li>
           <li>
-            Hosts moderate their own guestbook and can hide any line. Tiny Torque can override any
+            Hosts moderate their own guestbook and can hide any line. Diecast Crew can override any
             host.
           </li>
         </ul>
@@ -75,7 +75,7 @@ export default function GuidelinesPage() {
         </ul>
         <h2>Adults only</h2>
         <p>
-          Tiny Torque and Collectors World are for adults 18+. Accounts found to belong to minors
+          Diecast Crew and Collectors World are for adults 18+. Accounts found to belong to minors
           are closed.
         </p>
         <p>

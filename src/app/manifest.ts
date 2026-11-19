@@ -9,8 +9,8 @@ import { APP_DEFAULT_THEME } from '@/lib/theme-default';
 export default function manifest(): MetadataRoute.Manifest {
   const theme = THEMES[APP_DEFAULT_THEME].vars;
   return {
-    name: 'Tiny Torque — Diecast Collector',
-    short_name: 'Tiny Torque',
+    name: 'Diecast Crew — Collector Garage',
+    short_name: 'Diecast Crew',
     description:
       'Track your diecast car collection, avoid buying duplicates, and connect with other collectors.',
     start_url: '/garage',

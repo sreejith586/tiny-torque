@@ -66,7 +66,7 @@ export async function generateMetadata({
   const listing = await getListing(supabase, id).catch(() => null);
   if (!listing) return { title: 'Listing' };
   const title = [listing.brand, listing.model].filter(Boolean).join(' ');
-  const description = `${listingPriceLabel(listing)} — ${title} on Tiny Torque`;
+  const description = `${listingPriceLabel(listing)} — ${title} on Diecast Crew`;
   return { title, description, openGraph: { title, description } };
 }
 

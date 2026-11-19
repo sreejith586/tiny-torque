@@ -1,4 +1,4 @@
-# Tiny Torque — Community Guidelines v2 (DRAFT — FOR COUNSEL + VARUN — NOT PUBLISHED)
+# Diecast Crew — Community Guidelines v2 (DRAFT — FOR COUNSEL + VARUN — NOT PUBLISHED)
 
 > Status: **draft v2, 2026-10-20**, from `docs/plan/07-collectors-world.md` §9 and §10. Publishes with the first World flag (W03). Copy tone to be aligned with Varun's prototype voice before publishing. Open questions marked ⚖️.
 
@@ -10,7 +10,7 @@ Be the collector you'd want to visit. Garages, guestbooks, meetups, rooms, clubs
 
 - No harassment, threats, hate speech, sexual content, or doxxing (sharing anyone's phone, address, workplace or exact location).
 - Blocks work everywhere: a blocked collector can't see your garage, message you, visit, RSVP to your meetups, or race you — and vice versa.
-- Hosts can mute, kick or ban in spaces they host. Tiny Torque can override any host.
+- Hosts can mute, kick or ban in spaces they host. Diecast Crew can override any host.
 
 ## 2. Honesty about cars
 
@@ -41,10 +41,10 @@ Be the collector you'd want to visit. Garages, guestbooks, meetups, rooms, clubs
 
 ## 8. In-person meetups (listings only)
 
-- Public venues only. 18+ only. No alcohol in the listing. No collecting money through Tiny Torque.
+- Public venues only. 18+ only. No alcohol in the listing. No collecting money through Diecast Crew.
 - The listing shows a city and approximate area; share the exact venue only with confirmed attendees.
 - Hosts are responsible for local permits, venue permission and local rules. ⚖️ UAE public-gathering/venue compliance wording.
-- **Tiny Torque is not the organiser** of any in-person event and may remove any listing. Meet safely: tell someone where you're going, bring a friend, trade in the open.
+- **Diecast Crew is not the organiser** of any in-person event and may remove any listing. Meet safely: tell someone where you're going, bring a friend, trade in the open.
 
 ## 9. Reporting and what happens next
 
@@ -54,4 +54,4 @@ Be the collector you'd want to visit. Garages, guestbooks, meetups, rooms, clubs
 
 ## 10. Minors
 
-Tiny Torque and Collectors World are for adults 18+. Accounts found to belong to minors are closed.
+Diecast Crew and Collectors World are for adults 18+. Accounts found to belong to minors are closed.

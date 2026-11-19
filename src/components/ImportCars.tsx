@@ -35,7 +35,7 @@ export default function ImportCars({ userId }: { userId: string }) {
     const url = URL.createObjectURL(new Blob([CSV_TEMPLATE], { type: 'text/csv' }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'mini-vault-import-template.csv';
+    a.download = 'diecast-crew-import-template.csv';
     a.click();
     URL.revokeObjectURL(url);
   }

@@ -82,7 +82,7 @@ export default function TokensStoreView({
         <div className="empty-state">
           <p>Buying tokens isn&apos;t open yet during the pilot.</p>
           <p className="muted">
-            You keep earning tokens as you use Tiny Torque — nothing to pay for right now.
+            You keep earning tokens as you use Diecast Crew — nothing to pay for right now.
           </p>
         </div>
       ) : packs.length === 0 ? (

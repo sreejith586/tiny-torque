@@ -1,4 +1,4 @@
-# Tiny Torque — Terms of Service v2 (DRAFT — FOR COUNSEL REVIEW — NOT PUBLISHED)
+# Diecast Crew — Terms of Service v2 (DRAFT — FOR COUNSEL REVIEW — NOT PUBLISHED)
 
 > Status: **draft v2, 2026-10-20**, prepared for counsel from `docs/plan/07-collectors-world.md` §3, §9, §10. Not legal advice; nothing here is in force until counsel signs off and it is published (planned W03 per `08-collectors-world-sprint-plan.md`). The version in force today is **v1**; `src/lib/legal.ts` records which version a user accepted.
 >
@@ -8,7 +8,7 @@
 
 ## 1. Who we are
 
-Tiny Torque ("the Service") is operated by Hypermax FZE (UAE) ("we", "us"). ⚖️ Confirm the contracting entity for Indian users and whether a local grievance address is required under the IT Rules 2021.
+Diecast Crew ("the Service") is operated by Hypermax FZE (UAE) ("we", "us"). ⚖️ Confirm the contracting entity for Indian users and whether a local grievance address is required under the IT Rules 2021.
 
 ## 2. Eligibility — adults only
 

@@ -165,7 +165,7 @@ function LoginForm() {
 
   return (
     <main style={{ padding: '48px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-      <h1 style={{ fontSize: 26 }}>Sign in to Tiny Torque</h1>
+      <h1 style={{ fontSize: 26 }}>Sign in to Diecast Crew</h1>
       <p className="muted">
         {method === 'email'
           ? 'No password needed — just your email.'

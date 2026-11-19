@@ -1,4 +1,4 @@
-# Tiny Torque — Privacy Policy v2 (DRAFT — FOR COUNSEL REVIEW — NOT PUBLISHED)
+# Diecast Crew — Privacy Policy v2 (DRAFT — FOR COUNSEL REVIEW — NOT PUBLISHED)
 
 > Status: **draft v2, 2026-10-20**, prepared for counsel from `docs/plan/07-collectors-world.md` §6.6, §9, §10. Not legal advice; not in force until counsel signs off and it is published. Open questions for counsel are marked ⚖️.
 >
