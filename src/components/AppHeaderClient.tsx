@@ -81,7 +81,7 @@ export default function AppHeaderClient({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="brand-logo" src="/tiny-torque-logo.webp" alt="" width={40} height={40} />
         <span className="brand-text">
-          <span className="brand-name">TINY TORQUE</span>
+          <span className="brand-name">DIECAST CREW</span>
           <span className="brand-tagline">DIECAST COLLECTOR</span>
         </span>
       </Link>

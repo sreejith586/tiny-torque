@@ -16,7 +16,7 @@ const NOTIFICATION_TEXT: Record<NotificationType, string> = {
   review_received: 'You received a new review.',
   badge_unlocked: 'You unlocked a new badge.',
   wishlist_match: 'A new listing matches your wishlist.',
-  system: 'Tiny Torque update.',
+  system: 'Diecast Crew update.',
   // Collectors World (W03, F-21)
   world_visit: 'Someone visited your garage.',
   world_kudos: 'Your garage got kudos.',

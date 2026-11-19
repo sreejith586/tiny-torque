@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getProfile } from '@/domain/identity';
 import { getEarnedBalance, listActivePacks } from '@/domain/tokens';
+import { isFlagEnabled } from '@/domain/flags';
 import TokensStoreView from '@/components/TokensStoreView';
 import { FIXTURE_PROFILE, FIXTURE_PACKS, isVisualHarness } from '@/lib/visual-fixtures';
 
@@ -42,11 +43,28 @@ export default async function TokensPage({
   ]);
   if (!profile) redirect('/onboarding');
 
+  // D-024 / D-018: the Buy buttons follow the same `token_purchase` kill switch the server
+  // action enforces — otherwise a pilot user sees prices for something that refuses to sell.
+  const purchasesOpen = await isFlagEnabled(supabase, 'token_purchase', {
+    userId: user.id,
+    plan: profile.plan === 'pro' ? 'pro' : 'free',
+    countryCode: profile.country_code ?? undefined,
+  }).catch(() => false);
+
   return (
     <main style={{ padding: '20px 16px', flex: 1 }}>
       <h1 className="page-heading">Tokens</h1>
-      <p className="page-sub">Buy tokens to spend on listing slots, scan packs, and Pro.</p>
-      <TokensStoreView balance={profile.tokens} packs={packs} earnedBalance={earnedBalance} />
+      <p className="page-sub">
+        {purchasesOpen
+          ? 'Buy tokens to spend on listing slots, scan packs, and Pro.'
+          : 'Spend tokens on listing slots, scan packs, and Pro.'}
+      </p>
+      <TokensStoreView
+        balance={profile.tokens}
+        packs={packs}
+        earnedBalance={earnedBalance}
+        purchasesOpen={purchasesOpen}
+      />
     </main>
   );
 }

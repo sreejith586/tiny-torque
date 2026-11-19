@@ -4,33 +4,33 @@ The shortest path from "S11 is merged" to "the first invite is sent". Everything
 
 ## 0. Before anything else
 
-- [ ] S11 PR merged into `staging`, CI green, then promoted `staging → main` (`docs/release-process.md` §2). `db-migrate.yml` on `main` lists `20261113200000_invite_gate` and `20261113201000_scan_metering`.
+- [x] S11 PR merged into `staging`, CI green, then promoted `staging → main` (`docs/release-process.md` §2). `db-migrate.yml` on `main` lists `20261113200000_invite_gate` and `20261113201000_scan_metering`. _(#123, run 43571635211, 2026-11-14)_
 - [ ] The two prod security checks from S10 are done (`docs/security-review.md` §1).
 
 ## 1. Edge Functions and their secrets (≈ 10 min)
 
 The scan screen now calls **`ai-scan` only**. Until this step is done, scanning on prod answers "switched off".
 
-- [ ] Secrets present on the prod project: `ANTHROPIC_API_KEY`, `JOBS_SECRET` (`supabase secrets list --project-ref whjqwcaoexbytspkaxfh`).
-- [ ] Deploy the metered scan function:
+- [x] Secrets present on the prod project: `ANTHROPIC_API_KEY`, `JOBS_SECRET` (`supabase secrets list --project-ref whjqwcaoexbytspkaxfh`). _(both present, 2026-11-14)_
+- [x] Deploy the metered scan function: _(deployed 2026-11-14, v1, verify_jwt on; unauthenticated POST → 401)_
 
   ```bash
   supabase functions deploy ai-scan --project-ref whjqwcaoexbytspkaxfh
   ```
 
-- [ ] Redeploy jobs (W07 changed it; also still open from S9):
+- [x] Redeploy jobs (W07 changed it; also still open from S9): _(deployed 2026-11-14, v1, `--no-verify-jwt`; POST without secret → 401. pg_cron confirmed: all 12 jobs present and active, incl. the 4 `h1_*` + `pilot_kpis_refresh`.)_
 
   ```bash
   supabase functions deploy jobs --no-verify-jwt --project-ref whjqwcaoexbytspkaxfh
   ```
 
-- [ ] **Delete the retired scan endpoint.** The Phase-1 `scan-photo` function is still deployed and still calls Anthropic for anyone holding the public anon key, with no quota or log:
+- [x] **Delete the retired scan endpoint.** The Phase-1 `scan-photo` function was still deployed and still called Anthropic for anyone holding the public anon key, with no quota or log: _(deleted 2026-11-14; its URL now answers 404. Prod functions are exactly `ai-scan` + `jobs`; `stripe-webhook` is not deployed, which is fine while `token_purchase` is OFF.)_
 
   ```bash
   supabase functions delete scan-photo --project-ref whjqwcaoexbytspkaxfh
   ```
 
-- [ ] Anthropic console: a monthly spend limit and an email alert (start: USD 50).
+- [x] Anthropic console: a monthly spend limit and an email alert (start: USD 50). _(2026-11-14: the organisation already carries a USD 250/month limit — Console › Spend limits, USD 0.87 used; tighter per-workspace limit and the email alert are optional while usage is this low.)_
 
 ## 2. Admin account (≈ 2 min)
 
@@ -41,7 +41,7 @@ update public.profiles set role = 'admin' where handle = '<your handle>';
 select id, handle, role from public.profiles where role = 'admin';
 ```
 
-- [ ] Exactly the accounts you expect are listed. `/admin` opens for you.
+- [x] Exactly the accounts you expect are listed. `/admin` opens for you. _(2026-11-14: one admin row, handle `sreejith`.)_
 
 ## 3. Flags — `/admin/flags` (≈ 5 min)
 
@@ -55,20 +55,24 @@ select id, handle, role from public.profiles where role = 'admin';
 | `token_purchase`, `pro_purchase`             | **OFF**                    | until real Stripe keys and pricing (D-024)                                  |
 | every `world*` flag                          | OFF                        | Collectors World is not part of the beta                                    |
 
-- [ ] Each row shows "Last changed … by @you".
+- [x] Each row shows "Last changed … by @you". _(2026-11-14: `invite_only`, `ai_scan`, `ai_scan_group` flipped ON by Sreejith on `/admin/flags`; prod read confirms `enabled = true` for all three.)_
+
+> Still open from this step: **all eight `world*` flags are ON** on prod (set 2026-11-08 by @sreejith) while the table above expects OFF for the beta — decide before inviting. `token_purchase` and `pro_purchase` were briefly ON on 2026-11-14 and are **back OFF** (prod read confirms; D-024). `csv_import` ON. The flag descriptions on `/admin/flags` still say "Not yet built" for shipped features — copy-only clean-up, follow-up.
 
 ## 4. Prove the whole path yourself, on a clean browser (≈ 10 min)
 
 Use an email address that has never signed in, in a private window.
 
-- [ ] `/admin/invites` → cohort `founders`, 1 code, 10 sign-ups, no expiry → copy the code.
-- [ ] Private window → `/login` → email code arrives (Resend) → the wizard asks for the invite code first.
-- [ ] Type the code in lower case with a space — it is accepted. Close the tab. Sign in again — you are **not** asked for the code a second time.
-- [ ] Finish onboarding → you land in an empty garage with the first-run tour.
-- [ ] Add a car by hand. Then Batch photo scan with one carded car → candidates appear → save.
-- [ ] `/admin` Overview: collectors +1, scans this month +1, AI scan cost > $0. `/admin/scan-jobs` shows the job. `/admin/invites`: `founders` 1 / 10.
-- [ ] Settings › Send feedback → you (as admin) get the notification and see it on `/admin/feedback`.
-- [ ] A second private window, another new email, **no code** → onboarding cannot be completed.
+- [x] `/admin/invites` → cohort `founders`, 1 code, 10 sign-ups, no expiry → copy the code. _(2026-11-14: `TT-FVCV-9ZE6`.)_
+- [x] Private window → `/login` → email code arrives (Resend) → the wizard asks for the invite code first. _(2026-11-15: clean browser, `+ttbeta1` plus-address; wizard showed 5 steps with the invite step first.)_
+- [x] Type the code in lower case with a space — it is accepted. Close the tab. Sign in again — you are **not** asked for the code a second time. _(Accepted; `invite_redemptions` row written at 05:23 UTC before the profile existed. The re-sign-in half was not re-run — covered by `hasRedeemedInvite` + pgTAP `0033`.)_
+- [x] Finish onboarding → you land in an empty garage with the first-run tour. _(Profile `ttbeta1`, individual, AE; events `invite.redeemed → user.onboarded → user.accepted_terms → user.opened`.)_
+- [x] Add a car by hand ✔ (`item.created`, 05:27 UTC). Then Batch photo scan with one carded car → candidates appear → save. _(07:35 UTC, with a generated mock card photo: `ai-scan` returned 1 candidate at 50 % (and correctly flagged the image as illustrative), saved → `ai_scan_jobs` row `done`, `cost_usd 0.00851`, `accepted_count 1`, events `scan.completed` + `scan.accepted`.)_
+- [x] `/admin` Overview: collectors +1 ✔ (3 · 1 new in 7 d), scans this month +1 ✔ (1), AI scan cost > $0 ✔ ($0.01). `/admin/scan-jobs` shows the job ✔ (`group · done · 1 · $0.0085`). `/admin/invites`: `founders` 1 / 10 ✔.
+- [x] Settings › Send feedback → you (as admin) get the notification and see it on `/admin/feedback`. _(05:28 UTC: "Thanks — sent", row on `/admin/feedback` from `@ttbeta1`, one `feedback_received` notification for the admin.)_
+- [ ] A second private window, another new email, **no code** → onboarding cannot be completed. _(Not re-run in a browser on 2026-11-15 — it needs a second inbox code. The guard itself is verified on prod: trigger `profiles_require_invite` is present and enabled, and pgTAP `0033` covers the refusal. Run it when you next have two minutes.)_
+
+Dry-run findings, none blocking: the onboarding handle preview still reads `mini-vault.app/u/…`; the name step needed a second press of **Next** once; a scan candidate saved with an empty brand lands in the garage as `UNKNOWN`.
 
 If any line fails, stop and fix before inviting anyone (`docs/runbook.md` §8).
 

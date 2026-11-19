@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { listEnabledCountries, defaultCountryCode, hasRedeemedInvite } from '@/domain/identity';
@@ -41,6 +42,9 @@ export default async function OnboardingPage({
     hasRedeemedInvite(supabase, user.id).catch(() => false),
   ]);
   const inviteOnly = inviteFlag && !redeemed;
+  const h = await headers();
+  const publicHost =
+    h.get('x-forwarded-host') ?? h.get('host') ?? 'tinytorque.hypermaxsolutions.com';
 
   return (
     <main style={{ padding: '48px 20px', flex: 1 }}>
@@ -50,6 +54,7 @@ export default async function OnboardingPage({
         countries={countries}
         inviteOnly={inviteOnly}
         defaultCountry={defaultCountryCode({ phone: user.phone, email: user.email }, countries)}
+        publicHost={publicHost}
       />
     </main>
   );

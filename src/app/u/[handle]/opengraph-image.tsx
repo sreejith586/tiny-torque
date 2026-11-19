@@ -10,7 +10,7 @@ import { APP_DEFAULT_THEME } from '@/lib/theme-default';
 // theme's token set (D-054) — never a second hardcoded palette (rule 13). Only `public_profiles`
 // fields are read (rule 15). Text-only on purpose: no remote image fetch can fail the card.
 
-export const alt = 'Collector profile on Tiny Torque';
+export const alt = 'Collector profile on Diecast Crew';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -113,7 +113,7 @@ export default async function OpenGraphImage({ params }: { params: Promise<{ han
           Diecast collection · offers · trades
         </div>
         <div style={{ fontSize: 40, fontWeight: 700, color: t['--orange'], letterSpacing: 2 }}>
-          TINY TORQUE
+          DIECAST CREW
         </div>
       </div>
     </div>,

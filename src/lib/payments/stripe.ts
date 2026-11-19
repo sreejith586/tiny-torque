@@ -36,7 +36,7 @@ export const stripeProvider: PaymentProvider = {
             {
               price_data: {
                 currency: pack.price_currency.toLowerCase(),
-                product_data: { name: `${pack.tokens} Tiny Torque tokens` },
+                product_data: { name: `${pack.tokens} Diecast Crew tokens` },
                 unit_amount: Math.round(pack.price_amount * 100),
               },
               quantity: 1,

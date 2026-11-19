@@ -34,7 +34,7 @@ export default function GlobalError({
         }}
       >
         <main style={{ textAlign: 'center', padding: 24, maxWidth: 420 }}>
-          <h1 style={{ fontSize: 20 }}>Tiny Torque hit a snag</h1>
+          <h1 style={{ fontSize: 20 }}>Diecast Crew hit a snag</h1>
           <p style={{ fontSize: 14, opacity: 0.75 }}>
             The app could not start. Reload to try again — if it keeps happening we already have the
             report{error.digest ? ` (reference ${error.digest})` : ''}.

@@ -14,8 +14,8 @@ export default function OfflinePage() {
           You&apos;re offline
         </h1>
         <p className="muted" style={{ fontSize: 13, marginTop: 6 }}>
-          Tiny Torque needs a connection for this page. Your garage&apos;s last saved view may still
-          be available.
+          Diecast Crew needs a connection for this page. Your garage&apos;s last saved view may
+          still be available.
         </p>
         <Link
           href="/garage"

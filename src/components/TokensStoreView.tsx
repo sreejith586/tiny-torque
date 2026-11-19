@@ -16,11 +16,14 @@ export default function TokensStoreView({
   balance,
   packs,
   earnedBalance = 0,
+  purchasesOpen = true,
 }: {
   balance: number;
   packs: TokenPackRow[];
   /** Earned (World) tokens still unspent — the part that expires (D-070). 0 hides the line. */
   earnedBalance?: number;
+  /** `token_purchase` flag (D-024): false during the pilot hides the packs instead of showing Buy buttons that refuse. */
+  purchasesOpen?: boolean;
 }) {
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +78,14 @@ export default function TokensStoreView({
           {error}
         </p>
       )}
-      {packs.length === 0 ? (
+      {!purchasesOpen ? (
+        <div className="empty-state">
+          <p>Buying tokens isn&apos;t open yet during the pilot.</p>
+          <p className="muted">
+            You keep earning tokens as you use Diecast Crew — nothing to pay for right now.
+          </p>
+        </div>
+      ) : packs.length === 0 ? (
         <div className="empty-state">
           <p>No token packs available right now.</p>
         </div>

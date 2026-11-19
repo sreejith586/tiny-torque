@@ -8,7 +8,7 @@ test('manifest is served with the install essentials', async ({ request }) => {
   const res = await request.get('/manifest.webmanifest');
   expect(res.status()).toBe(200);
   const manifest = await res.json();
-  expect(manifest.name).toContain('Tiny Torque');
+  expect(manifest.name).toContain('Diecast Crew');
   expect(manifest.display).toBe('standalone');
   expect(manifest.start_url).toBe('/garage');
   expect(manifest.icons.map((i: { sizes: string }) => i.sizes)).toEqual(
@@ -80,7 +80,7 @@ test('install prompt waits for the 2nd visit, then offers to install (dismiss hi
   await fireInstallEvent();
   const prompt = page.locator('[data-install-prompt]');
   await expect(prompt).toBeVisible();
-  await expect(prompt).toContainText('Add Tiny Torque to your home screen');
+  await expect(prompt).toContainText('Add Diecast Crew to your home screen');
   await prompt.getByRole('button', { name: 'Not now' }).click();
   await expect(prompt).toHaveCount(0);
   // Dismissed → not offered again on the next visit.

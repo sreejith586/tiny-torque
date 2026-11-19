@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import styles from './Splash.module.css';
 
-// Brand splash shown on a full page open/refresh: the Tiny Torque logo fades + scales in (the
+// Brand splash shown on a full page open/refresh: the Diecast Crew logo fades + scales in (the
 // prototype's splashFadeIn motion, D-045), holds for the prototype's exact minimum duration
 // (`splashMinDuration = setTimeout(resolve, 3000)`), then fades out and unmounts. Client-side
 // navigations don't remount the root layout, so it doesn't flash between in-app pages — only on
@@ -29,7 +29,7 @@ export default function Splash() {
       data-splash=""
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className={styles.logo} src="/tiny-torque-logo.webp" alt="Tiny Torque" />
+      <img className={styles.logo} src="/tiny-torque-logo.webp" alt="Diecast Crew" />
     </div>
   );
 }

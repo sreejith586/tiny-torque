@@ -92,7 +92,7 @@ Migration on local+staging with pgTAP · deployable to prod dark behind its flag
 
 ## Current sprint
 
-S11 — launch + buffer, fast-tracked to a closed beta (PR `[MV-S11-01/04]` into `staging`, branch `mv/S11-launch-beta`). S0–S10 live on prod (S10 promoted 2026-11-13, #120). Owner's launch path: `docs/pilot/launch-checklist.md`. Ops docs: `docs/runbook.md`, `docs/release-process.md`, `docs/security-review.md`, `docs/load-test.md`, `docs/pilot/`. See PROGRESS.md.
+S11 — launch + buffer, fast-tracked to a closed beta. S0–S10 and S11's launch code (invite gate, metered scan) are live on prod (promoted 2026-11-14, #123); the beta now waits on the owner steps. Owner's launch path: `docs/pilot/launch-checklist.md`. Ops docs: `docs/runbook.md`, `docs/release-process.md`, `docs/security-review.md`, `docs/load-test.md`, `docs/pilot/`. See PROGRESS.md.
 
 ## Don't
 

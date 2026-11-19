@@ -90,10 +90,10 @@ export async function generateMetadata({
   const tier = levelForXp(profile.xp ?? 0).tier;
   const description = profile.bio
     ? profile.bio
-    : `${profile.display_name}'s diecast collection on Tiny Torque · ${tier}.`;
+    : `${profile.display_name}'s diecast collection on Diecast Crew · ${tier}.`;
   // openGraph isn't covered by the root layout's title template, so it gets the full name here.
   // The OG image comes from the sibling opengraph-image.tsx file convention (F-14 share sheet).
-  return { title, description, openGraph: { title: `${title} · Tiny Torque`, description } };
+  return { title, description, openGraph: { title: `${title} · Diecast Crew`, description } };
 }
 
 export default async function PublicProfilePage({
